@@ -20,7 +20,8 @@ jobs:
         with: { distribution: temurin, java-version: "17" }
 
       - uses: gradle/actions/setup-gradle@v4
-
+      - name: Make gradlew executable
+              run: chmod +x gradlew
       # 1) Unit tests (command parser, voice catalog, provider logic)
       - name: Unit tests
         run: ./gradlew --no-daemon testDebugUnitTest
