@@ -1,0 +1,22 @@
+package dev.pages.badshah222ai.domain
+
+/** Everything the assistant can ask the phone to do. Pure data: no Android types. */
+sealed class PhoneAction {
+    data class OpenApp(val appName: String) : PhoneAction()
+    object OpenYouTube : PhoneAction()
+    object OpenWhatsApp : PhoneAction()
+    object OpenChrome : PhoneAction()
+    object OpenCamera : PhoneAction()
+    object OpenGallery : PhoneAction()
+    object PickContact : PhoneAction()
+    data class Call(val target: String) : PhoneAction()
+    data class WhatsAppMessage(val target: String, val message: String) : PhoneAction()
+    data class Sms(val target: String, val message: String) : PhoneAction()
+    data class SetAlarm(val hour24: Int, val minute: Int, val label: String? = null) : PhoneAction()
+    data class StartTimer(val seconds: Int, val label: String? = null) : PhoneAction()
+    data class WebSearch(val query: String) : PhoneAction()
+
+    /** Calls and messages are never sent silently: the user must confirm first. */
+    val needsConfirmation: Boolean
+        get() = this is Call || this is WhatsAppMessage || this is Sms
+}

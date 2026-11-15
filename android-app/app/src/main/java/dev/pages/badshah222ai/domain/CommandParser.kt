@@ -1,0 +1,92 @@
+package dev.pages.badshah222ai.domain
+
+/**
+ * Turns a spoken/typed command into a [PhoneAction], or null when it is an ordinary
+ * question for the AI. Understands English plus common Roman-Urdu/Hindi phrasing
+ * ("youtube kholo", "ali ko call karo", "5 minute ka timer").
+ */
+object CommandParser {
+    private val OPEN_VERBS = "open|launch|start|run|kholo|khol do|khol|chalao|chala do"
+    private val digitsOnly = Regex("^[+]?[0-9][0-9 \\-]{5,}$")
+
+    fun parse(raw: String): PhoneAction? {
+        val t = raw.trim().replace(Regex("\\s+"), " ").trimEnd('.', '!', '?')
+        if (t.isEmpty()) return null
+        val l = t.lowercase()
+
+        // ---- timer / alarm (checked first: they contain numbers) ----
+        parseTimer(l)?.let { return it }
+        parseAlarm(l)?.let { return it }
+
+        // ---- messages: whatsapp / sms ----
+        Regex("^(?:send (?:a |an )?)?(?:whatsapp|whats app)(?: message| msg)?(?: to)? (.+?)(?: (?:saying|that says|that|message|msg)|:) (.+)$").find(l)?.let {
+            return PhoneAction.WhatsAppMessage(cleanName(it.groupValues[1]), original(t, it.groupValues[2]))
+        }
+        Regex("^send (?:a |an )?(?:sms|text|text message|message)(?: to)? (.+?)(?: (?:saying|that says|that|with message)|:) (.+)$").find(l)?.let {
+            return PhoneAction.Sms(cleanName(it.groupValues[1]), original(t, it.groupValues[2]))
+        }
+        Regex("^(.+?) ko (?:whatsapp|whats app) (?:karo|kar do|bhejo)(?: (?:ke|k|ki) )?(.*)$").find(l)?.let {
+            return PhoneAction.WhatsAppMessage(cleanName(it.groupValues[1]), original(t, it.groupValues[2]))
+        }
+        Regex("^(.+?) ko (?:sms|message|msg) (?:karo|kar do|bhejo)(?: (?:ke|k|ki) )?(.*)$").find(l)?.let {
+            return PhoneAction.Sms(cleanName(it.groupValues[1]), original(t, it.groupValues[2]))
+        }
+
+        // ---- calls ----
+        Regex("^(?:please )?(?:call|dial|phone|ring)(?: up)? (.+)$").find(l)?.let { return PhoneAction.Call(cleanName(it.groupValues[1])) }
+        Regex("^(.+?) ko (?:call|phone|dial) (?:karo|kar do|lagao|laga do)$").find(l)?.let { return PhoneAction.Call(cleanName(it.groupValues[1])) }
+
+        // ---- contacts, search ----
+        if (Regex("^(?:pick|select|choose|show|open) (?:a |my )?contacts?$").matches(l)) return PhoneAction.PickContact
+        Regex("^(?:search|google|look up)(?: the web)?(?: for)? (.+)$").find(l)?.let { return PhoneAction.WebSearch(original(t, it.groupValues[1])) }
+
+        // ---- open things ----
+        val opened = Regex("^(?:$OPEN_VERBS) (?:the )?(.+?)(?: app)?$").find(l)?.groupValues?.get(1)
+            ?: Regex("^(.+?)(?: app)? (?:open karo|open kar do|kholo|khol do|chalao|chala do|open)$").find(l)?.groupValues?.get(1)
+        if (opened != null) return openTarget(opened.trim())
+        return null
+    }
+
+    private fun openTarget(name: String): PhoneAction = when (name) {
+        "youtube", "you tube", "yt" -> PhoneAction.OpenYouTube
+        "whatsapp", "whats app", "whatsapp messenger" -> PhoneAction.OpenWhatsApp
+        "chrome", "google chrome", "browser" -> PhoneAction.OpenChrome
+        "camera", "the camera" -> PhoneAction.OpenCamera
+        "gallery", "photos", "my photos", "photo gallery", "google photos" -> PhoneAction.OpenGallery
+        else -> PhoneAction.OpenApp(name)
+    }
+
+    private fun parseTimer(l: String): PhoneAction? {
+        val unit = "(second|seconds|sec|secs|minute|minutes|min|mins|hour|hours|hr|hrs|ghanta|ghante|minat|minute ka)"
+        val m = Regex("(?:timer|countdown).*?(\\d+(?:\\.\\d+)?) ?$unit").find(l)
+            ?: Regex("(\\d+(?:\\.\\d+)?) ?$unit(?: ka| ke)? (?:timer|countdown)").find(l) ?: return null
+        val n = m.groupValues[1].toDouble(); val u = m.groupValues[2]
+        val secs = when {
+            u.startsWith("sec") -> n
+            u.startsWith("min") -> n * 60
+            else -> n * 3600
+        }.toInt()
+        return if (secs in 1..86_400) PhoneAction.StartTimer(secs) else null
+    }
+
+    private fun parseAlarm(l: String): PhoneAction? {
+        if (!Regex("\\b(alarm|jaga|uthao)\\b").containsMatchIn(l)) return null
+        val m = Regex("(\\d{1,2})(?:[: .](\\d{2}))? ?(am|pm|a\\.m\\.|p\\.m\\.)?").findAll(l).lastOrNull { it.groupValues[1].isNotEmpty() } ?: return null
+        var h = m.groupValues[1].toInt(); val min = m.groupValues[2].ifEmpty { "0" }.toInt()
+        val ap = m.groupValues[3].replace(".", "")
+        if (ap == "pm" && h in 1..11) h += 12
+        if (ap == "am" && h == 12) h = 0
+        return if (h in 0..23 && min in 0..59) PhoneAction.SetAlarm(h, min) else null
+    }
+
+    private fun cleanName(s: String) = s.trim().removePrefix("to ").removePrefix("my ").trim().let {
+        if (digitsOnly.matches(it)) it.replace(" ", "").replace("-", "") else it.split(' ').joinToString(" ") { w -> w.replaceFirstChar { c -> c.uppercase() } }
+    }
+
+    /** Keep the user's original capitalisation for message bodies. */
+    private fun original(full: String, lowerTail: String): String {
+        if (lowerTail.isEmpty()) return ""
+        val i = full.lowercase().lastIndexOf(lowerTail)
+        return if (i >= 0) full.substring(i, i + lowerTail.length) else lowerTail
+    }
+}
