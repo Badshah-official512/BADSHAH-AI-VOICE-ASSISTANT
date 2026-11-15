@@ -1,0 +1,7 @@
+-keepattributes *Annotation*, Signature, SourceFile, LineNumberTable
+-keep class dev.pages.badshah222ai.domain.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**

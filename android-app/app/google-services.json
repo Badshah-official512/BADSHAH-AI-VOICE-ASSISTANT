@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "949903255351",
+    "project_id": "badshah-ai-badshah222",
+    "storage_bucket": "badshah-ai-badshah222.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949903255351:android:053b6a0441c5810dae1cb2",
+        "android_client_info": {
+          "package_name": "dev.pages.badshah222ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "949903255351-4ec3f49upm8io23drt0q0rgiks148h64.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.pages.badshah222ai",
+            "certificate_hash": "d3b23fc1b8e116599bd0c01744a81b7aa24b62f5"
+          }
+        },
+        {
+          "client_id": "949903255351-s6ohu1a2aut5j3s62nv9mfsc15jlkh4g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZ2sATZVrmEFAsdoiL6exncCNWHVFNxAY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "949903255351-s6ohu1a2aut5j3s62nv9mfsc15jlkh4g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
