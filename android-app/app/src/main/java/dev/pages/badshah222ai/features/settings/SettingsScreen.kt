@@ -22,6 +22,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pages.badshah222ai.BadshahApp
 import dev.pages.badshah222ai.data.ai.*
+import dev.pages.badshah222ai.data.supabase.VoiceProfileRow
 import dev.pages.badshah222ai.data.voice.*
 import dev.pages.badshah222ai.domain.*
 import dev.pages.badshah222ai.features.auth.SessionViewModel
