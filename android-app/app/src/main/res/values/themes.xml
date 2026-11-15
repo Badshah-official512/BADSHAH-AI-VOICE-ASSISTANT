@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.Badshah" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/badshah_bg</item>
+        <item name="android:statusBarColor">@color/badshah_bg</item>
+        <item name="android:navigationBarColor">@color/badshah_bg</item>
+    </style>
+    <style name="Theme.Badshah.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/badshah_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_fg</item>
+        <item name="postSplashScreenTheme">@style/Theme.Badshah</item>
+    </style>
+</resources>
