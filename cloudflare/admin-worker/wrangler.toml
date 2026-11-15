@@ -1,0 +1,16 @@
+name = "badshah-ai-site"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# `npm run build-site` assembles ../../website (docs explorer at / and admin at /admin)
+[assets]
+directory = "../../website"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+SUPABASE_URL = "https://aghlacmqlagmigoznxlm.supabase.co"
+
+# Secrets (NEVER put in this file):
+#   wrangler secret put GATEWAY_SECRET     (same value as the Supabase function secret)
+# Route: add your custom domain in the Cloudflare dashboard, e.g. YOUR-DOMAIN.com/*
