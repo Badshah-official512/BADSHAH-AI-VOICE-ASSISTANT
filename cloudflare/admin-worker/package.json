@@ -1,0 +1,3 @@
+{ "name": "badshah-ai-admin-worker", "private": true, "type": "module",
+  "scripts": { "test": "node --test test/worker.test.mjs", "dev": "wrangler dev", "deploy": "wrangler deploy", "build-site": "node ../../scripts/build-site.mjs" },
+  "devDependencies": { "wrangler": "^4" } }
