@@ -43,7 +43,7 @@ fun ChatHistoryScreen(home: HomeViewModel, vm: HistoryViewModel, onBack: () -> U
             items(local.takeLast(30)) { m -> Text((if (m.role == "user") "You: " else "BADSHAH: ") + m.content, color = if (m.role == "user") MaterialTheme.colorScheme.onSurface else Gold, style = MaterialTheme.typography.bodyMedium) }
             item { Text("Synced conversations", style = MaterialTheme.typography.titleMedium, color = Gold, modifier = Modifier.padding(top = 8.dp)) }
             err?.let { e -> item { Text("Cloud history unavailable: $e", color = Mute) } }
-            items(convos) { cv -> Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel), onClick = { vm.open(cv) }) { Column(Modifier.padding(12.dp)) { Text(cv.title); Text(cv.updatedAt.take(16).replace('T', ' '), style = MaterialTheme.typography.bodySmall, color = Mute) } } }
+            items(convos) { cv -> Card(onClick = { vm.open(cv) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel)) { Column(Modifier.padding(12.dp)) { Text(cv.title); Text(cv.updatedAt.take(16).replace('T', ' '), style = MaterialTheme.typography.bodySmall, color = Mute) } } }
         }
     }
     opened?.let { (cv, msgs) ->
