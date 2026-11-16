@@ -47,10 +47,25 @@ class PhoneExecutor(private val ctx: Context) {
         is PhoneAction.StartTimer -> if (launch(Intent(AlarmClock.ACTION_SET_TIMER).putExtra(AlarmClock.EXTRA_LENGTH, a.seconds).putExtra(AlarmClock.EXTRA_MESSAGE, a.label ?: "BADSHAH AI").putExtra(AlarmClock.EXTRA_SKIP_UI, false)))
             PhoneResult.Done("Timer started for ${a.seconds / 60} min ${a.seconds % 60} sec.") else PhoneResult.Failed("No clock app found.")
         is PhoneAction.Call -> withNumber(a.target) { num -> if (launch(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(num))))) PhoneResult.Done("Dialer opened for $num. Press call to connect.") else PhoneResult.Failed("No dialer found.") }
+        is PhoneAction.Flashlight -> torch(a.on)
         is PhoneAction.Sms -> withNumber(a.target) { num -> if (launch(Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + Uri.encode(num))).putExtra("sms_body", a.message))) PhoneResult.Done("Message ready for $num. Press send in your messages app.") else PhoneResult.Failed("No SMS app found.") }
         is PhoneAction.WhatsAppMessage -> withNumber(a.target) { num ->
             val e164 = toE164(num) ?: return@withNumber PhoneResult.Failed("I need the number with country code (for example +92...) to open WhatsApp.")
             if (url("https://wa.me/${e164.removePrefix("+")}?text=" + URLEncoder.encode(a.message, "UTF-8"))) PhoneResult.Done("WhatsApp chat opened with your message ready. Press send.") else PhoneResult.Failed("Could not open WhatsApp.")
+        }
+    }
+
+    /** Torch mode needs no permission and no camera app: CameraManager does it directly. */
+    private fun torch(on: Boolean): PhoneResult {
+        val cm = ctx.getSystemService(Context.CAMERA_SERVICE) as android.hardware.camera2.CameraManager
+        val id = cm.cameraIdList.firstOrNull { cid ->
+            runCatching { cm.getCameraCharacteristics(cid).get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true }.getOrDefault(false)
+        } ?: return PhoneResult.Failed("This phone has no flashlight.")
+        return try {
+            cm.setTorchMode(id, on)
+            PhoneResult.Done(if (on) "Flashlight on." else "Flashlight off.")
+        } catch (e: Exception) {
+            PhoneResult.Failed("Could not switch the flashlight.")
         }
     }
 
