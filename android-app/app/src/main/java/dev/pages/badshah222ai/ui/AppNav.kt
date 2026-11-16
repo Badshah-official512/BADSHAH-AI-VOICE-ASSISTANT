@@ -26,6 +26,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.pages.badshah222ai.core.WakeSignal
 import dev.pages.badshah222ai.features.about.AboutScreen
+import dev.pages.badshah222ai.features.browser.BrowserScreen
+import dev.pages.badshah222ai.features.browser.BrowserViewModel
 import dev.pages.badshah222ai.features.auth.AuthScreen
 import dev.pages.badshah222ai.features.auth.SessionViewModel
 import dev.pages.badshah222ai.features.chat.ChatHistoryScreen
@@ -67,7 +69,7 @@ private val TABS = setOf("home", "chat", "history", "settings")
 private fun SignedInNav(session: SessionViewModel) {
     val nav = rememberNavController()
     // ViewModels are created here (nav-graph scope) so Home state survives opening Settings/Help.
-    val home: HomeViewModel = viewModel(); val settings: SettingsViewModel = viewModel(); val help: HelpViewModel = viewModel(); val history: HistoryViewModel = viewModel()
+    val home: HomeViewModel = viewModel(); val settings: SettingsViewModel = viewModel(); val help: HelpViewModel = viewModel(); val history: HistoryViewModel = viewModel(); val browser: BrowserViewModel = viewModel()
     val backStack by nav.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "home"
     fun tab(r: String) { nav.navigate(r) { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true } }
@@ -75,6 +77,10 @@ private fun SignedInNav(session: SessionViewModel) {
     // Wake word heard: jump straight into the voice screen, like answering a call.
     val wakeTick by WakeSignal.ticks.collectAsState()
     LaunchedEffect(wakeTick) { if (wakeTick > 0L) nav.navigate("voice") }
+
+    // "Browser kholo…" asked in chat/voice: open the assistant's own browser.
+    val pendingBrowser by home.pendingBrowser.collectAsState()
+    LaunchedEffect(pendingBrowser) { if (pendingBrowser != null) nav.navigate("browser") }
 
     Scaffold(
         bottomBar = { if (route in TABS) LiaBottomBar(route, { tab(it) }, { nav.navigate("voice") }) },
@@ -86,6 +92,7 @@ private fun SignedInNav(session: SessionViewModel) {
                 composable("chat") { ChatScreen(home, { nav.popBackStack() }, { nav.navigate("voice") }) }
                 composable("voice") { VoiceScreen(home) { nav.popBackStack() } }
                 composable("quick") { QuickActionsScreen(home, { nav.popBackStack() }, { nav.navigate(it) }) }
+                composable("browser") { BrowserScreen(home, browser) { nav.popBackStack() } }
                 composable("settings") { SettingsScreen(session, settings, { nav.popBackStack() }, { nav.navigate("permissions") }) }
                 composable("help") { HelpScreen(help) { nav.popBackStack() } }
                 composable("about") { AboutScreen { nav.popBackStack() } }
