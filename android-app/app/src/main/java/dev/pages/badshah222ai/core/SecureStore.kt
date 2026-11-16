@@ -43,9 +43,25 @@ class SecureStore(context: Context) {
     var lowPower: Boolean get() = prefs.getBoolean("low_power", false); set(v) = prefs.edit().putBoolean("low_power", v).apply()
     var language: String get() = prefs.getString("lang", "en-US") ?: "en-US"; set(v) = prefs.edit().putString("lang", v).apply()
     var personalityId: String get() = prefs.getString("personality", "assistant") ?: "assistant"; set(v) = prefs.edit().putString("personality", v).apply()
-    var voiceModeId: String? get() = prefs.getString("voice_mode", null); set(v) = prefs.edit().putString("voice_mode", v).apply()
     var brainId: String get() = prefs.getString("brain", "general") ?: "general"; set(v) = prefs.edit().putString("brain", v).apply()
-    /** null = Auto: the feeling is detected from the user's words on every message. */
-    var feelingId: String? get() = prefs.getString("feeling", null); set(v) = prefs.edit().putString("feeling", v).apply()
+    /** null = Auto: the emotion is detected from the user's words on every message. */
+    var emotionId: String? get() = prefs.getString("emotion", null); set(v) = prefs.edit().putString("emotion", v).apply()
     var wakeWord: Boolean get() = prefs.getBoolean("wake_word", false); set(v) = prefs.edit().putBoolean("wake_word", v).apply()
+    /** Optional custom wake phrase (in addition to "BADSHAH"). */
+    var customWakeWord: String get() = prefs.getString("wake_custom", "") ?: ""; set(v) = prefs.edit().putString("wake_custom", v).apply()
+
+    // ---- Gemini Live (real human voices) ----
+    /** Selected Gemini Live voice name, e.g. "Charon" (male) or "Aoede" (female). */
+    var liveVoiceName: String get() = prefs.getString("live_voice", "Charon") ?: "Charon"; set(v) = prefs.edit().putString("live_voice", v).apply()
+    /** Live-capable model found for the user's own Gemini key (auto-detected, never invented). */
+    var liveModel: String? get() = prefs.getString("live_model", null); set(v) = prefs.edit().putString("live_model", v).apply()
+    /** Use the Gemini Live engine on the Voice screen when a Gemini key exists. */
+    var liveEnabled: Boolean get() = prefs.getBoolean("live_enabled", true); set(v) = prefs.edit().putBoolean("live_enabled", v).apply()
+
+    // ---- assistant identity & look ----
+    var assistantName: String get() = prefs.getString("assistant_name", "BADSHAH")?.ifBlank { "BADSHAH" } ?: "BADSHAH"; set(v) = prefs.edit().putString("assistant_name", v).apply()
+    /** balanced | short | detailed */
+    var responseStyle: String get() = prefs.getString("response_style", "balanced") ?: "balanced"; set(v) = prefs.edit().putString("response_style", v).apply()
+    /** photo (his cutout) | girl (AISHA) | logo (crown logo) */
+    var avatarChoice: String get() = prefs.getString("avatar", "photo") ?: "photo"; set(v) = prefs.edit().putString("avatar", v).apply()
 }

@@ -113,9 +113,11 @@ class WakeWordService : Service(), RecognitionListener {
 
     /** Returns true when the wake word was heard (and handled). */
     private fun heard(texts: List<String>?): Boolean {
+        val custom = runCatching { SecureStore(this).customWakeWord.lowercase().trim() }.getOrDefault("")
         val hit = texts.orEmpty().any { t ->
             val n = t.lowercase()
-            n.contains("badshah") || n.contains("bad shah") || n.contains("baadshah") || n.contains("badsha")
+            n.contains("badshah") || n.contains("bad shah") || n.contains("baadshah") || n.contains("badsha") ||
+                (custom.isNotEmpty() && n.contains(custom))
         }
         if (hit) onWake()
         return hit
