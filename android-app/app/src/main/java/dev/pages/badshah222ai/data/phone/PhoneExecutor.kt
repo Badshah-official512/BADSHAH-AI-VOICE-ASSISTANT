@@ -37,6 +37,7 @@ class PhoneExecutor(private val ctx: Context) {
         PhoneAction.OpenYouTube -> if (launchPackage("com.google.android.youtube") || url("https://www.youtube.com")) PhoneResult.Done("Opening YouTube.") else PhoneResult.Failed("Could not open YouTube.")
         PhoneAction.OpenWhatsApp -> if (launchPackage("com.whatsapp") || launchPackage("com.whatsapp.w4b")) PhoneResult.Done("Opening WhatsApp.") else PhoneResult.Failed("WhatsApp is not installed on this phone.")
         PhoneAction.OpenChrome -> if (launchPackage("com.android.chrome") || url("https://www.google.com")) PhoneResult.Done("Opening Chrome.") else PhoneResult.Failed("Could not open a browser.")
+        is PhoneAction.OpenBrowser -> PhoneResult.Failed("Browser app ke andar se khulta hai.") // intercepted by HomeViewModel before execute()
         PhoneAction.OpenCamera -> if (launch(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))) PhoneResult.Done("Opening the camera.") else PhoneResult.Failed("No camera app found.")
         PhoneAction.OpenGallery -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))) PhoneResult.Done("Opening your gallery.") else PhoneResult.Failed("No gallery app found.")
         PhoneAction.OpenVideos -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_VIEW).setType("video/*"))) PhoneResult.Done("Opening your videos.") else PhoneResult.Failed("No video gallery found.")
