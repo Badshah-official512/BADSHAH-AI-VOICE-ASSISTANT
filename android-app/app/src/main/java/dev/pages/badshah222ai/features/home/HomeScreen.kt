@@ -109,7 +109,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
         }
-        c.live.onUnavailable = { reason -> liveFallback.value = reason }
+        c.live.onUnavailable = { reason -> liveFallback.value = reason; c.store.lastLiveError = reason }
     }
 
     fun startListening() {
@@ -190,9 +190,22 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ---- classic voice-call loop: listen → reply → listen again, until the Boss ends the call ----
+    val inCall = MutableStateFlow(false)
+    val callMuted = MutableStateFlow(false)
+    fun beginCall() { inCall.value = true; callMuted.value = false; c.tts.setCallVolume(true) }
+    fun endCall() { inCall.value = false; c.tts.setCallVolume(false); stopListening(); stopSpeaking() }
+    fun setCallMuted(m: Boolean) { callMuted.value = m; if (m) stopListening() else if (inCall.value) startListening() }
+
     private suspend fun speak(text: String) {
         if (!c.store.speakReplies) return
-        c.tts.speak(text)?.let { warn -> status.value = warn }
+        c.tts.speak(text, onDone = {
+            // In a call, the moment the reply finishes the mic opens again — the conversation never goes dead.
+            if (inCall.value && !callMuted.value) viewModelScope.launch {
+                kotlinx.coroutines.delay(250)
+                if (inCall.value && !callMuted.value) startListening()
+            }
+        })?.let { warn -> status.value = warn }
     }
     /** Speak one message aloud on demand (the speaker button on a chat bubble). */
     fun replay(text: String) { c.tts.stop(); viewModelScope.launch { c.tts.speak(text) } }

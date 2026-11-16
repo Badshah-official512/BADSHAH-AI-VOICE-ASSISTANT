@@ -18,6 +18,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -64,13 +65,14 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     val liveError by vm.live.error.collectAsState(); val muted by vm.live.muted.collectAsState()
     val fallback by vm.liveFallback.collectAsState()
     val emotion by vm.emotion.collectAsState()
+    val inCall by vm.inCall.collectAsState(); val callMuted by vm.callMuted.collectAsState()
 
     var liveMode by remember { mutableStateOf(vm.liveAvailable()) }
     var started by remember { mutableStateOf(false) }
 
     fun begin() {
         if (started) return; started = true
-        if (liveMode) vm.startLiveSession() else vm.startListening()
+        if (liveMode) vm.startLiveSession() else { vm.beginCall(); vm.startListening() }
     }
     val micPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) begin() else vm.status.value = "Microphone permission denied. Open Permissions to enable it."
@@ -84,15 +86,16 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
         if (fallback != null && liveMode) {
             liveMode = false
             vm.status.value = fallback!!
-            if (started) vm.startListening()
+            if (started) { vm.beginCall(); vm.startListening() }
         }
     }
-    // Classic mode only: quietly recover from a dropped recognizer (a few times at most).
-    var autoRetries by remember { mutableStateOf(0) }
+    // Classic call loop: if the recognizer drops, reopen the mic at once — the call stays
+    // alive, listening and replying turn by turn, until the Boss himself presses End.
     LaunchedEffect(classicState, liveMode) {
-        if (!liveMode && classicState == CharState.Error) {
-            if (autoRetries < 3) { delay(1800); autoRetries++; vm.dismissError(); vm.startListening() }
-        } else autoRetries = 0
+        if (!liveMode && classicState == CharState.Error && inCall && !callMuted) {
+            delay(900); vm.dismissError()
+            if (inCall && !callMuted) vm.startListening()
+        }
     }
 
     val orbState = if (liveMode) when (liveState) {
@@ -186,6 +189,13 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
                 if (liveMode) "Real voice · Gemini Live" else "Classic voice mode",
                 Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall,
             )
+            if (!liveMode && fallback != null) {
+                Text(
+                    "Live voice kyun nahi chali: $fallback",
+                    Modifier.fillMaxWidth().padding(top = 10.dp).background(Bad.copy(alpha = 0.15f), RoundedCornerShape(10.dp)).padding(10.dp),
+                    textAlign = TextAlign.Center, color = Bad, style = MaterialTheme.typography.bodySmall,
+                )
+            }
             if (transcript.isNotEmpty()) Text(transcript, Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center, color = VioletSoft, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
             Spacer(Modifier.weight(1f))
             Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
@@ -193,8 +203,8 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
                     ControlButton(if (muted) Icons.Default.Mic else Icons.Default.MicOff, if (muted) "Unmute" else "Mute", Panel2, Color.White) { vm.live.setMuted(!muted) }
                     ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.stopLiveSession(); onBack() }
                 } else {
-                    ControlButton(Icons.Default.MicOff, "Mute", Panel2, Color.White) { vm.stopListening() }
-                    ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.stopListening(); vm.stopSpeaking(); onBack() }
+                    ControlButton(if (callMuted) Icons.Default.Mic else Icons.Default.MicOff, if (callMuted) "Unmute" else "Mute", Panel2, Color.White) { vm.setCallMuted(!callMuted) }
+                    ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.endCall(); onBack() }
                 }
                 ControlButton(Icons.Default.KeyboardArrowDown, "Minimize", Panel2, Color.White) { onBack() }
             }
