@@ -17,6 +17,8 @@ sealed class PhoneAction {
     data class SetAlarm(val hour24: Int, val minute: Int, val label: String? = null) : PhoneAction()
     data class StartTimer(val seconds: Int, val label: String? = null) : PhoneAction()
     data class WebSearch(val query: String) : PhoneAction()
+    /** The assistant's OWN in-app browser (empty query = just open it). Handled by the UI layer, not the executor. */
+    data class OpenBrowser(val query: String) : PhoneAction()
     data class Flashlight(val on: Boolean) : PhoneAction()
 
     /** Calls and messages are never sent silently: the user must confirm first. */

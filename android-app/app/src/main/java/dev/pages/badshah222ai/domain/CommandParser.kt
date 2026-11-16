@@ -50,6 +50,13 @@ object CommandParser {
         if (Regex("\\b(videos?|movies?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|lagao|dikhao|play|watch)\\b").containsMatchIn(l)) return PhoneAction.OpenVideos
         if (Regex("\\b(files?|downloads?|file manager|documents?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|dikhao|show)\\b").containsMatchIn(l)) return PhoneAction.OpenFiles
 
+        // ---- the assistant's own browser: anything mentioning "browser" opens it in-app ----
+        if (l.contains("browser")) {
+            val q = l.replace(Regex("\\b(browser|kholo|khol|open|mein|par|pe|search|karo|kar|do|chalao|the|app|mera|meri|apna)\\b"), " ")
+                .replace(Regex("\\s+"), " ").trim()
+            return PhoneAction.OpenBrowser(q)
+        }
+
         // ---- open things ----
         val opened = Regex("^(?:$OPEN_VERBS) (?:the )?(.+?)(?: app)?$").find(l)?.groupValues?.get(1)
             ?: Regex("^(.+?)(?: app)? (?:open karo|open kar do|kholo|khol do|chalao|chala do|open)$").find(l)?.groupValues?.get(1)
@@ -60,7 +67,8 @@ object CommandParser {
     private fun openTarget(name: String): PhoneAction = when (name) {
         "youtube", "you tube", "yt" -> PhoneAction.OpenYouTube
         "whatsapp", "whats app", "whatsapp messenger" -> PhoneAction.OpenWhatsApp
-        "chrome", "google chrome", "browser" -> PhoneAction.OpenChrome
+        "chrome", "google chrome" -> PhoneAction.OpenChrome
+        "browser" -> PhoneAction.OpenBrowser("")
         "camera", "the camera" -> PhoneAction.OpenCamera
         "gallery", "photos", "my photos", "photo gallery", "google photos" -> PhoneAction.OpenGallery
         "videos", "my videos", "gallery videos", "movies" -> PhoneAction.OpenVideos
