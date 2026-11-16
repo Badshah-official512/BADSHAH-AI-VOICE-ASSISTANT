@@ -4,9 +4,13 @@ import android.app.Application
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -35,15 +39,37 @@ class HistoryViewModel(app: Application) : AndroidViewModel(app) {
 @Composable
 fun ChatHistoryScreen(home: HomeViewModel, vm: HistoryViewModel, onBack: () -> Unit) {
     val local by home.messages.collectAsState(); val convos by vm.convos.collectAsState(); val err by vm.error.collectAsState(); val opened by vm.opened.collectAsState()
+    var query by remember { mutableStateOf("") }
+    val shown = if (query.isBlank()) convos else convos.filter { it.title.contains(query, ignoreCase = true) }
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-        TopBar("Chat history", onBack)
-        LazyColumn(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton({ home.newChat() }) { Text("Start a new chat") }; OutlinedButton({ vm.refresh() }) { Text("Refresh") } } }
-            item { Text("On this phone (${local.size} messages)", style = MaterialTheme.typography.titleMedium, color = Gold) }
-            items(local.takeLast(30)) { m -> Text((if (m.role == "user") "You: " else "BADSHAH: ") + m.content, color = if (m.role == "user") MaterialTheme.colorScheme.onSurface else Gold, style = MaterialTheme.typography.bodyMedium) }
-            item { Text("Synced conversations", style = MaterialTheme.typography.titleMedium, color = Gold, modifier = Modifier.padding(top = 8.dp)) }
-            err?.let { e -> item { Text("Cloud history unavailable: $e", color = Mute) } }
-            items(convos) { cv -> Card(onClick = { vm.open(cv) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel)) { Column(Modifier.padding(12.dp)) { Text(cv.title); Text(cv.updatedAt.take(16).replace('T', ' '), style = MaterialTheme.typography.bodySmall, color = Mute) } } }
+        TopBar("Conversations", onBack)
+        OutlinedTextField(
+            query, { query = it }, Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            placeholder = { Text("Search conversations") }, leadingIcon = { Icon(Icons.Default.Search, "Search") },
+            singleLine = true, shape = RoundedCornerShape(24.dp),
+        )
+        LazyColumn(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
+            item { Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Button({ home.newChat() }) { Text("New chat") }; OutlinedButton({ vm.refresh() }) { Text("Refresh") } } }
+            item { Text("On this phone", style = MaterialTheme.typography.titleMedium, color = VioletSoft, modifier = Modifier.padding(top = 4.dp)) }
+            item {
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Current chat · ${local.size} messages", fontWeight = FontWeight.SemiBold)
+                        Text(local.lastOrNull()?.let { (if (it.role == "user") "You: " else "BADSHAH: ") + it.content } ?: "No messages yet — say hello from the Home tab.", style = MaterialTheme.typography.bodySmall, color = Mute, maxLines = 2)
+                    }
+                }
+            }
+            item { Text("Synced conversations", style = MaterialTheme.typography.titleMedium, color = VioletSoft, modifier = Modifier.padding(top = 8.dp)) }
+            err?.let { e -> item { Text("Cloud history unavailable: $e", color = Mute, style = MaterialTheme.typography.bodySmall) } }
+            if (convos.isNotEmpty() && shown.isEmpty()) item { Text("No conversations match your search.", color = Mute, style = MaterialTheme.typography.bodySmall) }
+            items(shown) { cv ->
+                Card(onClick = { vm.open(cv) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(cv.title, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text(cv.updatedAt.take(16).replace('T', ' '), style = MaterialTheme.typography.bodySmall, color = Mute)
+                    }
+                }
+            }
         }
     }
     opened?.let { (cv, msgs) ->
