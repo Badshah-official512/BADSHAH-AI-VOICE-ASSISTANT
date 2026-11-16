@@ -29,6 +29,11 @@ class SecureStore(context: Context) {
     fun setElevenKey(key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_elevenlabs") else putString("key_elevenlabs", key.trim()) }.apply()
     fun googleTtsKey(): String? = secrets.getString("key_google_tts", null)?.takeIf { it.isNotBlank() }
     fun setGoogleTtsKey(key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_google_tts") else putString("key_google_tts", key.trim()) }.apply()
+    /** The user's own FREE Hugging Face token (huggingface.co → Settings → Access Tokens) for image generation. */
+    fun hfToken(): String? = secrets.getString("key_huggingface", null)?.takeIf { it.isNotBlank() }
+    fun setHfToken(key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_huggingface") else putString("key_huggingface", key.trim()) }.apply()
+    /** Which Hugging Face image model to call. */
+    var hfModel: String get() = prefs.getString("hf_model", "black-forest-labs/FLUX.1-schnell") ?: "black-forest-labs/FLUX.1-schnell"; set(v) = prefs.edit().putString("hf_model", v).apply()
     fun wipeAllSecrets() = secrets.edit().clear().apply()
 
     // ---- non-secret settings ----
