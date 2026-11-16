@@ -56,15 +56,17 @@ class TtsManager(private val context: Context, private val store: SecureStore, p
 
     fun stop() { tts?.stop(); runCatching { player?.stop() }; player?.release(); player = null; _speaking.value = false; onFinished = null }
 
-    /** Speaks with whichever engine the user chose. ElevenLabs falls back to Android TTS on failure. */
-    suspend fun speak(text: String, onDone: (() -> Unit)? = null): String? {
+    /** Speaks with whichever engine the user chose. ElevenLabs falls back to Android TTS on failure.
+     *  [pitchMul]/[speedMul] carry the current feeling's small prosody shift (Android engine only;
+     *  ElevenLabs voices carry their own emotion). */
+    suspend fun speak(text: String, onDone: (() -> Unit)? = null, pitchMul: Float = 1f, speedMul: Float = 1f): String? {
         stop(); onFinished = onDone
         val key = store.elevenKey(); val vid = store.elevenVoiceId
         if (store.voiceEngine == "elevenlabs" && key != null && vid != null) {
             return try { speakEleven(key, vid, text); null }
-            catch (e: ElevenException) { speakAndroid(text, store.ttsVoiceName, store.pitch, store.speed); "ElevenLabs: ${e.userMessage} Using the phone voice instead." }
+            catch (e: ElevenException) { speakAndroid(text, store.ttsVoiceName, store.pitch * pitchMul, store.speed * speedMul); "ElevenLabs: ${e.userMessage} Using the phone voice instead." }
         }
-        speakAndroid(text, store.ttsVoiceName, store.pitch, store.speed); return null
+        speakAndroid(text, store.ttsVoiceName, store.pitch * pitchMul, store.speed * speedMul); return null
     }
 
     fun speakAndroid(text: String, voiceName: String?, pitch: Float, speed: Float) {
