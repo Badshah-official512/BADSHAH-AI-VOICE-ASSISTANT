@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -99,6 +101,19 @@ fun ChatScreen(vm: HomeViewModel, onBack: () -> Unit, onVoice: () -> Unit) {
 @Composable
 private fun MessageBubble(m: ChatMessage, vm: HomeViewModel, clipboard: androidx.compose.ui.platform.ClipboardManager) {
     val mine = m.role == "user"
+    val ctx = LocalContext.current
+    if (!mine && m.content.startsWith("image_url:")) {
+        val url = m.content.removePrefix("image_url:")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
+            VoiceOrb(CharState.Idle, 0f, vm.lowPower, Modifier.padding(end = 6.dp, top = 2.dp).size(26.dp))
+            Column {
+                UrlImage(url, Modifier.widthIn(max = 300.dp).fillMaxWidth().height(300.dp).clip(RoundedCornerShape(16.dp)))
+                Text("Generated image · link ~1 ghante valid hai", color = Mute, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+        return
+    }
+    val codeFiles = remember(m.content) { if (mine) emptyList() else extractCodeFiles(m.content) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start, verticalAlignment = Alignment.Top) {
         if (!mine) VoiceOrb(CharState.Idle, 0f, vm.lowPower, Modifier.padding(end = 6.dp, top = 2.dp).size(26.dp))
         Column(horizontalAlignment = if (mine) Alignment.End else Alignment.Start) {
@@ -115,7 +130,83 @@ private fun MessageBubble(m: ChatMessage, vm: HomeViewModel, clipboard: androidx
                     IconButton({ clipboard.setText(AnnotatedString(m.content)) }, Modifier.size(32.dp)) { Icon(Icons.Default.ContentCopy, "Copy", Modifier.size(16.dp), tint = Mute) }
                     IconButton({ vm.replay(m.content) }, Modifier.size(32.dp)) { Icon(Icons.Default.VolumeUp, "Listen", Modifier.size(16.dp), tint = Mute) }
                 }
+                if (codeFiles.isNotEmpty()) {
+                    OutlinedButton({
+                        vm.status.value = saveCodeZip(ctx, codeFiles)
+                    }) { Icon(Icons.Default.FolderZip, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("Download ZIP (${codeFiles.size} files)") }
+                }
             }
         }
     }
+}
+
+/** Loads a remote image with the shared HTTP client (no extra image library needed). */
+@Composable
+private fun UrlImage(url: String, modifier: Modifier = Modifier) {
+    val bmp by produceState<android.graphics.Bitmap?>(null, url) {
+        value = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching {
+                val req = okhttp3.Request.Builder().url(url).build()
+                dev.pages.badshah222ai.data.ai.http.newCall(req).execute().use { r -> r.body?.byteStream()?.let { android.graphics.BitmapFactory.decodeStream(it) } }
+            }.getOrNull()
+        }
+    }
+    if (bmp != null) Image(bmp!!.asImageBitmap(), "Generated image", modifier, contentScale = ContentScale.Crop)
+    else Box(modifier.background(Panel2), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = VioletSoft) }
+}
+
+/** Pulls fenced code blocks out of an assistant reply and names each file (from the fence label when given). */
+fun extractCodeFiles(content: String): List<Pair<String, String>> {
+    val rx = Regex("""```([A-Za-z0-9]*)[ ]*([A-Za-z0-9._-]*)\s*\n(.*?)```""", RegexOption.DOT_MATCHES_ALL)
+    val used = mutableMapOf<String, Int>()
+    fun unique(name: String): String {
+        val n = (used[name] ?: 0) + 1; used[name] = n
+        if (n == 1) return name
+        val dot = name.lastIndexOf('.')
+        return if (dot > 0) name.substring(0, dot) + n + name.substring(dot) else name + n
+    }
+    return rx.findAll(content).map { m ->
+        val lang = m.groupValues[1].lowercase()
+        val named = m.groupValues[2]
+        val base = when {
+            named.contains('.') -> named
+            lang == "html" || lang == "htm" -> "index.html"
+            lang == "css" -> "style.css"
+            lang == "javascript" || lang == "js" -> "script.js"
+            lang == "kotlin" || lang == "kt" -> "Main.kt"
+            lang == "python" || lang == "py" -> "main.py"
+            lang == "json" -> "data.json"
+            lang.isNotBlank() -> "file.$lang"
+            else -> "file.txt"
+        }
+        unique(base) to m.groupValues[3].trim()
+    }.toList()
+}
+
+/** Packs the files into a ZIP in the phone's Downloads folder and returns a status line. */
+fun saveCodeZip(ctx: android.content.Context, files: List<Pair<String, String>>): String {
+    val name = "badshah-code-${System.currentTimeMillis() / 1000}.zip"
+    return try {
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val values = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name)
+                put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/zip")
+                put(android.provider.MediaStore.Downloads.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = ctx.contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: return "ZIP nahi ban saka."
+            ctx.contentResolver.openOutputStream(uri)?.use { out ->
+                java.util.zip.ZipOutputStream(out).use { z ->
+                    files.forEach { (n, c) -> z.putNextEntry(java.util.zip.ZipEntry(n)); z.write(c.toByteArray(Charsets.UTF_8)); z.closeEntry() }
+                }
+            } ?: return "ZIP nahi ban saka."
+            "ZIP Downloads mein save ho gaya: $name"
+        } else {
+            val f = java.io.File(ctx.cacheDir, name)
+            java.util.zip.ZipOutputStream(java.io.FileOutputStream(f)).use { z ->
+                files.forEach { (n, c) -> z.putNextEntry(java.util.zip.ZipEntry(n)); z.write(c.toByteArray(Charsets.UTF_8)); z.closeEntry() }
+            }
+            "ZIP ban gaya: ${f.absolutePath}"
+        }
+    } catch (e: Exception) { "ZIP banane mein masla: ${e.message?.take(60) ?: "unknown"}" }
 }
