@@ -80,11 +80,26 @@ class TtsManager(private val context: Context, private val store: SecureStore, p
         val v = voiceName?.let { n -> runCatching { engine.voices }.getOrNull()?.firstOrNull { it.name == n } }
         if (v != null) engine.setVoice(v) else engine.setLanguage(Locale.forLanguageTag(store.language))
         engine.setPitch(pitch.coerceIn(0.5f, 2f)); engine.setSpeechRate(speed.coerceIn(0.5f, 2f))
+        val params = Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f) }
         val max = (TextToSpeech.getMaxSpeechInputLength() - 100).coerceAtLeast(500)
         val chunks = text.chunkedBySentence(max)
         chunks.forEachIndexed { i, c ->
             val id = "u$i" + if (i == chunks.lastIndex) "_last" else ""
-            engine.speak(c, if (i == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD, Bundle(), id)
+            engine.speak(c, if (i == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD, params, id)
+        }
+    }
+
+    private var prevMusicVolume = -1
+    /** During a classic voice call, push the media/TTS stream to max so the Boss hears every word; restore after. */
+    fun setCallVolume(on: Boolean) {
+        runCatching {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            if (on) {
+                prevMusicVolume = am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)
+                am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC), 0)
+            } else if (prevMusicVolume >= 0) {
+                am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, prevMusicVolume, 0); prevMusicVolume = -1
+            }
         }
     }
     private fun TextToSpeech.stopSilently() { runCatching { stop() } }

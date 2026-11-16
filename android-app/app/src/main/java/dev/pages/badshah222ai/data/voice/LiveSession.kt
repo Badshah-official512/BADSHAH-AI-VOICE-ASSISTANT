@@ -162,6 +162,7 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         }
         if (root.has("setupComplete")) {
             setupDone = true
+            store.lastLiveError = null
             // Remember the model that actually worked, so next time it connects first.
             candidates.getOrNull(attempt)?.let { store.liveModel = it }
             _state.value = State.Listening
@@ -284,8 +285,20 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         if (wasRunning) onUnavailable?.invoke(message)
     }
 
+    private var prevCallVolume = -1
+
     private fun setCommMode(on: Boolean) {
         val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        runCatching { am.mode = if (on) AudioManager.MODE_IN_COMMUNICATION else AudioManager.MODE_NORMAL }
+        if (on) {
+            runCatching { am.mode = AudioManager.MODE_IN_COMMUNICATION }
+            // Boss wants the voice LOUD: push the call stream to max for the session.
+            runCatching {
+                prevCallVolume = am.getStreamVolume(AudioManager.STREAM_VOICE_CALL)
+                am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, am.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0)
+            }
+        } else {
+            runCatching { am.mode = AudioManager.MODE_NORMAL }
+            if (prevCallVolume >= 0) { runCatching { am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, prevCallVolume, 0) }; prevCallVolume = -1 }
+        }
     }
 }
