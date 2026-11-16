@@ -42,4 +42,6 @@ class SecureStore(context: Context) {
     var speakReplies: Boolean get() = prefs.getBoolean("speak", true); set(v) = prefs.edit().putBoolean("speak", v).apply()
     var lowPower: Boolean get() = prefs.getBoolean("low_power", false); set(v) = prefs.edit().putBoolean("low_power", v).apply()
     var language: String get() = prefs.getString("lang", "en-US") ?: "en-US"; set(v) = prefs.edit().putString("lang", v).apply()
+    var personalityId: String get() = prefs.getString("personality", "assistant") ?: "assistant"; set(v) = prefs.edit().putString("personality", v).apply()
+    var voiceModeId: String? get() = prefs.getString("voice_mode", null); set(v) = prefs.edit().putString("voice_mode", v).apply()
 }
