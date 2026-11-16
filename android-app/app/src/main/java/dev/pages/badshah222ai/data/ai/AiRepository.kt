@@ -19,12 +19,17 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
         return models
     }
 
-    suspend fun chat(history: List<ChatMessage>, personality: String = "friendly, confident and respectful"): AiReply {
+    suspend fun chat(
+        history: List<ChatMessage>,
+        personality: String = "friendly, confident and respectful",
+        brain: String = "a sharp all-rounder mind",
+        feeling: String = "warm and heartfelt",
+    ): AiReply {
         val p = store.provider
         val key = store.apiKey(p) ?: throw AiException("no_key", "no key", "Add your ${p.label} API key in Settings to start chatting.")
         val model = store.model(p) ?: throw AiException("no_model", "no model", "Test your ${p.label} key and choose a model in Settings.")
         return try {
-            val reply = client(p).chat(key, model, SystemPrompt.build(personality, store.language), history.takeLast(20))
+            val reply = client(p).chat(key, model, SystemPrompt.build(personality, brain, feeling, store.language), history.takeLast(20))
             cloud.recordUsage(p.id, model, "chat", true, reply.inputTokens, reply.outputTokens, reply.latencyMs.toInt(), null)
             reply
         } catch (e: AiException) {
