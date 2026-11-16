@@ -3,6 +3,13 @@ package dev.pages.badshah222ai.data.ai
 import dev.pages.badshah222ai.core.SecureStore
 import dev.pages.badshah222ai.data.supabase.SupabaseApi
 import dev.pages.badshah222ai.domain.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 
 /** Provider switching + per-user keys + usage reporting. There is NO shared developer key anywhere. */
 class AiRepository(private val store: SecureStore, private val cloud: SupabaseApi) {
@@ -81,5 +88,43 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
         }
         sb.append("\nReply as the Assistant to the last User message.")
         return sb.toString()
+    }
+
+    /**
+     * Image understanding (screen share, photos) via the user's own Gemini key —
+     * the same key Live voice needs. Direct HTTP to the official Gemini endpoint.
+     */
+    suspend fun vision(prompt: String, imageBase64: String, mimeType: String = "image/jpeg"): AiReply {
+        val key = store.apiKey(Provider.GEMINI) ?: throw AiException(
+            "no_key", "no gemini key",
+            "Screen samajhne ke liye pehle Settings → Connections mein apni Google Gemini API key lagao, Boss — yehi key Live voice ke liye bhi chahiye hoti hai.",
+        )
+        val model = store.model(Provider.GEMINI)?.takeIf { it.contains("flash") || it.contains("pro") } ?: "gemini-2.5-flash"
+        val t0 = System.currentTimeMillis()
+        val payload = JSONObject()
+            .put("system_instruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text",
+                systemPrompt("Speak warmly and heartily, like a close friend who is genuinely glad to talk.")))))
+            .put("contents", JSONArray().put(JSONObject().put("parts", JSONArray()
+                .put(JSONObject().put("text", prompt))
+                .put(JSONObject().put("inline_data", JSONObject().put("mime_type", mimeType).put("data", imageBase64))))))
+        val req = Request.Builder()
+            .url("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent")
+            .header("x-goog-api-key", key).header("Content-Type", "application/json")
+            .post(payload.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+        val text = withContext(Dispatchers.IO) {
+            http.newCall(req).execute().use { res ->
+                val bodyStr = res.body?.string().orEmpty()
+                if (!res.isSuccessful) throw AiException("vision_${res.code}", bodyStr.take(160), "Gemini vision ne jawab nahi diya (HTTP ${res.code}). Key check karo ya thodi dair baad try karo, Boss.")
+                val parts = JSONObject(bodyStr).optJSONArray("candidates")?.optJSONObject(0)
+                    ?.optJSONObject("content")?.optJSONArray("parts")
+                val sb = StringBuilder()
+                if (parts != null) for (i in 0 until parts.length()) sb.append(parts.optJSONObject(i)?.optString("text") ?: "")
+                sb.toString()
+            }
+        }
+        if (text.isBlank()) throw AiException("vision_empty", "empty", "Screen parh li, lekin Gemini ne kuch bataya nahi. Dobara try karo, Boss.")
+        cloud.recordUsage("gemini", model, "vision", true, 0, 0, (System.currentTimeMillis() - t0).toInt(), null)
+        return AiReply(text.trim(), Provider.GEMINI, model, 0, 0, System.currentTimeMillis() - t0)
     }
 }
