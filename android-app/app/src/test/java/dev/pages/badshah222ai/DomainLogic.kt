@@ -66,8 +66,8 @@ object DomainLogic {
         eq("voice info keeps engine data", VoiceInfo("en-us-x-iom-local", "en-US", false, 400).localeTag, "en-US")
 
         // ---- new emotions ----
-        eq("30 emotions", Emotions.all.size, 30)
-        eq("6 emotion families", Emotions.families.size, 6)
+        eq("38 emotions", Emotions.all.size, 38)
+        eq("7 emotion families", Emotions.families.size, 7)
         eq("every family has emotions", Emotions.families.all { Emotions.byFamily(it).isNotEmpty() }, true)
         eq("emotion lookup fallback is warm", Emotions.fromId("nope").id, "warm")
         eq("sad words => comforting", Emotions.detect("i am sad today").id, "comforting")
@@ -76,6 +76,9 @@ object DomainLogic {
         eq("success => celebratory", Emotions.detect("ho gaya kaam").id, "celebratory")
         eq("neend => sleepy", Emotions.detect("mujhe neend aa rahi hai").id, "sleepy")
         eq("plain text => warm", Emotions.detect("what is the capital of France").id, "warm")
+        eq("provider fusion id", Provider.fromId("fusion"), Provider.FUSION)
+        eq("12 fusion text models", dev.pages.badshah222ai.data.ai.FtFusion.TEXT_MODELS.size, 12)
+        eq("fusion image models are uni and astra", dev.pages.badshah222ai.data.ai.FtFusion.IMAGE_MODELS, listOf("fusion-uni", "fusion-astra"))
         eq("provider lookup falls back to Gemini", Provider.fromId("nonsense"), Provider.GEMINI)
         eq("provider lookup groq", Provider.fromId("groq"), Provider.GROQ)
     }
