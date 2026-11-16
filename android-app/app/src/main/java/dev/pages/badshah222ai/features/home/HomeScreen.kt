@@ -232,6 +232,7 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
         Box(Modifier.fillMaxWidth().padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
             VoiceOrb(state, level, vm.lowPower, Modifier.size(118.dp).clip(CircleShape).clickable { onNav("voice") })
         }
+        Text("Tap to Talk", Modifier.fillMaxWidth().padding(bottom = 2.dp), textAlign = TextAlign.Center, color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
 
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(text, { text = it }, Modifier.weight(1f), placeholder = { Text("Ask me anything…") }, maxLines = 3, shape = RoundedCornerShape(28.dp))
