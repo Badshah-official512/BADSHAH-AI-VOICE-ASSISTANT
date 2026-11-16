@@ -113,6 +113,17 @@ private fun MessageBubble(m: ChatMessage, vm: HomeViewModel, clipboard: androidx
         }
         return
     }
+    if (!mine && m.content.startsWith("image_file:")) {
+        val path = m.content.removePrefix("image_file:")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.Top) {
+            VoiceOrb(CharState.Idle, 0f, vm.lowPower, Modifier.padding(end = 6.dp, top = 2.dp).size(26.dp))
+            Column {
+                FileImage(path, Modifier.widthIn(max = 300.dp).fillMaxWidth().height(300.dp).clip(RoundedCornerShape(16.dp)))
+                Text("Generated image · Hugging Face", color = Mute, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+            }
+        }
+        return
+    }
     val codeFiles = remember(m.content) { if (mine) emptyList() else extractCodeFiles(m.content) }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start, verticalAlignment = Alignment.Top) {
         if (!mine) VoiceOrb(CharState.Idle, 0f, vm.lowPower, Modifier.padding(end = 6.dp, top = 2.dp).size(26.dp))
@@ -149,6 +160,17 @@ private fun UrlImage(url: String, modifier: Modifier = Modifier) {
                 val req = okhttp3.Request.Builder().url(url).build()
                 dev.pages.badshah222ai.data.ai.http.newCall(req).execute().use { r -> r.body?.byteStream()?.let { android.graphics.BitmapFactory.decodeStream(it) } }
             }.getOrNull()
+        }
+    }
+    if (bmp != null) Image(bmp!!.asImageBitmap(), "Generated image", modifier, contentScale = ContentScale.Crop)
+    else Box(modifier.background(Panel2), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = VioletSoft) }
+}
+
+@Composable
+private fun FileImage(path: String, modifier: Modifier = Modifier) {
+    val bmp by produceState<android.graphics.Bitmap?>(null, path) {
+        value = withContext(kotlinx.coroutines.Dispatchers.IO) {
+            runCatching { android.graphics.BitmapFactory.decodeFile(path) }.getOrNull()
         }
     }
     if (bmp != null) Image(bmp!!.asImageBitmap(), "Generated image", modifier, contentScale = ContentScale.Crop)
