@@ -4,23 +4,38 @@ import android.app.Application
 import android.content.Intent
 import android.speech.tts.TextToSpeech
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pages.badshah222ai.BadshahApp
+import dev.pages.badshah222ai.R
 import dev.pages.badshah222ai.data.ai.*
 import dev.pages.badshah222ai.data.supabase.VoiceProfileRow
 import dev.pages.badshah222ai.data.voice.*
@@ -108,8 +123,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     private fun pushPrefs() { val u = uid ?: return; viewModelScope.launch { runCatching { c.cloud.savePreferences(u, provider.value.id, selectedModel.value, voiceName.value, engine.value, speed.value, pitch.value, language.value) } } }
 }
 
-@Composable private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(title, style = MaterialTheme.typography.titleMedium, color = Gold); content() } }
+@Composable private fun Section(title: String, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(20.dp)) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { Icon(icon, null, tint = VioletSoft); Text(title, style = MaterialTheme.typography.titleMedium, color = VioletSoft) }; content() } }
 }
 @Composable private fun Msg(m: Pair<Boolean, String>?) { m?.let { Text(it.second, color = if (it.first) Ok else Bad, style = MaterialTheme.typography.bodySmall) } }
 
@@ -124,6 +139,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val presets by vm.serverPresets.collectAsState(); val engineName by vm.engineName.collectAsState()
     val elevenSaved by vm.elevenSaved.collectAsState(); val elevenVoices by vm.elevenVoices.collectAsState(); val elevenVoice by vm.elevenVoice.collectAsState(); val elevenMsg by vm.elevenMsg.collectAsState()
     val speak by vm.speak.collectAsState(); val low by vm.lowPower.collectAsState(); val lang by vm.language.collectAsState()
+    val user by session.user.collectAsState()
     var key by remember(provider) { mutableStateOf("") }; var showKey by remember { mutableStateOf(false) }
     var eKey by remember { mutableStateOf("") }; var maleOnly by remember { mutableStateOf(true) }; var modelMenu by remember { mutableStateOf(false) }
     val sorted = remember(voices) { VoiceCatalog.sorted(voices) }
@@ -133,7 +149,20 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
         TopBar("Settings", onBack)
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
-            item { Section("AI brain") {
+            item {
+                Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(20.dp)) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Image(painterResource(R.drawable.badshah_cutout), "BADSHAH", Modifier.size(54.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+                        Column(Modifier.padding(start = 12.dp)) {
+                            Text("BADSHAH", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(user?.email ?: "Signed in", color = Mute, style = MaterialTheme.typography.bodySmall)
+                            Text("Your assistant · Male voice", color = VioletSoft, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
+            }
+            item { Text("AI SETTINGS", color = Mute, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 4.dp)) }
+            item { Section("Connections", Icons.Default.Key) {
                 Text("Each person uses their own API key. It is stored encrypted on this phone only.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Provider.entries.forEach { p -> FilterChip(provider == p, { vm.selectProvider(p) }, { Text(p.label) }) } }
                 OutlinedTextField(key, { key = it }, Modifier.fillMaxWidth(), label = { Text(if (keySaved) "API key saved (paste a new one to replace)" else "${provider.label} API key") }, singleLine = true,
@@ -149,7 +178,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     DropdownMenu(modelMenu, { modelMenu = false }) { models.forEach { m -> DropdownMenuItem({ Text(m) }, { vm.selectModel(m); modelMenu = false }) } } }
                 if (keySaved && models.isEmpty()) Text("Press Test & save to load the list of models for your key.", style = MaterialTheme.typography.bodySmall, color = Mute)
             } }
-            item { Section("Voice language & engine") {
+            item { Section("Voice & language", Icons.Default.RecordVoiceOver) {
                 Text("Installed speech engine: ${engineName.ifBlank { "unknown" }}", style = MaterialTheme.typography.bodySmall, color = Mute)
                 support.forEach { s -> Text("${s.label}: " + if (s.installed) "${s.voices.size} voice(s) installed" else "not installed on this phone", color = if (s.installed) Ok else Mute, style = MaterialTheme.typography.bodySmall) }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -162,7 +191,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(engine == "android", { vm.setEngine("android") }, { Text("Phone voices (Google TTS)") }); FilterChip(engine == "elevenlabs", { if (elevenSaved) vm.setEngine("elevenlabs") }, { Text("ElevenLabs") }, enabled = elevenSaved) }
                 Row(verticalAlignment = Alignment.CenterVertically) { Text("Speak replies aloud", Modifier.weight(1f)); Switch(speak, vm::setSpeak) }
             } }
-            item { Section("Phone voices") {
+            item { Section("Phone voices", Icons.Default.Mic) {
                 Text("Android does not tell apps a voice's gender. Voices whose engine name says \"male\" are marked MALE; the rest are unverified, so listen and choose. Styles change pitch and speed of the voice you pick; they are not separate voices.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Row(verticalAlignment = Alignment.CenterVertically) { Text("Hide voices labelled female", Modifier.weight(1f)); Switch(maleOnly, { maleOnly = it }) }
                 Text("${VoiceCatalog.maleCandidates(voices).size} labelled male, ${voices.size} installed in total", style = MaterialTheme.typography.bodySmall, color = Gold)
@@ -178,14 +207,14 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     }
                 }
             }
-            item { Section("Voice style") {
+            item { Section("Voice style", Icons.Default.GraphicEq) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { VoiceCatalog.styles.forEach { s -> FilterChip(styleId == s.id, { vm.applyStyle(s) }, { Text(s.label) }) } }
                 if (presets.isNotEmpty()) { Text("From the BADSHAH team", style = MaterialTheme.typography.labelLarge); FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) { presets.forEach { p -> FilterChip(styleId == p.id, { vm.applyServerPreset(p) }, { Text(p.label) }) } } }
                 Text("Pitch %.2f".format(pitch)); Slider(pitch, vm::setPitch, valueRange = 0.5f..1.5f, onValueChangeFinished = vm::commitVoice)
                 Text("Speed %.2f".format(speed)); Slider(speed, vm::setSpeed, valueRange = 0.5f..1.5f, onValueChangeFinished = vm::commitVoice)
                 Button({ if (engine == "elevenlabs") vm.previewEleven() else vm.preview() }) { Text("Preview current voice") }
             } }
-            item { Section("ElevenLabs (optional)") {
+            item { Section("ElevenLabs voice (optional)", Icons.Default.AutoAwesome) {
                 Text("Premium voices. Completely separate from Gemini/Groq. You need your own key and it costs ElevenLabs credits.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 OutlinedTextField(eKey, { eKey = it }, Modifier.fillMaxWidth(), label = { Text(if (elevenSaved) "Key saved (paste to replace)" else "ElevenLabs API key") }, singleLine = true, visualTransformation = PasswordVisualTransformation())
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -196,7 +225,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Msg(elevenMsg)
                 elevenVoices.take(30).forEach { v -> Row(verticalAlignment = Alignment.CenterVertically) { RadioButton(elevenVoice == v.id, { vm.pickEleven(v.id) }); Text("${v.name} ${if (v.category.isNotBlank()) "(${v.category})" else ""}") } }
             } }
-            item { Section("General") {
+            item { Section("App settings", Icons.Default.Tune) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Low-power mode"); Text("Simpler animation for older phones", style = MaterialTheme.typography.bodySmall, color = Mute) }; Switch(low, vm::setLowPower) }
                 OutlinedButton(onPermissions) { Text("Permissions") }
                 OutlinedButton({ session.signOut() }) { Text("Sign out") }
