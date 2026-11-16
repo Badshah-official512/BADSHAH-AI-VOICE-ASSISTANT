@@ -200,7 +200,9 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
     val maintenance by session.maintenance.collectAsState(); val announcements by session.announcements.collectAsState(); val cloud by session.cloudReady.collectAsState()
     var text by remember { mutableStateOf("") }
 
-    Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel, Ink))).statusBarsPadding().verticalScroll(rememberScrollState())) {
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel, Ink)))) {
+        AmbientLights(Modifier.fillMaxSize())
+        Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton({ onNav("about") }) { Icon(Icons.Default.Menu, "About") }
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -244,6 +246,7 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
             QuickCard(Modifier.weight(1f), Icons.Default.Bolt, "Quick Actions", "Phone control") { onNav("quick") }
         }
         Spacer(Modifier.height(12.dp))
+        }
     }
     ActionDialogs(vm)
 }
@@ -252,11 +255,14 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
 private fun HeroPortrait(girl: Boolean, accent: Color, lowPower: Boolean) {
     val transition = rememberInfiniteTransition(label = "hero")
     val floatY by transition.animateFloat(-6f, 6f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "float")
+    val rgb = rememberRgbColor()
+    var burst by remember { mutableStateOf(0) }
     Box(Modifier.fillMaxWidth().height(248.dp), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(240.dp).clip(CircleShape).background(Brush.radialGradient(listOf(accent.copy(alpha = 0.35f), Color.Transparent))))
-        Box(Modifier.size(230.dp).border(1.5.dp, accent.copy(alpha = 0.5f), CircleShape))
-        Box(Modifier.size(254.dp).border(1.dp, CyanAcc.copy(alpha = 0.22f), CircleShape))
-        Image(painterResource(if (girl) R.drawable.girl_assistant else R.drawable.badshah_cutout), if (girl) "AI assistant" else "BADSHAH", Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+        Box(Modifier.size(240.dp).clip(CircleShape).background(Brush.radialGradient(listOf(rgb.copy(alpha = 0.35f), Color.Transparent))))
+        Box(Modifier.size(230.dp).border(1.5.dp, rgb.copy(alpha = 0.65f), CircleShape))
+        Box(Modifier.size(254.dp).border(1.dp, accent.copy(alpha = 0.45f), CircleShape))
+        Image(painterResource(if (girl) R.drawable.girl_assistant else R.drawable.badshah_cutout), if (girl) "AI assistant" else "BADSHAH", Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape).clickable { burst++ }, contentScale = ContentScale.Crop)
+        TapLightBurst(burst, rgb, Modifier.size(254.dp))
         Text(if (girl) "Hi, I'm\nAISHA" else "Hi, I'm\nBADSHAH", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         Text("Always\nhere for you", Modifier.align(Alignment.CenterEnd).padding(end = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
     }
