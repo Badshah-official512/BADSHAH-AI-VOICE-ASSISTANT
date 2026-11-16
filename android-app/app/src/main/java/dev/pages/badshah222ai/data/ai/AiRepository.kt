@@ -6,13 +6,17 @@ import dev.pages.badshah222ai.domain.*
 
 /** Provider switching + per-user keys + usage reporting. There is NO shared developer key anywhere. */
 class AiRepository(private val store: SecureStore, private val cloud: SupabaseApi) {
-    private val clients = mapOf(Provider.GEMINI to GeminiClient(), Provider.GROQ to GroqClient())
+    private val clients = mapOf(Provider.GEMINI to GeminiClient(), Provider.GROQ to GroqClient(), Provider.FUSION to FtFusionClient())
     private fun client(p: Provider) = clients.getValue(p)
 
-    fun isConfigured(p: Provider) = store.apiKey(p) != null && store.model(p) != null
+    fun isConfigured(p: Provider) = if (p == Provider.FUSION) store.model(p) != null else store.apiKey(p) != null && store.model(p) != null
 
-    /** Tests the key with a real request and returns the models it may use. */
+    /** Tests the key with a real request and returns the models it may use. FT Fusion has no user key — it gets a real ping instead. */
     suspend fun testConnection(p: Provider, key: String): List<String> {
+        if (p == Provider.FUSION) {
+            FtFusion.chat("fusion-flex", "Hello! Reply with one short friendly sentence.")
+            return FtFusion.TEXT_MODELS
+        }
         require(key.isNotBlank()) { "empty key" }
         val models = client(p).listModels(key.trim())
         if (models.isEmpty()) throw AiException("no_models", "no models", "The key works but no chat models are available on this account.")
@@ -28,7 +32,7 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
         val gemini = clients.getValue(Provider.GEMINI) as GeminiClient
         val live = runCatching { gemini.listLiveModels(key) }.getOrDefault(emptyList())
         val pick = live.firstOrNull()
-        if (pick != null) store.liveModel = pick
+        if (pick != null) { store.liveModel = pick; store.liveCandidates = live.joinToString(",") }
         return pick
     }
 
@@ -47,8 +51,8 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
         emotionStyle: String = "Speak warmly and heartily, like a close friend who is genuinely glad to talk.",
     ): AiReply {
         val p = store.provider
-        val key = store.apiKey(p) ?: throw AiException("no_key", "no key", "Add your ${p.label} API key in Settings to start chatting.")
-        val model = store.model(p) ?: throw AiException("no_model", "no model", "Test your ${p.label} key and choose a model in Settings.")
+        val key = if (p == Provider.FUSION) "" else store.apiKey(p) ?: throw AiException("no_key", "no key", "Add your ${p.label} API key in Settings to start chatting.")
+        val model = store.model(p) ?: throw AiException("no_model", "no model", "Test your ${p.label} connection and choose a model in Settings.")
         return try {
             val reply = client(p).chat(key, model, systemPrompt(emotionStyle), history.takeLast(20))
             cloud.recordUsage(p.id, model, "chat", true, reply.inputTokens, reply.outputTokens, reply.latencyMs.toInt(), null)
