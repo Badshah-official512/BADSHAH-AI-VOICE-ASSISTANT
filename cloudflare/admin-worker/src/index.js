@@ -6,6 +6,9 @@
 //  * The admin session token never reaches page JavaScript (HttpOnly cookie).
 //  * /admin/pages/* (the dashboard code) is only served to a valid session.
 //  * CSRF: SameSite=Strict + same-origin Origin check + custom header.
+//  * HARDENED: this code never throws an unhandled exception (no Error 1101).
+//    If the website files (static assets) are not attached yet, it shows a
+//    friendly "setup not complete" page instead of crashing.
 const COOKIE = '__Host-badshah_admin';
 const MAX_BODY = 65536;
 
@@ -47,7 +50,9 @@ async function callEdge(env, body, token, ip) {
 async function handleApi(request, env) {
   if (request.method !== 'POST') return jsonRes(405, { error: 'method not allowed' });
   const origin = request.headers.get('Origin');
-  if (!origin || new URL(origin).host !== new URL(request.url).host) return jsonRes(403, { error: 'bad origin' });
+  let originOk = false;
+  try { originOk = !!origin && new URL(origin).host === new URL(request.url).host; } catch { originOk = false; }
+  if (!originOk) return jsonRes(403, { error: 'bad origin' });
   if (request.headers.get('x-requested-with') !== 'badshah-admin') return jsonRes(403, { error: 'bad request' });
   const raw = await request.text();
   if (raw.length > MAX_BODY) return jsonRes(413, { error: 'too large' });
@@ -79,28 +84,53 @@ async function sessionValid(request, env) {
   } catch { return false; }
 }
 
+const SETUP_PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>BADSHAH AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0C0918;color:#EDE9FE;font-family:system-ui,sans-serif;padding:24px}
+.card{max-width:520px;background:#171130;border:1px solid #8B5CF6;border-radius:20px;padding:28px;text-align:center}
+h1{margin:0 0 10px;font-size:22px}p{color:#B79CFF;line-height:1.6}</style></head>
+<body><div class="card"><h1>BADSHAH AI</h1>
+<p>Worker is running, but the website files are not attached yet.<br>
+Upload the website bundle files (index.html, files.json and the admin folder) as this Worker's static assets, then refresh.</p>
+</div></body></html>`;
+
+async function serveAsset(env, request, extra = {}) {
+  if (!env || !env.ASSETS || typeof env.ASSETS.fetch !== 'function') {
+    return withHeaders(new Response(SETUP_PAGE, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } }), { 'Cache-Control': 'no-store', ...extra });
+  }
+  try {
+    const res = await env.ASSETS.fetch(request);
+    return withHeaders(res, extra);
+  } catch {
+    return withHeaders(new Response(SETUP_PAGE, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } }), { 'Cache-Control': 'no-store', ...extra });
+  }
+}
+
 export default {
   async fetch(request, env) {
-    const url = new URL(request.url);
-    let path = url.pathname;
+    try {
+      const url = new URL(request.url);
+      const path = url.pathname;
 
-    if (path === '/admin/api') return handleApi(request, env);
-    if (path === '/admin') return withHeaders(Response.redirect(url.origin + '/admin/', 301));
+      if (path === '/admin/api') return handleApi(request, env);
+      if (path === '/admin') return withHeaders(Response.redirect(url.origin + '/admin/', 301));
 
-    // Server-side access protection: dashboard code only for valid sessions.
-    if (path.startsWith('/admin/pages/')) {
-      if (!(await sessionValid(request, env))) {
-        return withHeaders(Response.redirect(url.origin + '/admin/', 302), { 'Cache-Control': 'no-store' });
+      // Server-side access protection: dashboard code only for valid sessions.
+      if (path.startsWith('/admin/pages/')) {
+        if (!(await sessionValid(request, env))) {
+          return withHeaders(Response.redirect(url.origin + '/admin/', 302), { 'Cache-Control': 'no-store' });
+        }
+        return serveAsset(env, request, { 'Cache-Control': 'no-store' });
       }
-      const res = await env.ASSETS.fetch(request);
-      return withHeaders(res, { 'Cache-Control': 'no-store' });
-    }
 
-    // Never serve secret-looking files, even if one slipped into the bundle.
-    if (/\.(env|pem|key|jks|keystore|sql)$|service[-_]account|google-services\.json|\.map$/i.test(path)) {
-      return withHeaders(new Response('Not found', { status: 404 }));
+      // Never serve secret-looking files, even if one slipped into the bundle.
+      if (/\.(env|pem|key|jks|keystore|sql)$|service[-_]account|google-services\.json|\.map$/i.test(path)) {
+        return withHeaders(new Response('Not found', { status: 404 }));
+      }
+      return serveAsset(env, request);
+    } catch {
+      // Last-resort guard: a plain 500 page, never an unhandled exception (Error 1101).
+      return new Response('BADSHAH AI: temporary problem. Please try again in a moment.', { status: 500, headers: { 'content-type': 'text/plain; charset=utf-8' } });
     }
-    const res = await env.ASSETS.fetch(request);
-    return withHeaders(res);
   },
 };
