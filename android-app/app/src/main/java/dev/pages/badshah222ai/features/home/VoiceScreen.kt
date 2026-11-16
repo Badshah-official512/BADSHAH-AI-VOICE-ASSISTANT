@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -48,7 +49,7 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     }
 
     val stars = remember { List(70) { Offset(Random.nextFloat(), Random.nextFloat()) to Random.nextFloat() } }
-    Box(Modifier.fillMaxSize().background(Ink).statusBarsPadding().navigationBarsPadding()) {
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel2, Ink))).statusBarsPadding().navigationBarsPadding()) {
         Canvas(Modifier.fillMaxSize()) {
             stars.forEach { (p, a) -> drawCircle(Color.White.copy(alpha = 0.10f + a * 0.15f), radius = 1.2f + a * 1.6f, center = Offset(p.x * size.width, p.y * size.height)) }
         }
