@@ -94,6 +94,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     // ---- FT Fusion images & Google Voice ----
     val imageModel = MutableStateFlow(c.store.imageModel)
     fun setImageModel(m: String) { c.store.imageModel = m; imageModel.value = m }
+    val hfSaved = MutableStateFlow(c.store.hfToken() != null)
+    val hfModel = MutableStateFlow(c.store.hfModel)
+    fun saveHfToken(k: String) { c.store.setHfToken(k.ifBlank { null }); hfSaved.value = c.store.hfToken() != null }
+    fun setHfModel(m: String) { c.store.hfModel = m; hfModel.value = m }
     val googleSaved = MutableStateFlow(c.store.googleTtsKey() != null)
     val googleVoice = MutableStateFlow(c.store.googleTtsVoice)
     val googleMsg = MutableStateFlow<Pair<Boolean, String>?>(null)
@@ -212,6 +216,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val liveMsg by vm.liveMsg.collectAsState(); val liveTesting by vm.liveTesting.collectAsState()
     val emotionId by vm.emotionId.collectAsState(); val assistantName by vm.assistantName.collectAsState()
     val imageModel by vm.imageModel.collectAsState()
+    val hfSaved by vm.hfSaved.collectAsState(); val hfModel by vm.hfModel.collectAsState()
     val googleSaved by vm.googleSaved.collectAsState(); val googleVoice by vm.googleVoice.collectAsState(); val googleMsg by vm.googleMsg.collectAsState()
     var gKey by remember { mutableStateOf("") }; var gShow by remember { mutableStateOf(false) }
     val responseStyle by vm.responseStyle.collectAsState(); val avatarChoice by vm.avatarChoice.collectAsState()
@@ -292,6 +297,21 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     FilterChip(imageModel == "fusion-uni", { vm.setImageModel("fusion-uni") }, { Text("Fusion Uni") })
                     FilterChip(imageModel == "fusion-astra", { vm.setImageModel("fusion-astra") }, { Text("Fusion Astra") })
                     FilterChip(imageModel == "pollinations", { vm.setImageModel("pollinations") }, { Text("Pollinations (free)") })
+                    FilterChip(imageModel == "huggingface", { vm.setImageModel("huggingface") }, { Text("Hugging Face") })
+                }
+                Text("Hugging Face: huggingface.co par free account banao → Settings → Access Tokens → free token yahan lagao. Phir FLUX jaise behtreen image models free mein chalenge:", style = MaterialTheme.typography.bodySmall, color = Mute)
+                var hfKey by remember { mutableStateOf("") }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(hfKey, { hfKey = it }, Modifier.weight(1f), singleLine = true, placeholder = { Text(if (hfSaved) "Token saved hai — naya lagana hai to likho" else "hf_... token paste karo") })
+                    Button({ vm.saveHfToken(hfKey); hfKey = "" }) { Text("Save") }
+                }
+                if (hfSaved) {
+                    Text("HF token saved ✓ — model chuno:", style = MaterialTheme.typography.bodySmall, color = Ok)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        dev.pages.badshah222ai.data.ai.HuggingFace.MODELS.forEach { (id, label) ->
+                            FilterChip(hfModel == id, { vm.setHfModel(id) }, { Text(label) })
+                        }
+                    }
                 }
             } }
             item { Section("Personality", Icons.Default.Person) {
