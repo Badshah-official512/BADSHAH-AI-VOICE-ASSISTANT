@@ -87,14 +87,30 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val responseStyle = MutableStateFlow(c.store.responseStyle)
     val avatarChoice = MutableStateFlow(c.store.avatarChoice)
 
+    // ---- FT Fusion images & Google Voice ----
+    val imageModel = MutableStateFlow(c.store.imageModel)
+    fun setImageModel(m: String) { c.store.imageModel = m; imageModel.value = m }
+    val googleSaved = MutableStateFlow(c.store.googleTtsKey() != null)
+    val googleVoice = MutableStateFlow(c.store.googleTtsVoice)
+    val googleMsg = MutableStateFlow<Pair<Boolean, String>?>(null)
+    fun testGoogle(key: String) {
+        val k = key.ifBlank { c.store.googleTtsKey() }; if (k == null) { googleMsg.value = false to "Pehle Google Cloud API key paste karo."; return }
+        viewModelScope.launch {
+            try { GoogleTtsClient().synthesize(k, googleVoice.value, "Hello, I am Badshah AI."); c.store.setGoogleTtsKey(k); googleSaved.value = true; googleMsg.value = true to "Google Voice connected." }
+            catch (e: Exception) { googleMsg.value = false to (e.message?.take(130) ?: "Google Voice connect nahi hua.") }
+        }
+    }
+    fun pickGoogleVoice(v: String) { c.store.googleTtsVoice = v; googleVoice.value = v }
+    fun removeGoogle() { c.store.setGoogleTtsKey(null); googleSaved.value = false; if (c.store.voiceEngine == "google") setEngine("android"); googleMsg.value = true to "Google Voice key removed." }
+
     // ---- AI ----
-    fun selectProvider(p: Provider) { c.store.provider = p; provider.value = p; models.value = emptyList(); selectedModel.value = c.store.model(p); keySaved.value = c.store.apiKey(p) != null; aiMsg.value = null; pushPrefs() }
+    fun selectProvider(p: Provider) { c.store.provider = p; provider.value = p; models.value = if (p == Provider.FUSION) dev.pages.badshah222ai.data.ai.FtFusion.TEXT_MODELS else emptyList(); selectedModel.value = c.store.model(p); keySaved.value = c.store.apiKey(p) != null; aiMsg.value = null; pushPrefs() }
     fun testAndSave(key: String) {
-        val p = provider.value; if (key.isBlank() && !keySaved.value) { aiMsg.value = false to "Paste your ${p.label} API key first."; return }
+        val p = provider.value; if (p != Provider.FUSION && key.isBlank() && !keySaved.value) { aiMsg.value = false to "Paste your ${p.label} API key first."; return }
         viewModelScope.launch {
             testing.value = true; aiMsg.value = null
             try {
-                val k = key.ifBlank { c.store.apiKey(p)!! }
+                val k = if (p == Provider.FUSION) "" else key.ifBlank { c.store.apiKey(p)!! }
                 val list = c.ai.testConnection(p, k)
                 c.store.setApiKey(p, k); keySaved.value = true; models.value = list
                 val keep = c.store.model(p)?.takeIf { it in list } ?: list.first(); c.store.setModel(p, keep); selectedModel.value = keep
@@ -184,6 +200,9 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val liveVoiceName by vm.liveVoiceName.collectAsState(); val liveModel by vm.liveModel.collectAsState(); val liveEnabled by vm.liveEnabled.collectAsState()
     val liveMsg by vm.liveMsg.collectAsState(); val liveTesting by vm.liveTesting.collectAsState()
     val emotionId by vm.emotionId.collectAsState(); val assistantName by vm.assistantName.collectAsState()
+    val imageModel by vm.imageModel.collectAsState()
+    val googleSaved by vm.googleSaved.collectAsState(); val googleVoice by vm.googleVoice.collectAsState(); val googleMsg by vm.googleMsg.collectAsState()
+    var gKey by remember { mutableStateOf("") }; var gShow by remember { mutableStateOf(false) }
     val responseStyle by vm.responseStyle.collectAsState(); val avatarChoice by vm.avatarChoice.collectAsState()
     val user by session.user.collectAsState()
     var emotionFamily by remember { mutableStateOf(Emotions.families.first()) }
@@ -214,16 +233,20 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
             item { Section("Connections", Icons.Default.Key) {
                 Text("Each person uses their own API key. It is stored encrypted on this phone only.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Provider.entries.forEach { p -> FilterChip(provider == p, { vm.selectProvider(p) }, { Text(p.label) }) } }
+                if (provider == Provider.FUSION) {
+                    Text("FT Fusion built-in hai — koi key nahi chahiye. Test dabao: 12 models chat aur coding ke liye ready ho jayenge. Images ke liye neeche Image Studio dekho.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                } else {
                 OutlinedTextField(key, { key = it }, Modifier.fillMaxWidth(), label = { Text(if (keySaved) "API key saved (paste a new one to replace)" else "${provider.label} API key") }, singleLine = true,
                     visualTransformation = if (showKey) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = { TextButton({ showKey = !showKey }) { Text(if (showKey) "Hide" else "Show") } })
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button({ vm.testAndSave(key); key = "" }, enabled = !testing) { if (testing) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test & save") }
-                    OutlinedButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(provider.keyUrl))) }) { Text("Get a key") }
-                    if (keySaved) TextButton(vm::removeKey) { Text("Remove") }
+                    if (provider != Provider.FUSION) OutlinedButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(provider.keyUrl))) }) { Text("Get a key") }
+                    if (keySaved && provider != Provider.FUSION) TextButton(vm::removeKey) { Text("Remove") }
                 }
                 Msg(aiMsg)
-                if (keySaved) Box { OutlinedButton({ modelMenu = true }, enabled = models.isNotEmpty() || selModel != null) { Text("Model: ${selModel ?: "-"}") }
+                if (keySaved || provider == Provider.FUSION) Box { OutlinedButton({ modelMenu = true }, enabled = models.isNotEmpty() || selModel != null) { Text("Model: ${selModel ?: "-"}") }
                     DropdownMenu(modelMenu, { modelMenu = false }) { models.forEach { m -> DropdownMenuItem({ Text(m) }, { vm.selectModel(m); modelMenu = false }) } } }
                 if (keySaved && models.isEmpty()) Text("Press Test & save to load the list of models for your key.", style = MaterialTheme.typography.bodySmall, color = Mute)
             } }
@@ -248,6 +271,13 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     }
                 }
                 Text("Voice sunne ke liye Voice Call kholo — wahan live baat hogi isi voice mein.", style = MaterialTheme.typography.bodySmall, color = Mute)
+            } }
+            item { Section("Image Studio", Icons.Default.Image) {
+                Text("Chat mein bolo \"ek golden crown ka logo banao, image banao\" — BADSHAH khud image bana dega (FT Fusion). Model chuno:", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(imageModel == "fusion-uni", { vm.setImageModel("fusion-uni") }, { Text("Fusion Uni") })
+                    FilterChip(imageModel == "fusion-astra", { vm.setImageModel("fusion-astra") }, { Text("Fusion Astra") })
+                }
             } }
             item { Section("Personality", Icons.Default.Person) {
                 Text("Choose who your assistant is for you. The personality changes how it talks, advises and behaves with you.", style = MaterialTheme.typography.bodySmall, color = Mute)
@@ -322,6 +352,22 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Msg(elevenMsg)
                 elevenVoices.take(30).forEach { v -> Row(verticalAlignment = Alignment.CenterVertically) { RadioButton(elevenVoice == v.id, { vm.pickEleven(v.id) }); Text("${v.name} ${if (v.category.isNotBlank()) "(${v.category})" else ""}") } }
                 if (elevenSaved) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(engine == "elevenlabs", { vm.setEngine("elevenlabs") }, { Text("Use for chat replies") }); FilterChip(engine == "android", { vm.setEngine("android") }, { Text("Phone voice") }) }
+                if (googleSaved) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(engine == "google", { vm.setEngine("google") }, { Text("Google voice for replies") }) }
+            } }
+            item { Section("Google Voice (optional)", Icons.Default.RecordVoiceOver) {
+                Text("Google ki apni premium awaazein (Journey waghera) — phone ki robot awaaz se kahin zyada natural. Apni Google Cloud API key lagao (console.cloud.google.com → Text-to-Speech API enable karo). Key sirf is phone par rehti hai.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                OutlinedTextField(gKey, { gKey = it }, Modifier.fillMaxWidth(), label = { Text(if (googleSaved) "Google Cloud key saved" else "Google Cloud API key") }, singleLine = true,
+                    visualTransformation = if (gShow) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = { TextButton({ gShow = !gShow }) { Text(if (gShow) "Hide" else "Show") } })
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Button({ vm.testGoogle(gKey); gKey = "" }) { Text("Test & save") }
+                    if (googleSaved) TextButton(vm::removeGoogle) { Text("Remove") }
+                }
+                Msg(googleMsg)
+                if (googleSaved) {
+                    Text("Voice chuno, phir ElevenLabs wale hisse mein \"Google voice for replies\" on karo:", style = MaterialTheme.typography.bodySmall, color = Mute)
+                    GoogleVoices.all.forEach { (id, label) -> Row(verticalAlignment = Alignment.CenterVertically) { RadioButton(googleVoice == id, { vm.pickGoogleVoice(id) }); Column { Text(label, style = MaterialTheme.typography.bodyMedium); Text(id, style = MaterialTheme.typography.bodySmall, color = Mute) } } }
+                }
             } }
             item { Section("Wake word", Icons.Default.Hearing) {
                 Text("Jab ye ON ho, phone background mein assistant ka naam sunta rahega — doosri apps ke upar bhi. Naam bolo, assistant direct hazir ho jayega. Note: kuch phones battery bachane ke liye background listening band kar sakte hain.", style = MaterialTheme.typography.bodySmall, color = Mute)
