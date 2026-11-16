@@ -17,6 +17,8 @@ object DomainLogic {
         eq("roman urdu youtube", p("youtube kholo"), PhoneAction.OpenYouTube)
         eq("open whatsapp", p("open whatsapp"), PhoneAction.OpenWhatsApp)
         eq("open chrome", p("launch Chrome"), PhoneAction.OpenChrome)
+        eq("assistant browser plain", p("browser kholo"), PhoneAction.OpenBrowser(""))
+        eq("assistant browser search", p("browser mein cricket search karo"), PhoneAction.OpenBrowser("cricket"))
         eq("open camera", p("open the camera"), PhoneAction.OpenCamera)
         eq("open gallery", p("open photos"), PhoneAction.OpenGallery)
         eq("open arbitrary app", p("open Spotify app"), PhoneAction.OpenApp("spotify"))
