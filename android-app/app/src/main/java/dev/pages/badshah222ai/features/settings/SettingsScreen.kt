@@ -78,6 +78,9 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     // ---- Gemini Live ----
     val liveVoiceName = MutableStateFlow(c.store.liveVoiceName)
     val liveModel = MutableStateFlow(c.store.liveModel)
+    val geminiSaved = MutableStateFlow(c.store.apiKey(Provider.GEMINI) != null)
+    val liveCandidates = MutableStateFlow(c.store.liveCandidates)
+    val lastLiveError = MutableStateFlow(c.store.lastLiveError)
     val liveEnabled = MutableStateFlow(c.store.liveEnabled)
     val liveMsg = MutableStateFlow<Pair<Boolean, String>?>(null)
     val liveTesting = MutableStateFlow(false)
@@ -116,6 +119,12 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 c.store.setApiKey(p, k); keySaved.value = true; models.value = list
                 val keep = c.store.model(p)?.takeIf { it in list } ?: list.first(); c.store.setModel(p, keep); selectedModel.value = keep
                 aiMsg.value = true to "Connected. ${list.size} models available."
+                if (p == Provider.GEMINI) {
+                    // Detect the Live model right away, so the Voice Call connects in seconds later.
+                    val lm = runCatching { c.ai.detectLiveModel() }.getOrNull()
+                    liveModel.value = lm; liveCandidates.value = c.store.liveCandidates; geminiSaved.value = true
+                    if (lm != null) aiMsg.value = true to "Connected. ${list.size} models available. Live voice bhi ready hai ($lm)."
+                }
                 uid?.let { runCatching { c.cloud.saveProviderStatus(it, p.id, true, "ok") } }; pushPrefs()
             } catch (e: AiException) { aiMsg.value = false to e.userMessage; uid?.let { runCatching { c.cloud.saveProviderStatus(it, p.id, c.store.apiKey(p) != null, "failed") } } }
             catch (e: Exception) { aiMsg.value = false to "Could not test the key." } finally { testing.value = false }
@@ -133,7 +142,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
             liveTesting.value = true; liveMsg.value = null
             try {
                 val m = c.ai.detectLiveModel()
-                liveModel.value = m
+                liveModel.value = m; liveCandidates.value = c.store.liveCandidates; lastLiveError.value = c.store.lastLiveError
                 liveMsg.value = if (m != null) true to "Live ready — model: $m" else false to "Is key par koi Live model nahi mila. Voice Call classic mode mein chalegi."
             } catch (e: Exception) { liveMsg.value = false to "Live test failed. Internet check karke dobara try karo." }
             finally { liveTesting.value = false }
@@ -199,6 +208,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val speak by vm.speak.collectAsState(); val low by vm.lowPower.collectAsState(); val lang by vm.language.collectAsState()
     val personalityId by vm.personalityId.collectAsState(); val brainId by vm.brainId.collectAsState(); val wakeOn by vm.wakeWord.collectAsState()
     val liveVoiceName by vm.liveVoiceName.collectAsState(); val liveModel by vm.liveModel.collectAsState(); val liveEnabled by vm.liveEnabled.collectAsState()
+    val geminiSaved by vm.geminiSaved.collectAsState(); val liveCandidates by vm.liveCandidates.collectAsState(); val lastLiveError by vm.lastLiveError.collectAsState()
     val liveMsg by vm.liveMsg.collectAsState(); val liveTesting by vm.liveTesting.collectAsState()
     val emotionId by vm.emotionId.collectAsState(); val assistantName by vm.assistantName.collectAsState()
     val imageModel by vm.imageModel.collectAsState()
@@ -255,6 +265,9 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Text("Voice Call ab Gemini Live par chalti hai — Google ki asli insani voices, bilkul LIA AI ki tarah. Koi robotic phone voice nahi. Apni Gemini key ka Live model pehle test kar lo, phir apni pasand ki voice chun lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Row(verticalAlignment = Alignment.CenterVertically) { Text("Use Live voice on Voice Call", Modifier.weight(1f)); Switch(liveEnabled, vm::setLiveEnabled) }
                 Text("Live model: ${liveModel ?: "not tested yet"}", style = MaterialTheme.typography.bodySmall, color = if (liveModel != null) Ok else Mute)
+                Text("Gemini key: ${if (geminiSaved) "saved hai ✓" else "NAHI daali — Live sirf Gemini key se chalta hai (Groq/FT Fusion se nahi). Connections mein Google Gemini select karke key daalo."}", style = MaterialTheme.typography.bodySmall, color = if (geminiSaved) Ok else Bad)
+                if (liveCandidates.isNotBlank()) Text("Live models mile: ${liveCandidates.split(",").size} — ${liveCandidates.take(110)}", style = MaterialTheme.typography.bodySmall, color = Mute)
+                lastLiveError?.let { Text("Aakhri Live koshish ki wajah: $it", style = MaterialTheme.typography.bodySmall, color = Bad) }
                 Button(vm::testLive, enabled = !liveTesting) { if (liveTesting) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test Live model") }
                 Msg(liveMsg)
                 Text("Male voices", style = MaterialTheme.typography.labelLarge, color = Gold)
