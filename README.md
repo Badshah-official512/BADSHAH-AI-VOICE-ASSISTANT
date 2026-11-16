@@ -100,3 +100,29 @@ docs/images/     Brand images used in this README
 ---
 
 *Built with ❤️ in Swabi, Pakistan — BADSHAH AI, Chat. Create. Imagine.*
+
+
+## Open source
+
+BADSHAH-RANI AI is **fully open source** (MIT — see `LICENSE`). One app, two
+assistants: **BADSHAH** (boyfriend) and **RANI** (girlfriend) — switch in
+Settings → Assistant. The complete package — Android source, Supabase backend
+(`backend/`, including the unified `ai-api` gateway), admin panel, website and
+Cloudflare Worker — lives in this repository / zip.
+
+Highlights: Gemini Live real voices (male Charon by default for BADSHAH,
+female Aoede for RANI) connected the MYRA way (see `THIRD-PARTY-NOTICES.md`),
+FT Fusion built in, free fallbacks (Pollinations, Hugging Face, OpenRouter
+free models), screen sharing with Gemini Vision, an in-app assistant browser,
+a floating orb, and full phone control by voice.
+
+## Hisab kitab (accounts & records)
+
+- Backend: Supabase project "Badshah ai voice assistant" — migrations 001–003
+  in `backend/supabase/migrations/` (003 adds long-term memories).
+- Unified AI gateway: `backend/supabase/functions/ai-api/` with the provider
+  registry in `backend/ai-providers.json` and the integration guide in
+  `documentation/AI-API-INTEGRATION.md`. All provider keys live ONLY as
+  backend secrets — never in this source.
+- Admin panel + website: `admin-panel/` and `website/`, hosted by the
+  Cloudflare Worker in `cloudflare/` (name: badshah-ai-site).
