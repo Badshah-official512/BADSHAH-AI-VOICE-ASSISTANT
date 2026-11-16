@@ -4,8 +4,17 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -14,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,9 +59,18 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     }
 
     val stars = remember { List(70) { Offset(Random.nextFloat(), Random.nextFloat()) to Random.nextFloat() } }
+    val driftT = rememberInfiniteTransition(label = "drift")
+    val drift by driftT.animateFloat(0f, 1f, infiniteRepeatable(tween(14000, easing = LinearEasing), RepeatMode.Restart), label = "drift")
+    val floatY by driftT.animateFloat(-10f, 10f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "floatY")
+    val rgb = rememberRgbColor()
+    var burst by remember { mutableStateOf(0) }
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel2, Ink))).statusBarsPadding().navigationBarsPadding()) {
+        AmbientLights(Modifier.fillMaxSize())
         Canvas(Modifier.fillMaxSize()) {
-            stars.forEach { (p, a) -> drawCircle(Color.White.copy(alpha = 0.10f + a * 0.15f), radius = 1.2f + a * 1.6f, center = Offset(p.x * size.width, p.y * size.height)) }
+            stars.forEach { (p, a) ->
+                val y = (p.y + drift * (0.03f + a * 0.06f)) % 1f
+                drawCircle(Color.White.copy(alpha = 0.10f + a * 0.15f), radius = 1.2f + a * 1.6f, center = Offset(p.x * size.width, y * size.height))
+            }
         }
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -61,7 +80,8 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
             }
             Spacer(Modifier.weight(0.7f))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                VoiceOrb(state, level, vm.lowPower, Modifier.size(280.dp))
+                TapLightBurst(burst, rgb, Modifier.size(300.dp))
+                VoiceOrb(state, level, vm.lowPower, Modifier.size(280.dp).offset(y = floatY.dp).clip(CircleShape).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { burst++ })
             }
             Spacer(Modifier.height(18.dp))
             Text(
