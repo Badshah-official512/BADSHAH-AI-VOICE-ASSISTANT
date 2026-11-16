@@ -192,14 +192,41 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { speak("Image tayyar hai, Boss.") }
     }
 
+    private fun deliverImageFile(path: String) {
+        add(ChatMessage("assistant", "image_file:$path"))
+        status.value = "Image tayyar hai, Boss."
+        viewModelScope.launch { speak("Image tayyar hai, Boss.") }
+    }
+
+    /** Hugging Face step of the image chain (only when the user saved a free HF token). True when an image was delivered. */
+    private suspend fun tryHuggingFace(prompt: String): Boolean {
+        val token = c.store.hfToken() ?: return false
+        return try {
+            val bytes = HuggingFace.image(token, c.store.hfModel, prompt)
+            val dir = java.io.File(getApplication<android.app.Application>().cacheDir, "images").apply { mkdirs() }
+            val f = java.io.File(dir, "hf_${System.currentTimeMillis()}.jpg")
+            f.writeBytes(bytes)
+            deliverImageFile(f.absolutePath)
+            true
+        } catch (e: Exception) { false }
+    }
+
     private suspend fun generateImage(prompt: String) {
         status.value = "Image ban raha hai…"
         val chosen = c.store.imageModel
         if (chosen == "pollinations") { deliverImage(Pollinations.imageUrl(prompt)); return }
+        if (chosen == "huggingface") {
+            if (tryHuggingFace(prompt)) return
+            // HF failed (or no token yet) — fall through to the FT chain, then free.
+            try { deliverImage(FtFusion.image("fusion-uni", prompt)); return } catch (e: AiException) { /* next */ }
+            try { deliverImage(FtFusion.image("fusion-astra", prompt)); return } catch (e: AiException) { /* next */ }
+            deliverImage(Pollinations.imageUrl(prompt)); return
+        }
         val second = if (chosen == "fusion-uni") "fusion-astra" else "fusion-uni"
         try { deliverImage(FtFusion.image(chosen, prompt)); return } catch (e: AiException) { /* try the other FT model */ }
-        try { deliverImage(FtFusion.image(second, prompt)); return } catch (e: AiException) { /* free fallback below */ }
-        // Both FT image models failed → the free Pollinations image always answers.
+        try { deliverImage(FtFusion.image(second, prompt)); return } catch (e: AiException) { /* next step */ }
+        if (tryHuggingFace(prompt)) return
+        // Everything else failed → the free Pollinations image always answers.
         deliverImage(Pollinations.imageUrl(prompt))
     }
 
