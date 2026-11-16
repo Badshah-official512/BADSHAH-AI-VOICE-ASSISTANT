@@ -26,6 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -60,6 +63,7 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     val liveUser by vm.live.userText.collectAsState(); val liveAssistant by vm.live.assistantText.collectAsState()
     val liveError by vm.live.error.collectAsState(); val muted by vm.live.muted.collectAsState()
     val fallback by vm.liveFallback.collectAsState()
+    val emotion by vm.emotion.collectAsState()
 
     var liveMode by remember { mutableStateOf(vm.liveAvailable()) }
     var started by remember { mutableStateOf(false) }
@@ -133,6 +137,7 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     val driftT = rememberInfiniteTransition(label = "drift")
     val drift by driftT.animateFloat(0f, 1f, infiniteRepeatable(tween(14000, easing = LinearEasing), RepeatMode.Restart), label = "drift")
     val floatY by driftT.animateFloat(-10f, 10f, infiniteRepeatable(tween(3000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "floatY")
+    val spin by driftT.animateFloat(0f, 360f, infiniteRepeatable(tween(16000, easing = LinearEasing), RepeatMode.Restart), label = "spin")
     val rgb = rememberRgbColor()
     var burst by remember { mutableStateOf(0) }
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel2, Ink))).statusBarsPadding().navigationBarsPadding()) {
@@ -151,6 +156,25 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
             }
             Spacer(Modifier.weight(0.7f))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                // Antigravity orbit system: two tilted rings + satellite sparks that swell with the voice.
+                val emoColor = emotion.composeColor
+                Canvas(Modifier.size(340.dp).offset(y = floatY.dp)) {
+                    val cx = size.width / 2f; val cy = size.height / 2f
+                    val baseR = size.minDimension / 2f * 0.86f
+                    val pulse = 1f + orbLevel * 0.10f
+                    rotate(degrees = spin, pivot = Offset(cx, cy)) {
+                        drawArc(emoColor.copy(alpha = 0.55f), 20f, 130f, false, topLeft = Offset(cx - baseR * pulse, cy - baseR * 0.62f * pulse), size = Size(baseR * 2 * pulse, baseR * 1.24f * pulse), style = Stroke(width = 3f))
+                        drawArc(CyanAcc.copy(alpha = 0.4f), 210f, 110f, false, topLeft = Offset(cx - baseR * pulse, cy - baseR * 0.62f * pulse), size = Size(baseR * 2 * pulse, baseR * 1.24f * pulse), style = Stroke(width = 2f))
+                    }
+                    rotate(degrees = -spin * 0.7f, pivot = Offset(cx, cy)) {
+                        drawCircle(VioletSoft.copy(alpha = 0.30f), radius = baseR * 1.02f * pulse, center = Offset(cx, cy), style = Stroke(width = 1.5f))
+                    }
+                    for (i in 0 until 10) {
+                        val ang = Math.toRadians((spin * (0.7 + i * 0.06) + i * 36.0)) 
+                        val r = baseR * (0.98f + 0.06f * kotlin.math.sin(ang * 2)) * pulse
+                        drawCircle(if (i % 2 == 0) emoColor else CyanAcc, radius = 2.5f + orbLevel * 4f, center = Offset(cx + (r * kotlin.math.cos(ang)).toFloat(), cy + (r * 0.66f * kotlin.math.sin(ang)).toFloat()))
+                    }
+                }
                 TapLightBurst(burst, rgb, Modifier.size(300.dp))
                 VoiceOrb(orbState, orbLevel, vm.lowPower, Modifier.size(280.dp).offset(y = floatY.dp).clip(CircleShape).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { burst++ })
                 // The assistant's own logo/avatar lives inside the orb.

@@ -128,6 +128,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             busy.value = true; status.value = "Thinking..."
             try {
+                if (isImageRequest(t)) { generateImage(t); return@launch }
                 val emo = c.store.emotionId?.let { Emotions.fromId(it) } ?: Emotions.detect(t)
                 emotion.value = emo
                 val reply = c.ai.chat(messages.value, emo.style)
@@ -162,6 +163,33 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun contactPicked(name: String) = reply("Selected contact: $name. Say \"call $name\" or \"send WhatsApp to $name saying ...\".")
 
     private fun reply(text: String) { add(ChatMessage("assistant", text)); status.value = text; viewModelScope.launch { speak(text) } }
+    // ---- image generation (FT Fusion: fusion-uni / fusion-astra) ----
+    private fun isImageRequest(t: String): Boolean {
+        val l = t.lowercase()
+        return listOf("image banao", "image bana", "tasveer banao", "tasveer bana", "photo banao", "pic banao",
+            "generate image", "create image", "make an image", "make image", "draw me", "logo banao",
+            "poster banao", "wallpaper banao", "image generate", "tasveer bana do", "image bana do").any { l.contains(it) }
+    }
+
+    private suspend fun generateImage(prompt: String) {
+        status.value = "Image ban raha hai…"
+        val first = c.store.imageModel
+        val second = if (first == "fusion-uni") "fusion-astra" else "fusion-uni"
+        try {
+            val url = FtFusion.image(first, prompt)
+            add(ChatMessage("assistant", "image_url:$url"))
+            status.value = "Image tayyar hai, Boss."
+            speak("Image tayyar hai, Boss.")
+        } catch (e: AiException) {
+            try {
+                val url = FtFusion.image(second, prompt)
+                add(ChatMessage("assistant", "image_url:$url"))
+                status.value = "Image tayyar hai, Boss."
+                speak("Image tayyar hai, Boss.")
+            } catch (e2: AiException) { error.value = e2.userMessage; status.value = e2.userMessage }
+        }
+    }
+
     private suspend fun speak(text: String) {
         if (!c.store.speakReplies) return
         c.tts.speak(text)?.let { warn -> status.value = warn }
