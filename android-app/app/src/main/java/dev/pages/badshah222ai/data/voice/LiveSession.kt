@@ -77,6 +77,8 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     @Volatile private var playerRunning = false
     private var systemInstruction: String = ""
     private var sessionKey: String = ""
+    /** Latest session-resumption handle from the server (MYRA-style long-call survival). */
+    @Volatile private var resumeHandle: String? = null
     private var userBuf = StringBuilder()
     private var assistantBuf = StringBuilder()
     @Volatile private var turnOpen = false
@@ -89,20 +91,34 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         if (key == null) { onUnavailable?.invoke("Add your Google Gemini API key in Settings to use the real voice."); return }
         candidates = store.liveCandidates.split(",").map { it.trim() }.filter { it.isNotBlank() }
             .ifEmpty { listOfNotNull(store.liveModel) }
-        if (candidates.isEmpty()) { onUnavailable?.invoke("No live voice model was found for your Gemini key yet. Open Settings → Live Voice and press Test."); return }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             onUnavailable?.invoke("Microphone permission is needed for the voice call."); return
         }
         this.systemInstruction = systemInstruction
         sessionKey = key
-        running = true; setupDone = false; reconnects = 0; attempt = 0; advancing = false
+        running = true; setupDone = false; reconnects = 0; attempt = 0; advancing = false; resumeHandle = null
         _error.value = null; _userText.value = ""; _assistantText.value = ""
         setCommMode(true)
-        // Build the attempt ladder: for each model, the setup variant that worked last time
-        // first, then the other variants; finally the first model once more on v1alpha.
-        val levels = listOf(store.liveSetupLevel, 0, 1, 2).distinct()
-        attempts = candidates.flatMap { m -> levels.map { lv -> Attempt(m, lv, "v1beta") } } +
-            listOf(Attempt(candidates[0], store.liveSetupLevel, "v1alpha"), Attempt(candidates[0], 2, "v1alpha"))
+        // Attempt ladder, MYRA-style first: the open-source MYRA assistant (MIT) connects
+        // Gemini Live with (model, API-version) PAIRS and a specific setup payload — the
+        // native-audio models only exist on v1alpha, and no languageCode is ever sent.
+        // Level 0 = that exact payload shape. Older camelCase variants follow as backup,
+        // then the models this key's own list reported. The winning combo is remembered.
+        val myraPairs = listOf(
+            Attempt("gemini-3.1-flash-live-preview", 0, "v1beta"),
+            Attempt("gemini-2.5-flash-native-audio-latest", 0, "v1alpha"),
+            Attempt("gemini-2.5-flash-native-audio-preview-12-2025", 0, "v1alpha"),
+            Attempt("gemini-3.8-live", 0, "v1beta"),
+        )
+        val ladder = mutableListOf<Attempt>()
+        store.liveModel?.takeIf { it.isNotBlank() }?.let { ladder += Attempt(it, store.liveSetupLevel, store.liveVersion) }
+        ladder += candidates.map { Attempt(it, 0, "v1beta") }
+        ladder += myraPairs
+        if (candidates.isNotEmpty()) {
+            ladder += listOf(1, 2, 3).map { Attempt(candidates[0], it, "v1beta") }
+            ladder += Attempt(candidates[0], 3, "v1alpha")
+        }
+        attempts = ladder.distinctBy { "${it.model}|${it.level}|${it.version}" }
         connect(key, attempts[0])
     }
 
@@ -151,14 +167,35 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     }
 
     private fun sendSetup(att: Attempt) {
-        // Setup variants (levels): some Live models reject fields others accept.
-        //  0 = full: languageCode + transcriptions
-        //  1 = no languageCode (native-audio models pick the language themselves and reject it)
-        //  2 = bare: no languageCode, no transcription requests
         val voice = store.liveVoiceName
+        if (att.level == 0) {
+            // MYRA-style setup (the shape the open-source MYRA app connects with):
+            // context-window compression + session resumption keep long calls alive,
+            // snake_case generation/speech config, and NO languageCode anywhere —
+            // native-audio models choose the language themselves and reject it.
+            val resumption = JSONObject()
+            resumeHandle?.let { resumption.put("handle", it) }
+            val gen = JSONObject()
+                .put("temperature", 0.7)
+                .put("response_modalities", JSONArray().put("AUDIO"))
+                .put("speech_config", JSONObject().put("voice_config",
+                    JSONObject().put("prebuilt_voice_config", JSONObject().put("voice_name", voice))))
+            val setup = JSONObject()
+                .put("contextWindowCompression", JSONObject().put("slidingWindow", JSONObject()))
+                .put("sessionResumption", resumption)
+                .put("inputAudioTranscription", JSONObject())
+                .put("outputAudioTranscription", JSONObject())
+                .put("model", "models/${att.model}")
+                .put("generation_config", gen)
+                .put("system_instruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemInstruction))))
+            ws?.send(JSONObject().put("setup", setup).toString())
+            return
+        }
+        // Backup variants (camelCase): 1 = full with languageCode, 2 = no languageCode,
+        // 3 = bare (no languageCode, no transcription requests).
         val speech = JSONObject()
             .put("voiceConfig", JSONObject().put("prebuiltVoiceConfig", JSONObject().put("voiceName", voice)))
-        if (att.level == 0) speech.put("languageCode", store.language)
+        if (att.level == 1) speech.put("languageCode", store.language)
         val gen = JSONObject()
             .put("responseModalities", JSONArray().put("AUDIO"))
             .put("speechConfig", speech)
@@ -166,7 +203,7 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
             .put("model", "models/${att.model}")
             .put("generationConfig", gen)
             .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemInstruction))))
-        if (att.level < 2) {
+        if (att.level < 3) {
             setup.put("inputAudioTranscription", JSONObject())
             setup.put("outputAudioTranscription", JSONObject())
         }
@@ -184,10 +221,27 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         if (root.has("setupComplete")) {
             setupDone = true
             store.lastLiveError = null
-            // Remember the model AND setup variant that actually worked, so next time it connects first try.
-            attempts.getOrNull(attempt)?.let { store.liveModel = it.model; store.liveSetupLevel = it.level }
+            // Remember the model, setup variant AND API version that actually worked,
+            // so the next call connects first try.
+            attempts.getOrNull(attempt)?.let { store.liveModel = it.model; store.liveSetupLevel = it.level; store.liveVersion = it.version }
             _state.value = State.Listening
             startMic(); startPlayer()
+            return
+        }
+        // Session resumption: the server hands us a handle; reconnects reuse it so a
+        // long call survives the server's session limits without losing context.
+        root.optJSONObject("sessionResumptionUpdate")?.let { u ->
+            if (u.optBoolean("resumable")) u.optString("newHandle").takeIf { it.isNotEmpty() }?.let { resumeHandle = it }
+        }
+        if (root.has("goAway")) {
+            // Server is about to close this session — reconnect at once with the handle.
+            if (running && setupDone && reconnects < 3) {
+                reconnects++
+                val att = attempts.getOrNull(attempt) ?: return
+                setupDone = false
+                runCatching { ws?.close(1000, "goAway") }
+                thread(isDaemon = true) { Thread.sleep(400); if (running) connect(sessionKey, att) }
+            }
             return
         }
         val sc = root.optJSONObject("serverContent") ?: return
