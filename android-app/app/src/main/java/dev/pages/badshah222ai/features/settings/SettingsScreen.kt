@@ -1,10 +1,15 @@
 package dev.pages.badshah222ai.features.settings
 
+import android.Manifest
 import android.app.Application
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.speech.tts.TextToSpeech
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,11 +19,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Hearing
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
@@ -34,10 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pages.badshah222ai.BadshahApp
 import dev.pages.badshah222ai.R
+import dev.pages.badshah222ai.core.WakeWordService
 import dev.pages.badshah222ai.data.ai.*
 import dev.pages.badshah222ai.data.supabase.VoiceProfileRow
 import dev.pages.badshah222ai.data.voice.*
@@ -72,6 +82,9 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val speak = MutableStateFlow(c.store.speakReplies); val lowPower = MutableStateFlow(c.store.lowPower); val language = MutableStateFlow(c.store.language)
     val personalityId = MutableStateFlow(c.store.personalityId)
     val voiceModeId = MutableStateFlow(c.store.voiceModeId)
+    val brainId = MutableStateFlow(c.store.brainId)
+    val feelingId = MutableStateFlow(c.store.feelingId)
+    val wakeWord = MutableStateFlow(c.store.wakeWord)
 
     init { viewModelScope.launch { serverPresets.value = c.cloud.voiceProfiles() }; refreshVoices() }
     fun refreshVoices() = c.tts.refreshVoices()
@@ -113,6 +126,10 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---- personality & voice modes ----
     fun setPersonality(p: Personality) { c.store.personalityId = p.id; personalityId.value = p.id }
+    fun setBrain(b: Brain) { c.store.brainId = b.id; brainId.value = b.id }
+    /** null = Auto: detect the feeling from the user's words on every message. */
+    fun setFeeling(f: Feeling?) { c.store.feelingId = f?.id; feelingId.value = f?.id }
+    fun setWakeWord(on: Boolean) { c.store.wakeWord = on; wakeWord.value = on }
     fun applyVoiceMode(m: VoiceMode) {
         val name = VoiceModes.resolveVoiceName(m, voices.value)
         c.store.voiceModeId = m.id; voiceModeId.value = m.id
@@ -157,7 +174,12 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val elevenSaved by vm.elevenSaved.collectAsState(); val elevenVoices by vm.elevenVoices.collectAsState(); val elevenVoice by vm.elevenVoice.collectAsState(); val elevenMsg by vm.elevenMsg.collectAsState()
     val speak by vm.speak.collectAsState(); val low by vm.lowPower.collectAsState(); val lang by vm.language.collectAsState()
     val personalityId by vm.personalityId.collectAsState(); val voiceModeId by vm.voiceModeId.collectAsState()
+    val brainId by vm.brainId.collectAsState(); val feelingId by vm.feelingId.collectAsState(); val wakeOn by vm.wakeWord.collectAsState()
     val user by session.user.collectAsState()
+    var feelingFamily by remember { mutableStateOf(Feelings.families.first()) }
+    val wakeMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok && vm.wakeWord.value) WakeWordService.start(ctx) else if (!ok) vm.setWakeWord(false)
+    }
     var key by remember(provider) { mutableStateOf("") }; var showKey by remember { mutableStateOf(false) }
     var eKey by remember { mutableStateOf("") }; var maleOnly by remember { mutableStateOf(true) }; var modelMenu by remember { mutableStateOf(false) }
     val sorted = remember(voices) { VoiceCatalog.sorted(voices) }
@@ -174,7 +196,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                         Column(Modifier.padding(start = 12.dp)) {
                             Text("BADSHAH", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             Text(user?.email ?: "Signed in", color = Mute, style = MaterialTheme.typography.bodySmall)
-                            Text("Your assistant · ${Personalities.fromId(personalityId).label}", color = VioletSoft, style = MaterialTheme.typography.bodySmall)
+                            Text("Your assistant · ${Personalities.fromId(personalityId).label} · ${Brains.fromId(brainId).label}", color = VioletSoft, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -205,6 +227,15 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     }
                 }
             } }
+            item { Section("AI Brain", Icons.Default.Psychology) {
+                Text("Choose the expert mind BADSHAH thinks with. Doctor ki tarah treat karega, Teacher ki tarah parhayega, Poet ki tarah bolega — har brain apne profession ki tarah behave karta hai. Brain, Personality aur Feeling teeno ek saath chalte hain.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Brains.all.forEach { b ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(brainId == b.id, { vm.setBrain(b) })
+                        Column { Text(b.label, style = MaterialTheme.typography.bodyLarge); Text(b.tagline, style = MaterialTheme.typography.bodySmall, color = Mute) }
+                    }
+                }
+            } }
             item { Section("Voice & language", Icons.Default.RecordVoiceOver) {
                 Text("Installed speech engine: ${engineName.ifBlank { "unknown" }}", style = MaterialTheme.typography.bodySmall, color = Mute)
                 support.forEach { s -> Text("${s.label}: " + if (s.installed) "${s.voices.size} voice(s) installed" else "not installed on this phone", color = if (s.installed) Ok else Mute, style = MaterialTheme.typography.bodySmall) }
@@ -225,6 +256,23 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Text("Girls voices", style = MaterialTheme.typography.labelLarge, color = Gold)
                 VoiceModes.female.forEach { m -> VoiceModeRow(m, voiceModeId == m.id, { vm.previewMode(m) }, { vm.applyVoiceMode(m) }) }
                 Text("Want even more realistic voices? Connect ElevenLabs below (optional) — hundreds of premium voices, bilkul alag se.", style = MaterialTheme.typography.bodySmall, color = Mute)
+            } }
+            item { Section("Feelings", Icons.Default.Favorite) {
+                Text("110 feelings — har feeling alag. Auto par BADSHAH tumhare alfaaz se tumhara mood pehchanta hai aur usi feeling mein jawab deta hai: udas ho to tasalli, khush ho to celebration, gussa ho to sukoon. Orb ka rang aur awaaz ka lehja bhi feeling ke saath badalta hai. Ya khud koi feeling fix kar lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(feelingId == null, { vm.setFeeling(null) })
+                    Column { Text("Auto — reads your mood", style = MaterialTheme.typography.bodyLarge); Text("Recommended", style = MaterialTheme.typography.bodySmall, color = Mute) }
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Feelings.families.forEach { fam -> FilterChip(feelingFamily == fam, { feelingFamily = fam }, { Text(fam) }) }
+                }
+                Feelings.byFamily(feelingFamily).forEach { f ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(feelingId == f.id, { vm.setFeeling(f) })
+                        Box(Modifier.size(10.dp).clip(CircleShape).background(f.composeColor))
+                        Text(f.label, Modifier.padding(start = 8.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
             } }
             item { Section("Phone voices", Icons.Default.Mic) {
                 Text("Android does not tell apps a voice's gender. Voices whose engine name says \"male\" are marked MALE; the rest are unverified, so listen and choose. Styles change pitch and speed of the voice you pick; they are not separate voices.", style = MaterialTheme.typography.bodySmall, color = Mute)
@@ -259,6 +307,19 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 }
                 Msg(elevenMsg)
                 elevenVoices.take(30).forEach { v -> Row(verticalAlignment = Alignment.CenterVertically) { RadioButton(elevenVoice == v.id, { vm.pickEleven(v.id) }); Text("${v.name} ${if (v.category.isNotBlank()) "(${v.category})" else ""}") } }
+            } }
+            item { Section("Wake word", Icons.Default.Hearing) {
+                Text("Jab ye ON ho, phone background mein BADSHAH ka naam sunta rahega. Bahir se \"BADSHAH\" bolo — assistant direct hazir ho jayega, bilkul call uthane ki tarah. Note: kuch phones battery bachane ke liye background listening band kar sakte hain; app khula ho to hamesha chalega.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Wake word 'BADSHAH'", Modifier.weight(1f))
+                    Switch(wakeOn, { on ->
+                        vm.setWakeWord(on)
+                        if (on) {
+                            if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) WakeWordService.start(ctx)
+                            else wakeMic.launch(Manifest.permission.RECORD_AUDIO)
+                        } else WakeWordService.stop(ctx)
+                    })
+                }
             } }
             item { Section("App settings", Icons.Default.Tune) {
                 Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Low-power mode"); Text("Simpler animation for older phones", style = MaterialTheme.typography.bodySmall, color = Mute) }; Switch(low, vm::setLowPower) }
