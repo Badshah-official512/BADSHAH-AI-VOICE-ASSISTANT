@@ -27,6 +27,9 @@ import kotlinx.coroutines.withContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +89,15 @@ fun ChatScreen(vm: HomeViewModel, onBack: () -> Unit, onVoice: () -> Unit) {
         }
 
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                if (uri != null) {
+                    val bytes = runCatching { ctx.contentResolver.openInputStream(uri)?.readBytes() }.getOrNull()
+                    if (bytes != null) vm.askPhoto(bytes)
+                }
+            }
+            IconButton({ photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                Icon(Icons.Default.PhotoLibrary, "Photo bhejo — AI dekh kar batayega", tint = VioletSoft)
+            }
             OutlinedTextField(text, { text = it }, Modifier.weight(1f), placeholder = { Text("Message BADSHAH…") }, maxLines = 4, shape = RoundedCornerShape(26.dp))
             IconButton({ if (state == CharState.Listening) vm.stopListening() else mic() }) {
                 Icon(if (state == CharState.Listening) Icons.Default.Stop else Icons.Default.Mic, "Voice input", tint = if (state == CharState.Listening) Ok else VioletSoft)
