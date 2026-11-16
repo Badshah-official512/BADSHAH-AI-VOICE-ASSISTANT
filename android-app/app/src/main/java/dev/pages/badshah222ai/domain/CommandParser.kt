@@ -50,6 +50,15 @@ object CommandParser {
         if (Regex("\\b(videos?|movies?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|lagao|dikhao|play|watch)\\b").containsMatchIn(l)) return PhoneAction.OpenVideos
         if (Regex("\\b(files?|downloads?|file manager|documents?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|dikhao|show)\\b").containsMatchIn(l)) return PhoneAction.OpenFiles
 
+        // ---- device info + volume (MYRA-style system control) ----
+        if (l.contains("battery")) return PhoneAction.DeviceInfo("battery")
+        if (l.contains("storage") || l.contains("space kitna") || l.contains("space kitni")) return PhoneAction.DeviceInfo("storage")
+        if (l.contains("time kya") || l.contains("waqt kya") || l.contains("kitne baje") || l.contains("time batao")) return PhoneAction.DeviceInfo("time")
+        if (l.contains("date kya") || l.contains("tareekh") || l.contains("tarikh") || l.contains("aaj ki date")) return PhoneAction.DeviceInfo("date")
+        if (l.contains("mute") && (l.contains("kar") || l.contains("volume") || l.contains("awaz") || l.contains("aawaz"))) return PhoneAction.Volume("mute")
+        if ((l.contains("volume") || l.contains("awaz") || l.contains("aawaz")) && (l.contains("barha") || l.contains("tez") || l.contains("zyada") || l.contains("increase"))) return PhoneAction.Volume("up")
+        if ((l.contains("volume") || l.contains("awaz") || l.contains("aawaz")) && (l.contains("kam") || l.contains("halki") || l.contains("down") || l.contains("low"))) return PhoneAction.Volume("down")
+
         // ---- screen share: "meri screen dekho / screen share karo" ----
         if (l.contains("screen") && (l.contains("share") || l.contains("dekho") || l.contains("dikhao") || l.contains("dekh") || l.contains("show"))) return PhoneAction.OpenScreen
 

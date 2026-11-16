@@ -5,6 +5,8 @@ sealed class PhoneAction {
     data class OpenApp(val appName: String) : PhoneAction()
     object OpenYouTube : PhoneAction()
     object OpenScreen : PhoneAction()
+    data class DeviceInfo(val kind: String) : PhoneAction() // battery | storage | time | date
+    data class Volume(val dir: String) : PhoneAction() // up | down | mute
     object OpenWhatsApp : PhoneAction()
     object OpenChrome : PhoneAction()
     object OpenCamera : PhoneAction()
