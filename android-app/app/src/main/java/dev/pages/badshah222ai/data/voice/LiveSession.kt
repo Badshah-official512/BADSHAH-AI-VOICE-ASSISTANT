@@ -60,6 +60,10 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     @Volatile private var running = false
     @Volatile private var setupDone = false
     @Volatile private var reconnects = 0
+    private var candidates: List<String> = emptyList()
+    @Volatile private var attempt = 0
+    @Volatile private var attemptToken = 0
+    @Volatile private var advancing = false
     private var ws: WebSocket? = null
     private var recorder: AudioRecord? = null
     @Volatile private var micThread: Thread? = null
@@ -76,32 +80,58 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     fun start(systemInstruction: String) {
         if (running) return
         val key = store.apiKey(Provider.GEMINI)
-        val model = store.liveModel
         if (key == null) { onUnavailable?.invoke("Add your Google Gemini API key in Settings to use the real voice."); return }
-        if (model == null) { onUnavailable?.invoke("No live voice model was found for your Gemini key yet. Open Settings → Live Voice and press Test."); return }
+        candidates = store.liveCandidates.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            .ifEmpty { listOfNotNull(store.liveModel) }
+        if (candidates.isEmpty()) { onUnavailable?.invoke("No live voice model was found for your Gemini key yet. Open Settings → Live Voice and press Test."); return }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             onUnavailable?.invoke("Microphone permission is needed for the voice call."); return
         }
         this.systemInstruction = systemInstruction
-        running = true; setupDone = false; reconnects = 0
+        running = true; setupDone = false; reconnects = 0; attempt = 0; advancing = false
         _error.value = null; _userText.value = ""; _assistantText.value = ""
         setCommMode(true)
-        connect(key, model)
+        connect(key, candidates[0])
+    }
+
+    /** A connect attempt failed before the session was ready: try the next candidate model, or give up with the real reason. */
+    private fun nextOrFail(key: String, reason: String) {
+        if (!running || setupDone || advancing) return
+        advancing = true
+        runCatching { ws?.close(1000, "retry") }
+        if (attempt + 1 < candidates.size) {
+            attempt++
+            advancing = false
+            connect(key, candidates[attempt])
+        } else {
+            fail(reason)
+        }
     }
 
     private fun connect(key: String, model: String) {
         _state.value = State.Connecting
+        setupDone = false
+        // Watchdog: a hung handshake must never leave the screen on "Connecting…" forever.
+        val tok = ++attemptToken
+        thread(isDaemon = true) {
+            Thread.sleep(12000)
+            if (running && !setupDone && tok == attemptToken) {
+                nextOrFail(key, "Live connection 12 second mein nahi bana (model: $model). Internet slow hai ya ye model key par nahi chala — Settings → Live Voice mein Test karke dekho.")
+            }
+        }
         val url = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key"
         ws = client.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) { sendSetup(model) }
             override fun onMessage(webSocket: WebSocket, text: String) { handleMessage(text) }
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 if (!running) return
-                if (setupDone && reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, model) }
+                if (!setupDone) { nextOrFail(key, "Live connection fail ho gaya (model: $model): ${t.message?.take(90) ?: "network error"}"); return }
+                if (reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, model) }
                 else fail("Live voice connection failed. Check your internet and try again.")
             }
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 if (!running) return
+                if (!setupDone && code != 1000) { nextOrFail(key, "Live band ho gaya (model: $model, code $code ${reason.take(60)})"); return }
                 if (setupDone && reconnects < 1 && code != 1008) { reconnects++; if (running) connect(key, model) }
                 else if (code == 1008 || code == 1007) fail("The live voice was refused for this key or model. Open Settings → Live Voice and press Test to pick a working model.")
             }
@@ -132,6 +162,8 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         }
         if (root.has("setupComplete")) {
             setupDone = true
+            // Remember the model that actually worked, so next time it connects first.
+            candidates.getOrNull(attempt)?.let { store.liveModel = it }
             _state.value = State.Listening
             startMic(); startPlayer()
             return

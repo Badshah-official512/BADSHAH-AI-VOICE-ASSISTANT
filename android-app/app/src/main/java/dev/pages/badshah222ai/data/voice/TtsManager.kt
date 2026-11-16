@@ -66,6 +66,11 @@ class TtsManager(private val context: Context, private val store: SecureStore, p
             return try { speakEleven(key, vid, text); null }
             catch (e: ElevenException) { speakAndroid(text, store.ttsVoiceName, store.pitch * pitchMul, store.speed * speedMul); "ElevenLabs: ${e.userMessage} Using the phone voice instead." }
         }
+        val gKey = store.googleTtsKey()
+        if (store.voiceEngine == "google" && gKey != null) {
+            return try { speakGoogle(gKey, text); null }
+            catch (e: Exception) { speakAndroid(text, store.ttsVoiceName, store.pitch * pitchMul, store.speed * speedMul); "Google Voice: ${e.message?.take(90) ?: "masla aa gaya"}. Using the phone voice instead." }
+        }
         speakAndroid(text, store.ttsVoiceName, store.pitch * pitchMul, store.speed * speedMul); return null
     }
 
@@ -91,6 +96,18 @@ class TtsManager(private val context: Context, private val store: SecureStore, p
         }
         cloud.recordUsage("elevenlabs", "eleven_multilingual_v2", "tts", true, text.length.toLong(), 0, (System.currentTimeMillis() - t0).toInt(), null)
         val f = withContext(Dispatchers.IO) { File(context.cacheDir, "eleven_tts.mp3").also { it.writeBytes(bytes) } }
+        val mp = MediaPlayer()
+        mp.setDataSource(f.absolutePath)
+        mp.setOnCompletionListener { it.release(); if (player === it) player = null; finish() }
+        mp.setOnErrorListener { m, _, _ -> m.release(); finish(); true }
+        mp.prepare(); player = mp; _speaking.value = true; mp.start()
+    }
+
+    private val googleTts = GoogleTtsClient()
+
+    private suspend fun speakGoogle(key: String, text: String) {
+        val bytes = googleTts.synthesize(key, store.googleTtsVoice, text.take(2500))
+        val f = withContext(Dispatchers.IO) { File(context.cacheDir, "google_tts.mp3").also { it.writeBytes(bytes) } }
         val mp = MediaPlayer()
         mp.setDataSource(f.absolutePath)
         mp.setOnCompletionListener { it.release(); if (player === it) player = null; finish() }
