@@ -24,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.pages.badshah222ai.core.WakeSignal
 import dev.pages.badshah222ai.features.about.AboutScreen
 import dev.pages.badshah222ai.features.auth.AuthScreen
 import dev.pages.badshah222ai.features.auth.SessionViewModel
@@ -70,6 +71,10 @@ private fun SignedInNav(session: SessionViewModel) {
     val backStack by nav.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "home"
     fun tab(r: String) { nav.navigate(r) { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true } }
+
+    // Wake word heard: jump straight into the voice screen, like answering a call.
+    val wakeTick by WakeSignal.ticks.collectAsState()
+    LaunchedEffect(wakeTick) { if (wakeTick > 0L) nav.navigate("voice") }
 
     Scaffold(
         bottomBar = { if (route in TABS) LiaBottomBar(route, { tab(it) }, { nav.navigate("voice") }) },
