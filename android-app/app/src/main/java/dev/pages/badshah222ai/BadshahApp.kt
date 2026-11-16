@@ -9,6 +9,7 @@ import dev.pages.badshah222ai.data.ensureNotificationChannel
 import dev.pages.badshah222ai.data.local.ChatStore
 import dev.pages.badshah222ai.data.phone.PhoneExecutor
 import dev.pages.badshah222ai.data.supabase.SupabaseApi
+import dev.pages.badshah222ai.data.voice.LiveSession
 import dev.pages.badshah222ai.data.voice.SpeechInput
 import dev.pages.badshah222ai.data.voice.TtsManager
 
@@ -20,6 +21,7 @@ class Container(app: Application) {
     val ai = AiRepository(store, cloud)
     val tts = TtsManager(app, store, cloud)
     val speech = SpeechInput(app)
+    val live = LiveSession(app, store)
     val phone = PhoneExecutor(app)
     val chats = ChatStore(app)
 }
