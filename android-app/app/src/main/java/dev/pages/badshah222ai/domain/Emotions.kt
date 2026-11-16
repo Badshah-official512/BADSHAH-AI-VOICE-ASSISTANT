@@ -47,14 +47,23 @@ object Emotions {
         Emotion("bold", "Bold", "Energy", "Speak boldly and fearlessly, direct and powerful.", 0xFFE64A19),
         Emotion("energetic", "Energetic", "Energy", "Speak with high energy and enthusiasm, alive and quick.", 0xFFFF9100),
         Emotion("inspiring", "Inspiring", "Energy", "Speak in an inspiring way, lifting the user's spirit with meaningful words.", 0xFFFF6E40),
+        Emotion("brave", "Brave", "Energy", "Speak bravely, standing tall with the user against fear, steady and fearless.", 0xFFD84315),
         // Deep
         Emotion("comforting", "Comforting", "Deep", "Speak to comfort: soft, patient, understanding, sitting with the user in their pain.", 0xFF7986CB),
         Emotion("empathetic", "Empathetic", "Deep", "Speak with deep empathy, truly feeling what the user feels, gentle and sincere.", 0xFF64B5F6),
         Emotion("serious", "Serious", "Deep", "Speak seriously and thoughtfully, measured words, full attention.", 0xFF90A4AE),
         Emotion("thoughtful", "Thoughtful", "Deep", "Speak thoughtfully, pausing to reflect, wise and considered.", 0xFFA1887F),
         Emotion("nostalgic", "Nostalgic", "Deep", "Speak with soft nostalgia, warm memories in the voice, gentle and wistful.", 0xFFBCAAA4),
+        Emotion("curious", "Curious", "Deep", "Speak with genuine curiosity, asking and wondering together with the user, bright and interested.", 0xFF4DB6AC),
+        // Andaz — signature speaking styles (imitation of great talkers)
+        Emotion("royal", "Royal Badshah", "Andaz", "Speak like a king: grand, generous and proud, slow powerful words, treating the user like royalty too.", 0xFFFFD700),
+        Emotion("poet", "Poet", "Andaz", "Speak like a poet: beautiful imagery, rhythm in the words, feeling in every line.", 0xFFBA68C8),
+        Emotion("storyteller", "Storyteller", "Andaz", "Speak like a master storyteller: suspense, voices and drama, pulling the user into the tale.", 0xFFFF8A65),
+        Emotion("anchor", "News Anchor", "Andaz", "Speak like a prime-time news anchor: crisp, formal, perfectly clear and authoritative.", 0xFF42A5F5),
+        Emotion("rj", "RJ Star", "Andaz", "Speak like a radio RJ: full of life, music in the voice, greeting the audience with energy.", 0xFFEC407A),
+        Emotion("philosopher", "Philosopher", "Andaz", "Speak like a philosopher: deep, calm and questioning, finding meaning in small things.", 0xFF78909C),
     )
-    val families = listOf("Warm", "Joy", "Calm", "Love", "Energy", "Deep")
+    val families = listOf("Warm", "Joy", "Calm", "Love", "Energy", "Deep", "Andaz")
     fun byFamily(f: String) = all.filter { it.family == f }
     fun fromId(id: String?) = all.firstOrNull { it.id == id } ?: all.first()
 

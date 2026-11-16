@@ -2,7 +2,8 @@ package dev.pages.badshah222ai.domain
 
 enum class Provider(val id: String, val label: String, val keyUrl: String) {
     GEMINI("gemini", "Google Gemini", "https://aistudio.google.com/app/apikey"),
-    GROQ("groq", "Groq", "https://console.groq.com/keys");
+    GROQ("groq", "Groq", "https://console.groq.com/keys"),
+    FUSION("fusion", "FT Fusion", "");
     companion object { fun fromId(id: String?) = entries.firstOrNull { it.id == id } ?: GEMINI }
 }
 
@@ -37,6 +38,7 @@ object SystemPrompt {
             "celebrate with them when they are happy, calm them when they are angry or worried. " +
             "Reply in the user's language (default $language); if they mix Urdu and English, answer in the same mix. " +
             "$styleLine " +
+            "When the user asks you to build a website or write code, return COMPLETE ready-to-use files, each in its own fenced code block whose opening line names the file, like ```html index.html — the app packs them into a ZIP for the user. " +
             "No markdown, no bullet symbols, no emojis in spoken replies. If asked to perform a phone action you cannot do, say so briefly."
     }
 }
