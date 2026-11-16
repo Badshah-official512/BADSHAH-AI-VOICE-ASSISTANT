@@ -39,6 +39,8 @@ class PhoneExecutor(private val ctx: Context) {
         PhoneAction.OpenChrome -> if (launchPackage("com.android.chrome") || url("https://www.google.com")) PhoneResult.Done("Opening Chrome.") else PhoneResult.Failed("Could not open a browser.")
         PhoneAction.OpenCamera -> if (launch(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))) PhoneResult.Done("Opening the camera.") else PhoneResult.Failed("No camera app found.")
         PhoneAction.OpenGallery -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))) PhoneResult.Done("Opening your gallery.") else PhoneResult.Failed("No gallery app found.")
+        PhoneAction.OpenVideos -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_VIEW).setType("video/*"))) PhoneResult.Done("Opening your videos.") else PhoneResult.Failed("No video gallery found.")
+        PhoneAction.OpenFiles -> if (launch(Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS)) || launch(Intent(Intent.ACTION_GET_CONTENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE))) PhoneResult.Done("Opening your files.") else PhoneResult.Failed("No file manager found.")
         PhoneAction.PickContact -> PhoneResult.LaunchContactPicker
         is PhoneAction.OpenApp -> openByName(a.appName)
         is PhoneAction.WebSearch -> if (launch(Intent(Intent.ACTION_WEB_SEARCH).putExtra("query", a.query)) || url("https://www.google.com/search?q=" + URLEncoder.encode(a.query, "UTF-8"))) PhoneResult.Done("Searching for ${a.query}.") else PhoneResult.Failed("Could not start a search.")
