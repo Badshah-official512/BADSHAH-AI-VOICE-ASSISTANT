@@ -49,28 +49,33 @@ object DomainLogic {
         eq("no confirm: open youtube", PhoneAction.OpenYouTube.needsConfirmation, false)
         eq("no confirm: alarm", PhoneAction.SetAlarm(7, 0).needsConfirmation, false)
 
-        val voices = listOf(
-            VoiceInfo("en-us-x-iom-local", "en-US", false, 400), VoiceInfo("en-US-language", "en-US", false, 300),
-            VoiceInfo("en-gb-x-rjs-network", "en-GB", true, 400), VoiceInfo("hi-in-x-hid-local", "hi-IN", false, 400),
-            VoiceInfo("ur-pk-x-cfn-local", "ur-PK", false, 300), VoiceInfo("some-male-voice", "en-IN", false, 300),
-            VoiceInfo("some-female-voice", "en-IN", false, 300), VoiceInfo("tts_male#1", "en-AU", false, 300))
-        eq("engine id with 'male' => likely male", VoiceCatalog.guessGender(voices[5]), GenderGuess.LIKELY_MALE)
-        eq("'female' is NOT mistaken for male", VoiceCatalog.guessGender(voices[6]), GenderGuess.LIKELY_FEMALE)
-        eq("'tts_male#1' => likely male", VoiceCatalog.guessGender(voices[7]), GenderGuess.LIKELY_MALE)
-        eq("opaque google code => UNKNOWN (never guessed)", VoiceCatalog.guessGender(voices[0]), GenderGuess.UNKNOWN)
-        eq("male candidates are exactly the labelled ones", VoiceCatalog.maleCandidates(voices).map { it.name }, listOf("some-male-voice", "tts_male#1"))
-        eq("sorted puts likely-male first", VoiceCatalog.sorted(voices).first().name.contains("male"), true)
-        eq("sorted keeps likely-female last", VoiceCatalog.sorted(voices).last().name, "some-female-voice")
-        val sup = VoiceCatalog.languageSupport(voices).associateBy { it.code }
-        eq("English detected", sup["en"]!!.installed, true)
-        eq("Urdu detected", sup["ur"]!!.installed, true)
-        eq("Hindi detected", sup["hi"]!!.installed, true)
-        eq("Pashto reported as NOT installed (not faked)", sup["ps"]!!.installed, false)
-        eq("distinct count excludes unknowns when asked", VoiceCatalog.distinctChoices(voices, false), 2)
-        eq("distinct count with unknowns", VoiceCatalog.distinctChoices(voices, true), 7)
-        eq("6 style presets, first is untouched natural", VoiceCatalog.styles.first().let { it.id to it.pitch }, "natural" to 1.0f)
-        eq("deep is lower pitched than natural", VoiceCatalog.styles.first { it.id == "deep" }.pitch < 1.0f, true)
-        eq("all pitches within TTS-safe range", VoiceCatalog.styles.all { it.pitch in 0.5f..2.0f && it.speed in 0.5f..2.0f }, true)
+        eq("open my videos", p("open my videos"), PhoneAction.OpenVideos)
+        eq("roman urdu videos", p("meri videos kholo"), PhoneAction.OpenVideos)
+        eq("open files", p("open files"), PhoneAction.OpenFiles)
+        eq("downloads kholo", p("downloads kholo"), PhoneAction.OpenFiles)
+
+        // ---- Gemini Live voices (the real human voices) ----
+        eq("30 live voices in total", LiveVoices.all.size, 30)
+        eq("14 male live voices", LiveVoices.male.size, 14)
+        eq("16 female live voices", LiveVoices.female.size, 16)
+        eq("every live voice has a style", LiveVoices.all.all { it.style.isNotBlank() }, true)
+        eq("male list has no female voice", LiveVoices.male.none { it.female }, true)
+        eq("female list is all female", LiveVoices.female.all { it.female }, true)
+        eq("live voice lookup by name", LiveVoices.fromName("aoede").name, "Aoede")
+        eq("live voice lookup unknown falls back to first male", LiveVoices.fromName("nope"), LiveVoices.male.first())
+        eq("voice info keeps engine data", VoiceInfo("en-us-x-iom-local", "en-US", false, 400).localeTag, "en-US")
+
+        // ---- new emotions ----
+        eq("30 emotions", Emotions.all.size, 30)
+        eq("6 emotion families", Emotions.families.size, 6)
+        eq("every family has emotions", Emotions.families.all { Emotions.byFamily(it).isNotEmpty() }, true)
+        eq("emotion lookup fallback is warm", Emotions.fromId("nope").id, "warm")
+        eq("sad words => comforting", Emotions.detect("i am sad today").id, "comforting")
+        eq("gussa => calm", Emotions.detect("mujhe gussa aa raha hai").id, "calm")
+        eq("shukriya => grateful", Emotions.detect("shukriya bhai").id, "grateful")
+        eq("success => celebratory", Emotions.detect("ho gaya kaam").id, "celebratory")
+        eq("neend => sleepy", Emotions.detect("mujhe neend aa rahi hai").id, "sleepy")
+        eq("plain text => warm", Emotions.detect("what is the capital of France").id, "warm")
         eq("provider lookup falls back to Gemini", Provider.fromId("nonsense"), Provider.GEMINI)
         eq("provider lookup groq", Provider.fromId("groq"), Provider.GROQ)
     }
