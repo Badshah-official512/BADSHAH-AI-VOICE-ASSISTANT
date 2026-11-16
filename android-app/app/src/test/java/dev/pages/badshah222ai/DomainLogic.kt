@@ -83,11 +83,11 @@ object DomainLogic {
         eq("fusion image models are uni and astra", dev.pages.badshah222ai.data.ai.FtFusion.IMAGE_MODELS, listOf("fusion-uni", "fusion-astra"))
         eq("provider lookup falls back to Gemini", Provider.fromId("nonsense"), Provider.GEMINI)
         eq("provider lookup groq", Provider.fromId("groq"), Provider.GROQ)
+        eq("battery", p("battery kitni hai"), PhoneAction.DeviceInfo("battery"))
+        eq("storage", p("storage kitna hai"), PhoneAction.DeviceInfo("storage"))
+        eq("time", p("time kya hai"), PhoneAction.DeviceInfo("time"))
+        eq("vol-up", p("volume barhao"), PhoneAction.Volume("up"))
+        eq("vol-down", p("awaz kam karo"), PhoneAction.Volume("down"))
+        eq("screen", p("meri screen dekho"), PhoneAction.OpenScreen)
     }
 }
-    eq("battery", p("battery kitni hai"), PhoneAction.DeviceInfo("battery"))
-    eq("storage", p("storage kitna hai"), PhoneAction.DeviceInfo("storage"))
-    eq("time", p("time kya hai"), PhoneAction.DeviceInfo("time"))
-    eq("vol-up", p("volume barhao"), PhoneAction.Volume("up"))
-    eq("vol-down", p("awaz kam karo"), PhoneAction.Volume("down"))
-    eq("screen", p("meri screen dekho"), PhoneAction.OpenScreen)
