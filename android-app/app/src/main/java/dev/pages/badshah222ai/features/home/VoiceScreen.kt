@@ -14,6 +14,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -145,6 +146,11 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     var burst by remember { mutableStateOf(0) }
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Ink, Panel2, Ink))).statusBarsPadding().navigationBarsPadding()) {
         AmbientLights(Modifier.fillMaxSize())
+        // MYRA-style edge glow: the whole screen rim lights up while the assistant is listening.
+        val glowOn = if (liveMode) liveState == dev.pages.badshah222ai.data.voice.LiveSession.State.Listening else classicState == CharState.Listening
+        if (glowOn) {
+            Box(Modifier.fillMaxSize().border(3.dp, Violet.copy(alpha = 0.45f + 0.3f * kotlin.math.abs(kotlin.math.sin(spin * Math.PI / 180.0)).toFloat()), RoundedCornerShape(28.dp)))
+        }
         Canvas(Modifier.fillMaxSize()) {
             stars.forEach { (p, a) ->
                 val y = (p.y + drift * (0.03f + a * 0.06f)) % 1f

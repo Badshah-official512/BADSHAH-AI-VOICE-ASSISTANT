@@ -258,6 +258,21 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     fun replay(text: String) { c.tts.stop(); viewModelScope.launch { c.tts.speak(text) } }
     private fun add(m: ChatMessage) { messages.value = messages.value + m; if (uid.isNotEmpty()) c.chats.save(uid, messages.value) }
 
+    /** Chat attachment (MYRA-style): the user sends a photo, Gemini Vision describes it in chat. */
+    fun askPhoto(jpeg: ByteArray) {
+        add(ChatMessage("user", "📷 Maine ek photo bheji hai — is mein kya hai?"))
+        viewModelScope.launch {
+            busy.value = true
+            try {
+                val b64 = android.util.Base64.encodeToString(jpeg, android.util.Base64.NO_WRAP)
+                val r = c.ai.vision("User ne ye photo bheji hai. Is mein jo kuch hai tafseel se batao — cheezein, log, mahaul — aur agar koi text hai to wo bhi parh kar batao.", b64)
+                reply(r.text)
+            } catch (e: AiException) { reply(e.userMessage) }
+            catch (e: Exception) { reply("Photo parhne mein masla aya, Boss.") }
+            finally { busy.value = false }
+        }
+    }
+
     private suspend fun syncToCloud(userText: String, r: AiReply) {
         if (uid.isEmpty()) return
         runCatching {
@@ -383,7 +398,7 @@ private fun HeroPortrait(girl: Boolean, avatarChoice: String, assistantName: Str
         Box(Modifier.size(254.dp).border(1.dp, accent.copy(alpha = 0.45f), CircleShape))
         Image(painterResource(heroRes), assistantName, Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape).clickable { burst++ }, contentScale = ContentScale.Crop)
         TapLightBurst(burst, rgb, Modifier.size(254.dp))
-        Text(if (girl) "Hi, I'm\nAISHA" else "Hi, I'm\n$assistantName", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        Text(if (girl) "Hi, I'm\nRANI" else "Hi, I'm\n$assistantName", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         Text("Always\nhere for you", Modifier.align(Alignment.CenterEnd).padding(end = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
     }
 }
