@@ -4,6 +4,7 @@ package dev.pages.badshah222ai.domain
 sealed class PhoneAction {
     data class OpenApp(val appName: String) : PhoneAction()
     object OpenYouTube : PhoneAction()
+    object OpenScreen : PhoneAction()
     object OpenWhatsApp : PhoneAction()
     object OpenChrome : PhoneAction()
     object OpenCamera : PhoneAction()

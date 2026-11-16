@@ -50,6 +50,9 @@ object CommandParser {
         if (Regex("\\b(videos?|movies?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|lagao|dikhao|play|watch)\\b").containsMatchIn(l)) return PhoneAction.OpenVideos
         if (Regex("\\b(files?|downloads?|file manager|documents?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|dikhao|show)\\b").containsMatchIn(l)) return PhoneAction.OpenFiles
 
+        // ---- screen share: "meri screen dekho / screen share karo" ----
+        if (l.contains("screen") && (l.contains("share") || l.contains("dekho") || l.contains("dikhao") || l.contains("dekh") || l.contains("show"))) return PhoneAction.OpenScreen
+
         // ---- the assistant's own browser: anything mentioning "browser" opens it in-app ----
         if (l.contains("browser")) {
             val q = l.replace(Regex("\\b(browser|kholo|khol|open|mein|par|pe|search|karo|kar|do|chalao|the|app|mera|meri|apna)\\b"), " ")
