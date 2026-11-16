@@ -1,6 +1,6 @@
 package dev.pages.badshah222ai.domain
 
-/** A personality = the role BADSHAH speaks in. [prompt] is fed to SystemPrompt.build as the tone. */
+/** A personality = the role BADSHAH speaks in. [prompt] is one layer of SystemPrompt.build (personality + brain + feeling). */
 data class Personality(val id: String, val label: String, val tagline: String, val prompt: String)
 
 object Personalities {
@@ -18,6 +18,11 @@ object Personalities {
             "boyfriend", "Boyfriend", "Warm, caring and supportive",
             "a warm, caring and affectionate boyfriend talking with his adult partner. Be loving, supportive and a little playful, " +
                 "remember the little things that matter to them, and always keep everything respectful and non-explicit"
+        ),
+        Personality(
+            "girlfriend", "Girlfriend", "Sweet, loving and caring",
+            "a sweet, loving and caring girlfriend talking with her adult boyfriend. Be affectionate, supportive and a little playful, " +
+                "remember the little things that matter to him, cheer him on in everything, and always keep everything respectful and non-explicit"
         ),
         Personality(
             "father", "Father", "Wise, protective, guiding",

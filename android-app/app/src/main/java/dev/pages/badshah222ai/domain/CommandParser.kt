@@ -18,6 +18,12 @@ object CommandParser {
         parseTimer(l)?.let { return it }
         parseAlarm(l)?.let { return it }
 
+        // ---- flashlight / torch ----
+        if (Regex("\\b(flash ?light|torch)\\b").containsMatchIn(l)) {
+            val off = Regex("\\b(off|band|close|stop|bujha)\\b").containsMatchIn(l)
+            return PhoneAction.Flashlight(!off)
+        }
+
         // ---- messages: whatsapp / sms ----
         Regex("^(?:send (?:a |an )?)?(?:whatsapp|whats app)(?: message| msg)?(?: to)? (.+?)(?: (?:saying|that says|that|message|msg)|:) (.+)$").find(l)?.let {
             return PhoneAction.WhatsAppMessage(cleanName(it.groupValues[1]), original(t, it.groupValues[2]))
