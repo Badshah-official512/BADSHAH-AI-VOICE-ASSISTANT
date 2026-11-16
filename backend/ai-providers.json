@@ -1,0 +1,291 @@
+{
+  "gateway": {
+    "authHeader": "x-gateway-secret: <GATEWAY_SECRET>",
+    "baseUrl": "https://aghlacmqlagmigoznxlm.supabase.co/functions/v1/ai-api",
+    "byokPassthrough": "Any route accepts body.userKey — the caller's own provider key, used for that request only, never stored.",
+    "routes": [
+      "GET /health",
+      "POST /chat",
+      "POST /image",
+      "POST /vision",
+      "POST /file",
+      "POST /tts",
+      "POST /stt",
+      "POST /video",
+      "POST /video/status",
+      "POST /browse"
+    ],
+    "runtime": "Supabase Edge Function (Deno) — backend/supabase/functions/ai-api/"
+  },
+  "providers": [
+    {
+      "chat": {
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<key>"
+        },
+        "method": "POST",
+        "streamUrl": "https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+      },
+      "defaultModel": "gemini-2.5-flash",
+      "health": {
+        "method": "GET",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1"
+      },
+      "id": "gemini",
+      "name": "Google Gemini (text, vision, files, STT, Live models)",
+      "secret": "GEMINI_API_KEY",
+      "tier": "free-tier (AI Studio key, rate-limited) / paid above quota",
+      "verified": "Endpoint + error format verified live 2026-11-16 (403 PERMISSION_DENIED without a key). Success test runs via /health once GEMINI_API_KEY is set on the backend."
+    },
+    {
+      "chat": {
+        "headers": {
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+          "x-api-key": "<key>"
+        },
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages"
+      },
+      "defaultModel": "claude-sonnet-4-5",
+      "health": {
+        "method": "GET",
+        "url": "https://api.anthropic.com/v1/models"
+      },
+      "id": "claude",
+      "name": "Anthropic Claude Messages API",
+      "secret": "ANTHROPIC_API_KEY",
+      "tier": "PAID — Anthropic has no free API tier",
+      "verified": "Endpoint + error format verified live 2026-11-16 (401 authentication_error 'invalid x-api-key'). Success test requires a paid key."
+    },
+    {
+      "chat": {
+        "headers": {
+          "authorization": "Bearer <key>",
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions"
+      },
+      "defaultModel": "llama-3.3-70b-versatile",
+      "health": {
+        "method": "GET",
+        "url": "https://api.groq.com/openai/v1/models"
+      },
+      "id": "groq",
+      "name": "Groq Chat Completions + Whisper STT",
+      "secret": "GROQ_API_KEY",
+      "stt": {
+        "body": "multipart form: file + model=whisper-large-v3-turbo",
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions"
+      },
+      "tier": "free-tier (developer keys, rate-limited)",
+      "verified": "Endpoint + error format verified live 2026-11-16 (invalid_api_key JSON). Success test via /health once GROQ_API_KEY is set.",
+      "tts": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/speech",
+        "body": {
+          "model": "canopylabs/orpheus-v1-english",
+          "voice": "tara",
+          "response_format": "wav"
+        },
+        "note": "Orpheus voices are English/Arabic per Groq docs — do not assume Urdu/Pashto."
+      }
+    },
+    {
+      "chat": {
+        "headers": {
+          "authorization": "Bearer <key>",
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions"
+      },
+      "defaultModel": "meta-llama/llama-3.3-70b-instruct:free",
+      "health": {
+        "method": "GET",
+        "url": "https://openrouter.ai/api/v1/models"
+      },
+      "id": "openrouter",
+      "name": "OpenRouter (free :free models — Llama, DeepSeek, Qwen…)",
+      "secret": "OPENROUTER_API_KEY",
+      "tier": "free-tier models with a free account key",
+      "verified": "VERIFIED LIVE 2026-11-16: models list returned 200 — 469 models, 14 free at test time."
+    },
+    {
+      "chat": {
+        "method": "GET",
+        "url": "https://ft-fusion.shehryarteam8876.workers.dev/ft/api?key=<key>&model={model}&q={prompt}"
+      },
+      "id": "fusion",
+      "image": {
+        "method": "GET",
+        "url": "same endpoint with model=fusion-uni or fusion-astra"
+      },
+      "name": "FT Fusion (owner's own gateway — chat, coding, images)",
+      "secret": "FT_FUSION_KEY (optional override; built-in default exists by owner's instruction)",
+      "tier": "owner-operated, no per-call cost to the owner",
+      "verified": "IMAGE verified live 2026-11-16 (real image URL returned). TEXT still returns the gateway's own error 'Session issue. Please send your message again.' as of 2026-11-16 22:57 PKT — that is the FT server side, not this integration."
+    },
+    {
+      "chat": {
+        "method": "GET",
+        "url": "https://text.pollinations.ai/{urlencoded-prompt}?model=openai-fast"
+      },
+      "id": "pollinations",
+      "image": {
+        "method": "GET (URL renders the image)",
+        "url": "https://image.pollinations.ai/prompt/{urlencoded-prompt}?width=1024&height=1024&nologo=true"
+      },
+      "name": "Pollinations (free text + images, no key; video needs a free account key)",
+      "secret": null,
+      "tier": "free",
+      "verified": "VERIFIED LIVE 2026-11-16 (gen.pollinations.ai): chat completions answered with NO key; image returned a real 445 KB flux JPEG with NO key. VIDEO endpoint verified too but returns 401 without an API key (free account key at enter.pollinations.ai/keys; cost per their live catalog). Audio is NOT free (openai-audio not on the free Classic API, tested 404).",
+      "genApi": {
+        "chat": {
+          "method": "POST",
+          "url": "https://gen.pollinations.ai/v1/chat/completions",
+          "note": "OpenAI-compatible; key optional (raises limits)"
+        },
+        "video": {
+          "method": "GET",
+          "url": "https://gen.pollinations.ai/video/{prompt}?model=wan-fast",
+          "note": "API key REQUIRED (401 verified)"
+        }
+      }
+    },
+    {
+      "defaultModel": "black-forest-labs/FLUX.1-schnell",
+      "health": {
+        "method": "GET",
+        "url": "https://huggingface.co/api/whoami-v2"
+      },
+      "id": "huggingface",
+      "image": {
+        "body": {
+          "inputs": "<prompt>"
+        },
+        "headers": {
+          "authorization": "Bearer <token>",
+          "content-type": "application/json"
+        },
+        "method": "POST",
+        "response": "raw image bytes",
+        "url": "https://router.huggingface.co/hf-inference/models/{model}"
+      },
+      "name": "Hugging Face Inference (image generation)",
+      "secret": "HF_TOKEN",
+      "tier": "free-tier with a free account token (rate-limited)",
+      "verified": "Endpoint verified live 2026-11-16 (401 without a token). Success test via /health once HF_TOKEN is set."
+    },
+    {
+      "id": "google-tts",
+      "name": "Google Cloud Text-to-Speech",
+      "secret": "GOOGLE_TTS_KEY (falls back to GEMINI_API_KEY)",
+      "tier": "free monthly quota, then paid (needs a Google Cloud API key)",
+      "tts": {
+        "headers": {
+          "content-type": "application/json",
+          "x-goog-api-key": "<key>"
+        },
+        "method": "POST",
+        "url": "https://texttospeech.googleapis.com/v1/text:synthesize"
+      },
+      "verified": "Endpoint verified live 2026-11-16 (403 'unregistered callers' without a key)."
+    },
+    {
+      "health": {
+        "method": "GET",
+        "url": "https://api.elevenlabs.io/v1/voices"
+      },
+      "id": "elevenlabs",
+      "name": "ElevenLabs TTS",
+      "secret": "ELEVENLABS_API_KEY",
+      "tier": "free-tier (10k characters/month) / paid above",
+      "tts": {
+        "headers": {
+          "content-type": "application/json",
+          "xi-api-key": "<key>"
+        },
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/{voiceId}"
+      },
+      "verified": "Account connected 2026-11-09; quota nearly exhausted until 2026-12-09 reset (9,873 / 10,000 characters used)."
+    },
+    {
+      "connect": {
+        "method": "WebSocket",
+        "url": "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=<key>"
+      },
+      "id": "gemini-live",
+      "name": "Gemini Live (real-time voice, WebSocket)",
+      "secret": "GEMINI_API_KEY (used by the app directly — an HTTP edge function cannot proxy a WebSocket)",
+      "tier": "free-tier with AI Studio key (rate-limited)",
+      "verified": "Models for the owner's key list correctly; session setup for gemini-3.1-flash-live-preview was rejected by Google (close 1007 'invalid argument') on 2026-11-16 — the app now retries setup variants + v1alpha automatically. Final on-device confirmation pending."
+    },
+    {
+      "defaultModel": "veo-3.0-generate-001",
+      "id": "veo-video",
+      "name": "Google Veo (video generation via Gemini API)",
+      "secret": "GEMINI_API_KEY",
+      "tier": "PAID — no free video-generation tier exists in any official REST API",
+      "verified": "Adapter implemented from the official API shape; NOT success-tested (paid). Self-hosted alternative: Wan2.2 / LTX-Video / CogVideo behind backend/self-hosted/ when a GPU server exists.",
+      "video": {
+        "headers": {
+          "x-goog-api-key": "<key>"
+        },
+        "method": "POST",
+        "poll": "GET https://generativelanguage.googleapis.com/v1beta/{operationName}",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:predictLongRunning"
+      }
+    },
+    {
+      "contract": "POST {BROWSER_ENGINE_URL}/browse {url, task} → {result}; GET {BROWSER_ENGINE_URL}/health. Adapter skeleton: backend/self-hosted/server.js",
+      "id": "browser-engine",
+      "name": "Browser automation (browser-use / Playwright / Skyvern)",
+      "secret": "BROWSER_ENGINE_URL (base URL of the self-hosted server)",
+      "tier": "SELF-HOSTED — these are server programs, not hosted APIs (per the owner's rule: never assume a repo is a hosted API)",
+      "verified": "Not deployed — needs a server. The Android app already ships its own in-app browser (WebView) meanwhile."
+    },
+    {
+      "id": "cloudflare",
+      "name": "Cloudflare Workers AI (chat LLMs, FLUX images, embeddings)",
+      "secret": "CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN",
+      "tier": "free daily Neuron allocation on the owner's Cloudflare account, then pay-as-you-go",
+      "chat": {
+        "method": "POST",
+        "url": "https://api.cloudflare.com/client/v4/accounts/{accountId}/ai/v1/chat/completions",
+        "headers": {
+          "authorization": "Bearer <token>",
+          "content-type": "application/json"
+        },
+        "note": "OpenAI-compatible endpoint"
+      },
+      "image": {
+        "method": "POST",
+        "url": "https://api.cloudflare.com/client/v4/accounts/{accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell",
+        "response": "{result:{image: base64 jpeg}}"
+      },
+      "verified": "Not yet tested — needs the owner's Cloudflare Account ID + a Workers AI API token set as backend secrets; /health will verify live."
+    },
+    {
+      "id": "gemini-tts",
+      "name": "Gemini TTS (generateContent with AUDIO modality, Live voice names)",
+      "secret": "GEMINI_API_KEY",
+      "tier": "free-tier with AI Studio key (rate-limited)",
+      "tts": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        "defaultModel": "gemini-2.5-flash-preview-tts",
+        "note": "Returns raw PCM audio (audio/L16, 24kHz) in parts[].inlineData — play via AudioTrack."
+      },
+      "verified": "Adapter implemented on the verified Gemini endpoint; success via a key-backed call after GEMINI_API_KEY is set."
+    }
+  ],
+  "service": "badshah-ai-api",
+  "transport": "Direct HTTP REST only. No CLI tools, no terminal auth, no interactive logins.",
+  "version": 1
+}
