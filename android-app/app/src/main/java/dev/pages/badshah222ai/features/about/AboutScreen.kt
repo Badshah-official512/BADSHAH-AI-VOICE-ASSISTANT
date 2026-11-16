@@ -45,6 +45,9 @@ fun AboutScreen(onBack: () -> Unit) {
         TopBar("About BADSHAH AI", onBack)
         LazyColumn(Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             item {
+                Image(painterResource(R.drawable.hero_banner), "BADSHAH AI — Chat. Create. Imagine.", Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(20.dp)), contentScale = ContentScale.Crop)
+            }
+            item {
                 HorizontalPager(pager, Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(20.dp))) { i ->
                     Image(painterResource(IMAGES[i]), "BADSHAH photo ${i + 1}", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 }
@@ -54,6 +57,9 @@ fun AboutScreen(onBack: () -> Unit) {
                 Text("BADSHAH AI", style = MaterialTheme.typography.headlineMedium, color = Gold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("YOUR PERSONAL AI VOICE ASSISTANT", style = MaterialTheme.typography.labelLarge, color = Mute, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 Text("BADSHAH AI is a voice-first personal assistant created by BADSHAH. Talk to it, ask anything, and let it open your apps, prepare calls and messages, set alarms and timers, all with the AI provider and the voice you choose. Your keys stay on your phone.", Modifier.padding(top = 12.dp), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onBackground)
+            }
+            item {
+                Image(painterResource(R.drawable.about_creator), "About the creator — Zain Ullah Shah, Founder of BADSHAH AI", Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(20.dp)), contentScale = ContentScale.Crop)
             }
             item { Text("Follow BADSHAH", style = MaterialTheme.typography.titleMedium, color = Gold) }
             items(SOCIALS) { s ->
