@@ -65,11 +65,27 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val needPermission = MutableStateFlow<Pair<String, String>?>(null)
     val pickContact = MutableStateFlow(false)
     val working = MutableStateFlow(false)
-    val feeling = MutableStateFlow(Feelings.fromId("warm"))
+    val emotion = MutableStateFlow(Emotions.fromId("warm"))
     val lowPower get() = c.store.lowPower
-    /** GF mode: a girls voice mode or the Girlfriend personality swaps the hero to the girl assistant. */
-    val girlMode: Boolean get() = c.store.personalityId == "girlfriend" || VoiceModes.fromId(c.store.voiceModeId)?.female == true
+    /** The girl assistant (AISHA) is the face when the user picked the girl avatar, or the Girlfriend personality. */
+    val girlMode: Boolean get() = c.store.avatarChoice == "girl" || c.store.personalityId == "girlfriend"
+    val assistantName: String get() = c.store.assistantName
+    val avatarChoice: String get() = c.store.avatarChoice
     val listening = c.speech.listening; val micLevel = c.speech.level; val speaking = c.tts.speaking
+
+    // ---- Gemini Live (real human voice) ----
+    val live = c.live
+    val liveFallback = MutableStateFlow<String?>(null)
+    fun liveAvailable(): Boolean = c.store.liveEnabled && c.store.apiKey(Provider.GEMINI) != null
+    fun startLiveSession() {
+        liveFallback.value = null
+        viewModelScope.launch {
+            if (c.store.liveModel == null) c.ai.detectLiveModel()
+            val emo = c.store.emotionId?.let { Emotions.fromId(it) } ?: emotion.value
+            c.live.start(c.ai.systemPrompt(emo.style))
+        }
+    }
+    fun stopLiveSession() = c.live.stop()
     private var convoId: String? = null
     private var lastAction: PhoneAction? = null
 
@@ -77,7 +93,24 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         when { e != null -> CharState.Error; l -> CharState.Listening; b -> CharState.Thinking; w -> CharState.Working; s -> CharState.Speaking; else -> CharState.Idle }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CharState.Idle)
 
-    init { if (uid.isNotEmpty()) messages.value = c.chats.load(uid) }
+    init {
+        if (uid.isNotEmpty()) messages.value = c.chats.load(uid)
+        c.live.onTurn = { u, a ->
+            if (c.store.emotionId == null && u.isNotEmpty()) emotion.value = Emotions.detect(u)
+            if (u.isNotEmpty()) add(ChatMessage("user", u))
+            if (a.isNotEmpty()) {
+                add(ChatMessage("assistant", a))
+                if (uid.isNotEmpty()) viewModelScope.launch {
+                    runCatching {
+                        val id = convoId ?: c.cloud.createConversation(uid, u, "gemini", c.store.liveModel ?: "live").also { convoId = it }
+                        c.cloud.addMessage(uid, id, "user", u, null, null)
+                        c.cloud.addMessage(uid, id, "assistant", a, "gemini", c.store.liveModel ?: "live")
+                    }
+                }
+            }
+        }
+        c.live.onUnavailable = { reason -> liveFallback.value = reason }
+    }
 
     fun startListening() {
         error.value = null; c.tts.stop(); partial.value = ""; status.value = "Listening..."
@@ -95,14 +128,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             busy.value = true; status.value = "Thinking..."
             try {
-                val feel = c.store.feelingId?.let { Feelings.fromId(it) } ?: Feelings.detect(t)
-                feeling.value = feel
-                val reply = c.ai.chat(
-                    messages.value,
-                    Personalities.fromId(c.store.personalityId).prompt,
-                    Brains.fromId(c.store.brainId).prompt,
-                    feel.prompt,
-                )
+                val emo = c.store.emotionId?.let { Emotions.fromId(it) } ?: Emotions.detect(t)
+                emotion.value = emo
+                val reply = c.ai.chat(messages.value, emo.style)
                 add(ChatMessage("assistant", reply.text)); status.value = "Speaking..."
                 syncToCloud(t, reply)
                 busy.value = false
@@ -136,8 +164,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private fun reply(text: String) { add(ChatMessage("assistant", text)); status.value = text; viewModelScope.launch { speak(text) } }
     private suspend fun speak(text: String) {
         if (!c.store.speakReplies) return
-        val f = feeling.value
-        c.tts.speak(text, null, f.pitchMul, f.speedMul)?.let { warn -> status.value = warn }
+        c.tts.speak(text)?.let { warn -> status.value = warn }
     }
     /** Speak one message aloud on demand (the speaker button on a chat bubble). */
     fun replay(text: String) { c.tts.stop(); viewModelScope.launch { c.tts.speak(text) } }
@@ -196,7 +223,7 @@ fun ActionDialogs(vm: HomeViewModel) {
 fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> Unit) {
     val state by vm.charState.collectAsState(); val level by vm.micLevel.collectAsState()
     val status by vm.status.collectAsState(); val partial by vm.partial.collectAsState()
-    val feeling by vm.feeling.collectAsState()
+    val emotion by vm.emotion.collectAsState()
     val maintenance by session.maintenance.collectAsState(); val announcements by session.announcements.collectAsState(); val cloud by session.cloudReady.collectAsState()
     var text by remember { mutableStateOf("") }
 
@@ -213,19 +240,18 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
         }
         maintenance?.let { Banner(it, Bad) }
         announcements.firstOrNull()?.let { Banner("${it.first}: ${it.second}", Blue) }
-        if (!cloud) Banner("Cloud sync is off (chat is saved on this phone). See Help > Troubleshooting.", Mute)
 
-        HeroPortrait(vm.girlMode, feeling.composeColor, vm.lowPower)
+        HeroPortrait(vm.girlMode, vm.avatarChoice, vm.assistantName, emotion.composeColor, vm.lowPower)
 
         Text(stateLabel(state, status, partial), Modifier.fillMaxWidth().padding(horizontal = 24.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = if (state == CharState.Error) Bad else Mute, maxLines = 2)
 
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
             Row(
-                Modifier.clip(RoundedCornerShape(50)).background(Panel.copy(alpha = 0.85f)).border(1.dp, feeling.composeColor.copy(alpha = 0.55f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 4.dp),
+                Modifier.clip(RoundedCornerShape(50)).background(Panel.copy(alpha = 0.85f)).border(1.dp, emotion.composeColor.copy(alpha = 0.55f), RoundedCornerShape(50)).padding(horizontal = 10.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(feeling.composeColor))
-                Text("Feeling · ${feeling.label}", style = MaterialTheme.typography.labelMedium, color = feeling.composeColor)
+                Box(Modifier.size(8.dp).clip(CircleShape).background(emotion.composeColor))
+                Text("Emotion · ${emotion.label}", style = MaterialTheme.typography.labelMedium, color = emotion.composeColor)
             }
         }
 
@@ -253,18 +279,23 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
 }
 
 @Composable
-private fun HeroPortrait(girl: Boolean, accent: Color, lowPower: Boolean) {
+private fun HeroPortrait(girl: Boolean, avatarChoice: String, assistantName: String, accent: Color, lowPower: Boolean) {
     val transition = rememberInfiniteTransition(label = "hero")
     val floatY by transition.animateFloat(-6f, 6f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "float")
     val rgb = rememberRgbColor()
     var burst by remember { mutableStateOf(0) }
+    val heroRes = when {
+        girl -> R.drawable.girl_assistant
+        avatarChoice == "logo" -> R.drawable.ic_launcher_fg
+        else -> R.drawable.badshah_cutout
+    }
     Box(Modifier.fillMaxWidth().height(248.dp), contentAlignment = Alignment.Center) {
         Box(Modifier.size(240.dp).clip(CircleShape).background(Brush.radialGradient(listOf(rgb.copy(alpha = 0.35f), Color.Transparent))))
         Box(Modifier.size(230.dp).border(1.5.dp, rgb.copy(alpha = 0.65f), CircleShape))
         Box(Modifier.size(254.dp).border(1.dp, accent.copy(alpha = 0.45f), CircleShape))
-        Image(painterResource(if (girl) R.drawable.girl_assistant else R.drawable.badshah_cutout), if (girl) "AI assistant" else "BADSHAH", Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape).clickable { burst++ }, contentScale = ContentScale.Crop)
+        Image(painterResource(heroRes), assistantName, Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape).clickable { burst++ }, contentScale = ContentScale.Crop)
         TapLightBurst(burst, rgb, Modifier.size(254.dp))
-        Text(if (girl) "Hi, I'm\nAISHA" else "Hi, I'm\nBADSHAH", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        Text(if (girl) "Hi, I'm\nAISHA" else "Hi, I'm\n$assistantName", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
         Text("Always\nhere for you", Modifier.align(Alignment.CenterEnd).padding(end = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
     }
 }

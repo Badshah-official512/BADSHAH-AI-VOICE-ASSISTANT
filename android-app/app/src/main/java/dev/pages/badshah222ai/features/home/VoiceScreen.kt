@@ -12,6 +12,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,13 +28,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import dev.pages.badshah222ai.R
+import dev.pages.badshah222ai.data.voice.LiveSession
 import dev.pages.badshah222ai.ui.character.CharState
 import dev.pages.badshah222ai.ui.orb.VoiceOrb
 import dev.pages.badshah222ai.ui.theme.*
@@ -41,33 +46,87 @@ import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 /**
- * The full-screen voice conversation, modelled on the reference app's call screen:
- * a black-hole orb, "BADSHAH is listening / thinking / speaking", and
- * Mute / End / Minimize controls. Listening genuinely continues if you minimize,
- * because the speech engine lives in the shared HomeViewModel.
+ * The full-screen voice call. Primary engine: Gemini Live — a real-time conversation
+ * in a natural human voice, with the assistant's logo/avatar inside the orb.
+ * If Live is unavailable for this phone/key, it quietly falls back to the classic
+ * listen → think → speak mode and says so once, instead of looping errors.
  */
 @Composable
 fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
     val ctx = LocalContext.current
-    val state by vm.charState.collectAsState(); val level by vm.micLevel.collectAsState()
+    val classicState by vm.charState.collectAsState(); val classicLevel by vm.micLevel.collectAsState()
     val partial by vm.partial.collectAsState()
+    val liveState by vm.live.state.collectAsState(); val liveLevel by vm.live.level.collectAsState()
+    val liveUser by vm.live.userText.collectAsState(); val liveAssistant by vm.live.assistantText.collectAsState()
+    val liveError by vm.live.error.collectAsState(); val muted by vm.live.muted.collectAsState()
+    val fallback by vm.liveFallback.collectAsState()
 
-    val micPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) vm.startListening() else vm.status.value = "Microphone permission denied. Open Permissions to enable it." }
+    var liveMode by remember { mutableStateOf(vm.liveAvailable()) }
+    var started by remember { mutableStateOf(false) }
+
+    fun begin() {
+        if (started) return; started = true
+        if (liveMode) vm.startLiveSession() else vm.startListening()
+    }
+    val micPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok) begin() else vm.status.value = "Microphone permission denied. Open Permissions to enable it."
+    }
     LaunchedEffect(Unit) {
-        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            if (state == CharState.Idle) vm.startListening()
-        } else micPerm.launch(Manifest.permission.RECORD_AUDIO)
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) begin()
+        else micPerm.launch(Manifest.permission.RECORD_AUDIO)
+    }
+    // Live could not run → switch to classic mode once, no error loop.
+    LaunchedEffect(fallback) {
+        if (fallback != null && liveMode) {
+            liveMode = false
+            vm.status.value = fallback!!
+            if (started) vm.startListening()
+        }
+    }
+    // Classic mode only: quietly recover from a dropped recognizer (a few times at most).
+    var autoRetries by remember { mutableStateOf(0) }
+    LaunchedEffect(classicState, liveMode) {
+        if (!liveMode && classicState == CharState.Error) {
+            if (autoRetries < 3) { delay(1800); autoRetries++; vm.dismissError(); vm.startListening() }
+        } else autoRetries = 0
     }
 
-    // A call must never sit stranded on "Something went wrong": if listening drops into an
-    // error, quietly recover and start listening again (a few times at most).
-    var autoRetries by remember { mutableStateOf(0) }
-    LaunchedEffect(state) {
-        if (state == CharState.Error) {
-            if (autoRetries < 3) {
-                delay(1800); autoRetries++; vm.dismissError(); vm.startListening()
-            }
-        } else autoRetries = 0
+    val orbState = if (liveMode) when (liveState) {
+        LiveSession.State.Connecting -> CharState.Thinking
+        LiveSession.State.Listening -> CharState.Listening
+        LiveSession.State.Thinking -> CharState.Thinking
+        LiveSession.State.Speaking -> CharState.Speaking
+        LiveSession.State.Error -> CharState.Error
+        LiveSession.State.Idle -> CharState.Idle
+    } else classicState
+    val orbLevel = if (liveMode) liveLevel else classicLevel
+    val name = vm.assistantName
+    val statusText = if (liveMode) when (liveState) {
+        LiveSession.State.Connecting -> "Connecting…"
+        LiveSession.State.Listening -> "$name is listening…"
+        LiveSession.State.Thinking -> "$name is thinking…"
+        LiveSession.State.Speaking -> "$name is speaking…"
+        LiveSession.State.Error -> liveError ?: "Live voice stopped"
+        LiveSession.State.Idle -> "$name is ready"
+    } else when (classicState) {
+        CharState.Listening -> "$name is listening…"
+        CharState.Thinking -> "$name is thinking…"
+        CharState.Speaking -> "$name is speaking…"
+        CharState.Working -> "$name is working…"
+        CharState.Error -> "Something went wrong"
+        CharState.Idle -> "$name is ready"
+    }
+    val transcript = if (liveMode) {
+        when {
+            liveAssistant.isNotEmpty() -> liveAssistant
+            liveUser.isNotEmpty() -> "You: $liveUser"
+            else -> ""
+        }
+    } else partial
+    val avatarRes = when {
+        vm.girlMode -> R.drawable.girl_assistant
+        vm.avatarChoice == "logo" -> R.drawable.ic_launcher_fg
+        else -> R.drawable.badshah_cutout
     }
 
     val stars = remember { List(70) { Offset(Random.nextFloat(), Random.nextFloat()) to Random.nextFloat() } }
@@ -86,34 +145,33 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
         }
         Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("BADSHAH", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                Text(name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Spacer(Modifier.weight(1f))
                 IconButton(onBack) { Icon(Icons.Default.KeyboardArrowDown, "Minimize") }
             }
             Spacer(Modifier.weight(0.7f))
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 TapLightBurst(burst, rgb, Modifier.size(300.dp))
-                VoiceOrb(state, level, vm.lowPower, Modifier.size(280.dp).offset(y = floatY.dp).clip(CircleShape).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { burst++ })
+                VoiceOrb(orbState, orbLevel, vm.lowPower, Modifier.size(280.dp).offset(y = floatY.dp).clip(CircleShape).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { burst++ })
+                // The assistant's own logo/avatar lives inside the orb.
+                Image(painterResource(avatarRes), name, Modifier.size(118.dp).offset(y = floatY.dp).clip(CircleShape), contentScale = ContentScale.Crop)
             }
             Spacer(Modifier.height(18.dp))
+            Text(statusText, Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontStyle = FontStyle.Italic, style = MaterialTheme.typography.titleMedium)
             Text(
-                when (state) {
-                    CharState.Listening -> "BADSHAH is listening…"
-                    CharState.Thinking -> "BADSHAH is thinking…"
-                    CharState.Speaking -> "BADSHAH is speaking…"
-                    CharState.Working -> "BADSHAH is working…"
-                    CharState.Error -> "Something went wrong"
-                    CharState.Idle -> "BADSHAH is ready"
-                },
-                Modifier.fillMaxWidth(), textAlign = TextAlign.Center, fontStyle = FontStyle.Italic,
-                style = MaterialTheme.typography.titleMedium,
+                if (liveMode) "Real voice · Gemini Live" else "Classic voice mode",
+                Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall,
             )
-            Text("Keeps listening if you leave this screen.", Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall)
-            if (partial.isNotEmpty()) Text(partial, Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center, color = VioletSoft, style = MaterialTheme.typography.bodyMedium, maxLines = 2)
+            if (transcript.isNotEmpty()) Text(transcript, Modifier.fillMaxWidth().padding(top = 10.dp), textAlign = TextAlign.Center, color = VioletSoft, style = MaterialTheme.typography.bodyMedium, maxLines = 3)
             Spacer(Modifier.weight(1f))
             Row(Modifier.fillMaxWidth().padding(bottom = 18.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
-                ControlButton(Icons.Default.MicOff, "Mute", Panel2, Color.White) { vm.stopListening() }
-                ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.stopListening(); vm.stopSpeaking(); onBack() }
+                if (liveMode) {
+                    ControlButton(if (muted) Icons.Default.Mic else Icons.Default.MicOff, if (muted) "Unmute" else "Mute", Panel2, Color.White) { vm.live.setMuted(!muted) }
+                    ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.stopLiveSession(); onBack() }
+                } else {
+                    ControlButton(Icons.Default.MicOff, "Mute", Panel2, Color.White) { vm.stopListening() }
+                    ControlButton(Icons.Default.CallEnd, "End", Bad, Color.White, big = true) { vm.stopListening(); vm.stopSpeaking(); onBack() }
+                }
                 ControlButton(Icons.Default.KeyboardArrowDown, "Minimize", Panel2, Color.White) { onBack() }
             }
         }
