@@ -39,6 +39,8 @@ class PhoneExecutor(private val ctx: Context) {
         PhoneAction.OpenChrome -> if (launchPackage("com.android.chrome") || url("https://www.google.com")) PhoneResult.Done("Opening Chrome.") else PhoneResult.Failed("Could not open a browser.")
         is PhoneAction.OpenBrowser -> PhoneResult.Failed("Browser app ke andar se khulta hai.") // intercepted by HomeViewModel before execute()
         PhoneAction.OpenScreen -> PhoneResult.Failed("Screen share app ke andar se khulta hai.") // intercepted by HomeViewModel before execute()
+        is PhoneAction.DeviceInfo -> deviceInfo(a.kind)
+        is PhoneAction.Volume -> volume(a.dir)
         PhoneAction.OpenCamera -> if (launch(Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA))) PhoneResult.Done("Opening the camera.") else PhoneResult.Failed("No camera app found.")
         PhoneAction.OpenGallery -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI))) PhoneResult.Done("Opening your gallery.") else PhoneResult.Failed("No gallery app found.")
         PhoneAction.OpenVideos -> if (launch(Intent(Intent.ACTION_VIEW, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)) || launch(Intent(Intent.ACTION_VIEW).setType("video/*"))) PhoneResult.Done("Opening your videos.") else PhoneResult.Failed("No video gallery found.")
@@ -101,4 +103,37 @@ class PhoneExecutor(private val ctx: Context) {
         val hit = apps.firstOrNull { it.first.lowercase() == q } ?: apps.firstOrNull { it.first.lowercase().startsWith(q) } ?: apps.firstOrNull { it.first.lowercase().contains(q) }
         return if (hit != null && launchPackage(hit.second)) PhoneResult.Done("Opening ${hit.first}.") else PhoneResult.Failed("I could not find an app called \"$name\".")
     }
+
+    /** MYRA-style system monitor answers, computed on-device — no internet needed. */
+    private fun deviceInfo(kind: String): PhoneResult = try {
+        when (kind) {
+            "battery" -> {
+                val bm = ctx.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+                val pct = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                val charging = bm.isCharging
+                PhoneResult.Done("Battery $pct percent hai, Boss${if (charging) " — aur charging par lagi hai" else ""}.")
+            }
+            "storage" -> {
+                val dir = android.os.Environment.getDataDirectory()
+                val fs = android.os.StatFs(dir.path)
+                val total = fs.totalBytes / (1024.0 * 1024 * 1024)
+                val free = fs.availableBytes / (1024.0 * 1024 * 1024)
+                PhoneResult.Done("Storage: kul ${"%.0f".format(total)} GB mein se ${"%.1f".format(free)} GB khali hai, Boss.")
+            }
+            "time" -> PhoneResult.Done("Abhi waqt hai " + java.text.SimpleDateFormat("h:mm a", java.util.Locale.ENGLISH).format(java.util.Date()) + ", Boss.")
+            "date" -> PhoneResult.Done("Aaj ki tareekh hai " + java.text.SimpleDateFormat("d MMMM yyyy, EEEE", java.util.Locale.ENGLISH).format(java.util.Date()) + ", Boss.")
+            else -> PhoneResult.Failed("Ye maloomat nahi mili.")
+        }
+    } catch (e: Exception) { PhoneResult.Failed("Device info nahi mil saki: ${e.message?.take(60)}") }
+
+    private fun volume(dir: String): PhoneResult = try {
+        val am = ctx.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        val stream = android.media.AudioManager.STREAM_MUSIC
+        when (dir) {
+            "up" -> { am.adjustStreamVolume(stream, android.media.AudioManager.ADJUST_RAISE, android.media.AudioManager.FLAG_SHOW_UI); PhoneResult.Done("Volume barha diya, Boss.") }
+            "down" -> { am.adjustStreamVolume(stream, android.media.AudioManager.ADJUST_LOWER, android.media.AudioManager.FLAG_SHOW_UI); PhoneResult.Done("Volume kam kar diya, Boss.") }
+            "mute" -> { am.adjustStreamVolume(stream, android.media.AudioManager.ADJUST_MUTE, android.media.AudioManager.FLAG_SHOW_UI); PhoneResult.Done("Mute kar diya, Boss.") }
+            else -> PhoneResult.Failed("Volume samajh nahi aya.")
+        }
+    } catch (e: Exception) { PhoneResult.Failed("Volume change nahi hua: ${e.message?.take(60)}") }
 }
