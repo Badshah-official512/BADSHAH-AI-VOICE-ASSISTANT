@@ -37,6 +37,7 @@ import androidx.core.content.ContextCompat
 import dev.pages.badshah222ai.ui.character.CharState
 import dev.pages.badshah222ai.ui.orb.VoiceOrb
 import dev.pages.badshah222ai.ui.theme.*
+import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 /**
@@ -56,6 +57,17 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             if (state == CharState.Idle) vm.startListening()
         } else micPerm.launch(Manifest.permission.RECORD_AUDIO)
+    }
+
+    // A call must never sit stranded on "Something went wrong": if listening drops into an
+    // error, quietly recover and start listening again (a few times at most).
+    var autoRetries by remember { mutableStateOf(0) }
+    LaunchedEffect(state) {
+        if (state == CharState.Error) {
+            if (autoRetries < 3) {
+                delay(1800); autoRetries++; vm.dismissError(); vm.startListening()
+            }
+        } else autoRetries = 0
     }
 
     val stars = remember { List(70) { Offset(Random.nextFloat(), Random.nextFloat()) to Random.nextFloat() } }
