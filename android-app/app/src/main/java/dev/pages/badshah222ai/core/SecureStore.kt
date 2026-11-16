@@ -61,6 +61,8 @@ class SecureStore(context: Context) {
     var liveEnabled: Boolean get() = prefs.getBoolean("live_enabled", true); set(v) = prefs.edit().putBoolean("live_enabled", v).apply()
     /** All live-capable models found for the key (comma-separated), best first — the Live engine tries them in order. */
     var liveCandidates: String get() = prefs.getString("live_candidates", "") ?: ""; set(v) = prefs.edit().putString("live_candidates", v).apply()
+    /** Which Live setup variant worked last time (0 = full, 1 = no language code, 2 = bare). Tried first next time. */
+    var liveSetupLevel: Int get() = prefs.getInt("live_setup_level", 0); set(v) = prefs.edit().putInt("live_setup_level", v).apply()
     /** Why the last Live attempt could not run (shown in Settings + on the call screen). Cleared when Live connects. */
     var lastLiveError: String? get() = prefs.getString("live_last_error", null); set(v) = prefs.edit().putString("live_last_error", v).apply()
 
