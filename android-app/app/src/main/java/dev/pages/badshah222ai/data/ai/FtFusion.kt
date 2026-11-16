@@ -81,3 +81,29 @@ class FtFusionClient : AiClient {
         return AiReply(text, Provider.FUSION, model, 0, 0, System.currentTimeMillis() - t0)
     }
 }
+
+/**
+ * Pollinations.ai — free services that need NO key (verified live 2026-11-16):
+ *  - image generation: the URL itself renders the picture
+ *  - one free text model (openai-fast), used as the automatic chat fallback when the
+ *    FT Fusion gateway is having a bad moment, so the assistant keeps answering.
+ */
+object Pollinations {
+    private val http = OkHttpClient.Builder().connectTimeout(20, TimeUnit.SECONDS).readTimeout(90, TimeUnit.SECONDS).build()
+
+    fun imageUrl(prompt: String): String {
+        val enc = URLEncoder.encode(prompt.take(300), "UTF-8").replace("+", "%20")
+        val seed = (System.currentTimeMillis() % 100000).toString()
+        return "https://image.pollinations.ai/prompt/$enc?width=1024&height=1024&nologo=true&seed=$seed"
+    }
+
+    suspend fun chat(prompt: String): String = withContext(Dispatchers.IO) {
+        val enc = URLEncoder.encode(prompt.take(6000), "UTF-8").replace("+", "%20")
+        val req = Request.Builder().url("https://text.pollinations.ai/$enc?model=openai-fast").build()
+        http.newCall(req).execute().use { res ->
+            val body = res.body?.string().orEmpty()
+            if (!res.isSuccessful || body.isBlank()) throw AiException("backup_down", "HTTP ${res.code}", "Backup service bhi jawab nahi de raha, Boss. Thodi dair baad try karo.")
+            body.trim()
+        }
+    }
+}

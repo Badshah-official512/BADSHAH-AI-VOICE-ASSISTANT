@@ -58,8 +58,28 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
             cloud.recordUsage(p.id, model, "chat", true, reply.inputTokens, reply.outputTokens, reply.latencyMs.toInt(), null)
             reply
         } catch (e: AiException) {
+            // FT Fusion is the pre-connected default brain; if its gateway errors, a free
+            // backup model answers instead of showing the user an error screen.
+            if (p == Provider.FUSION) {
+                val t0 = System.currentTimeMillis()
+                val backup = runCatching { Pollinations.chat(fallbackPrompt(emotionStyle, history)) }.getOrNull()
+                if (backup != null) {
+                    cloud.recordUsage("pollinations", "openai-fast", "chat", true, 0, 0, (System.currentTimeMillis() - t0).toInt(), null)
+                    return AiReply(backup, Provider.FUSION, "openai-fast (free backup)", 0, 0, System.currentTimeMillis() - t0)
+                }
+            }
             cloud.recordUsage(p.id, model, "chat", false, 0, 0, null, e.code)
             throw e
         }
+    }
+
+    /** Flattens the system prompt + recent turns into one prompt for the plain-text backup model. */
+    private fun fallbackPrompt(emotionStyle: String, history: List<ChatMessage>): String {
+        val sb = StringBuilder(systemPrompt(emotionStyle))
+        history.takeLast(8).forEach { m ->
+            sb.append(if (m.role == "user") "\nUser: " else "\nAssistant: ").append(m.content.take(1200))
+        }
+        sb.append("\nReply as the Assistant to the last User message.")
+        return sb.toString()
     }
 }
