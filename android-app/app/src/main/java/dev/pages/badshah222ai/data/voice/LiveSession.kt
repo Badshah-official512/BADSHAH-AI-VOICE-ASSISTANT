@@ -61,6 +61,11 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     @Volatile private var setupDone = false
     @Volatile private var reconnects = 0
     private var candidates: List<String> = emptyList()
+    /** One connection attempt: a model + a setup variant + an API version. The engine walks
+     *  this list until the server accepts a setup — different Live models accept different
+     *  setup fields (native-audio models reject an explicit languageCode, for example). */
+    private data class Attempt(val model: String, val level: Int, val version: String)
+    private var attempts: List<Attempt> = emptyList()
     @Volatile private var attempt = 0
     @Volatile private var attemptToken = 0
     @Volatile private var advancing = false
@@ -71,6 +76,7 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     private val audioQueue = LinkedBlockingQueue<ByteArray>()
     @Volatile private var playerRunning = false
     private var systemInstruction: String = ""
+    private var sessionKey: String = ""
     private var userBuf = StringBuilder()
     private var assistantBuf = StringBuilder()
     @Volatile private var turnOpen = false
@@ -88,27 +94,33 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
             onUnavailable?.invoke("Microphone permission is needed for the voice call."); return
         }
         this.systemInstruction = systemInstruction
+        sessionKey = key
         running = true; setupDone = false; reconnects = 0; attempt = 0; advancing = false
         _error.value = null; _userText.value = ""; _assistantText.value = ""
         setCommMode(true)
-        connect(key, candidates[0])
+        // Build the attempt ladder: for each model, the setup variant that worked last time
+        // first, then the other variants; finally the first model once more on v1alpha.
+        val levels = listOf(store.liveSetupLevel, 0, 1, 2).distinct()
+        attempts = candidates.flatMap { m -> levels.map { lv -> Attempt(m, lv, "v1beta") } } +
+            listOf(Attempt(candidates[0], store.liveSetupLevel, "v1alpha"), Attempt(candidates[0], 2, "v1alpha"))
+        connect(key, attempts[0])
     }
 
-    /** A connect attempt failed before the session was ready: try the next candidate model, or give up with the real reason. */
+    /** A connect attempt failed before the session was ready: try the next attempt (model/setup variant), or give up with the real reason. */
     private fun nextOrFail(key: String, reason: String) {
         if (!running || setupDone || advancing) return
         advancing = true
         runCatching { ws?.close(1000, "retry") }
-        if (attempt + 1 < candidates.size) {
+        if (attempt + 1 < attempts.size) {
             attempt++
             advancing = false
-            connect(key, candidates[attempt])
+            connect(key, attempts[attempt])
         } else {
             fail(reason)
         }
     }
 
-    private fun connect(key: String, model: String) {
+    private fun connect(key: String, att: Attempt) {
         _state.value = State.Connecting
         setupDone = false
         // Watchdog: a hung handshake must never leave the screen on "Connecting…" forever.
@@ -116,55 +128,64 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         thread(isDaemon = true) {
             Thread.sleep(12000)
             if (running && !setupDone && tok == attemptToken) {
-                nextOrFail(key, "Live connection 12 second mein nahi bana (model: $model). Internet slow hai ya ye model key par nahi chala — Settings → Live Voice mein Test karke dekho.")
+                nextOrFail(key, "Live connection 12 second mein nahi bana (model: ${att.model}). Internet slow hai ya ye model key par nahi chala — Settings → Live Voice mein Test karke dekho.")
             }
         }
-        val url = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key"
+        val url = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.${att.version}.GenerativeService.BidiGenerateContent?key=$key"
         ws = client.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) { sendSetup(model) }
+            override fun onOpen(webSocket: WebSocket, response: Response) { sendSetup(att) }
             override fun onMessage(webSocket: WebSocket, text: String) { handleMessage(text) }
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 if (!running) return
-                if (!setupDone) { nextOrFail(key, "Live connection fail ho gaya (model: $model): ${t.message?.take(90) ?: "network error"}"); return }
-                if (reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, model) }
+                if (!setupDone) { nextOrFail(key, "Live connection fail ho gaya (model: ${att.model}): ${t.message?.take(90) ?: "network error"}"); return }
+                if (reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, att) }
                 else fail("Live voice connection failed. Check your internet and try again.")
             }
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 if (!running) return
-                if (!setupDone && code != 1000) { nextOrFail(key, "Live band ho gaya (model: $model, code $code ${reason.take(60)})"); return }
-                if (setupDone && reconnects < 1 && code != 1008) { reconnects++; if (running) connect(key, model) }
+                if (!setupDone && code != 1000) { nextOrFail(key, "Live band ho gaya (model: ${att.model}, code $code ${reason.take(60)})"); return }
+                if (setupDone && reconnects < 1 && code != 1008) { reconnects++; if (running) connect(key, att) }
                 else if (code == 1008 || code == 1007) fail("The live voice was refused for this key or model. Open Settings → Live Voice and press Test to pick a working model.")
             }
         })
     }
 
-    private fun sendSetup(model: String) {
+    private fun sendSetup(att: Attempt) {
+        // Setup variants (levels): some Live models reject fields others accept.
+        //  0 = full: languageCode + transcriptions
+        //  1 = no languageCode (native-audio models pick the language themselves and reject it)
+        //  2 = bare: no languageCode, no transcription requests
         val voice = store.liveVoiceName
         val speech = JSONObject()
             .put("voiceConfig", JSONObject().put("prebuiltVoiceConfig", JSONObject().put("voiceName", voice)))
-            .put("languageCode", store.language)
+        if (att.level == 0) speech.put("languageCode", store.language)
         val gen = JSONObject()
             .put("responseModalities", JSONArray().put("AUDIO"))
             .put("speechConfig", speech)
         val setup = JSONObject()
-            .put("model", "models/$model")
+            .put("model", "models/${att.model}")
             .put("generationConfig", gen)
             .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemInstruction))))
-            .put("inputAudioTranscription", JSONObject())
-            .put("outputAudioTranscription", JSONObject())
+        if (att.level < 2) {
+            setup.put("inputAudioTranscription", JSONObject())
+            setup.put("outputAudioTranscription", JSONObject())
+        }
         ws?.send(JSONObject().put("setup", setup).toString())
     }
 
     private fun handleMessage(text: String) {
         val root = runCatching { JSONObject(text) }.getOrNull() ?: return
         root.optJSONObject("error")?.let { e ->
-            fail("Live voice error: ${e.optString("message").take(140)}"); return
+            val msg = "Live voice error: ${e.optString("message").take(140)}"
+            // A rejection before the session is ready is just another failed attempt — climb the ladder.
+            if (!setupDone) nextOrFail(sessionKey, msg) else fail(msg)
+            return
         }
         if (root.has("setupComplete")) {
             setupDone = true
             store.lastLiveError = null
-            // Remember the model that actually worked, so next time it connects first.
-            candidates.getOrNull(attempt)?.let { store.liveModel = it }
+            // Remember the model AND setup variant that actually worked, so next time it connects first try.
+            attempts.getOrNull(attempt)?.let { store.liveModel = it.model; store.liveSetupLevel = it.level }
             _state.value = State.Listening
             startMic(); startPlayer()
             return
