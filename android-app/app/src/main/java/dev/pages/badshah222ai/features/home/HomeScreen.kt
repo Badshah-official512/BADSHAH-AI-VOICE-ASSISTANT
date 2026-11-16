@@ -5,32 +5,48 @@ import android.app.Application
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pages.badshah222ai.BadshahApp
+import dev.pages.badshah222ai.R
 import dev.pages.badshah222ai.data.phone.PhoneResult
 import dev.pages.badshah222ai.data.ai.*
 import dev.pages.badshah222ai.domain.*
 import dev.pages.badshah222ai.features.auth.SessionViewModel
-import dev.pages.badshah222ai.ui.character.BadshahCharacter
 import dev.pages.badshah222ai.ui.character.CharState
+import dev.pages.badshah222ai.ui.orb.VoiceOrb
 import dev.pages.badshah222ai.ui.theme.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -43,7 +59,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     val busy = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)
     val partial = MutableStateFlow("")
-    val status = MutableStateFlow("Tap the mic and speak, or type below.")
+    val status = MutableStateFlow("Tap the orb and speak, or type below.")
     val pending = MutableStateFlow<PhoneAction?>(null)        // waiting for user confirmation (calls / messages)
     val needPermission = MutableStateFlow<Pair<String, String>?>(null)
     val pickContact = MutableStateFlow(false)
@@ -111,6 +127,8 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         if (!c.store.speakReplies) return
         c.tts.speak(text)?.let { warn -> status.value = warn }
     }
+    /** Speak one message aloud on demand (the speaker button on a chat bubble). */
+    fun replay(text: String) { c.tts.stop(); viewModelScope.launch { c.tts.speak(text) } }
     private fun add(m: ChatMessage) { messages.value = messages.value + m; if (uid.isNotEmpty()) c.chats.save(uid, messages.value) }
 
     private suspend fun syncToCloud(userText: String, r: AiReply) {
@@ -126,18 +144,25 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() { c.speech.stop() }
 }
 
-@Composable
-fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> Unit) {
-    val ctx = LocalContext.current
-    val state by vm.charState.collectAsState(); val level by vm.micLevel.collectAsState()
-    val messages by vm.messages.collectAsState(); val status by vm.status.collectAsState(); val partial by vm.partial.collectAsState()
-    val pending by vm.pending.collectAsState(); val needPerm by vm.needPermission.collectAsState(); val pick by vm.pickContact.collectAsState()
-    val maintenance by session.maintenance.collectAsState(); val announcements by session.announcements.collectAsState(); val cloud by session.cloudReady.collectAsState()
-    var text by remember { mutableStateOf("") }
-    val listState = rememberLazyListState()
-    LaunchedEffect(messages.size) { if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex) }
+/** Short human label for the assistant's current state, LIA-style. */
+fun stateLabel(state: CharState, status: String, partial: String): String = when {
+    partial.isNotEmpty() -> partial
+    state == CharState.Listening -> "I'm listening…"
+    state == CharState.Speaking -> "Speaking…"
+    state == CharState.Thinking -> "Thinking…"
+    state == CharState.Working -> "Working…"
+    else -> status
+}
 
-    val micPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) vm.startListening() else vm.status.value = "Microphone permission denied. Open Permissions to enable it." }
+/**
+ * Everything a phone action can pop up: the confirmation dialog for calls/messages,
+ * the contacts-permission request and the contact picker. Include this once in any
+ * screen that can trigger actions (Home, Chat, Voice, Quick actions).
+ */
+@Composable
+fun ActionDialogs(vm: HomeViewModel) {
+    val ctx = LocalContext.current
+    val pending by vm.pending.collectAsState(); val needPerm by vm.needPermission.collectAsState(); val pick by vm.pickContact.collectAsState()
     val contactsPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) vm.retryLastAction() else vm.status.value = "Without contacts access, say the phone number instead." }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri ->
         vm.pickContact.value = false
@@ -145,40 +170,6 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
     }
     LaunchedEffect(pick) { if (pick) picker.launch(null) }
     LaunchedEffect(needPerm) { needPerm?.let { vm.needPermission.value = null; contactsPerm.launch(it.first) } }
-    fun mic() { if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) vm.startListening() else micPerm.launch(Manifest.permission.RECORD_AUDIO) }
-
-    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().imePadding()) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("BADSHAH AI", style = MaterialTheme.typography.titleLarge, color = Gold, modifier = Modifier.padding(start = 8.dp).weight(1f))
-            IconButton({ onNav("history") }) { Icon(Icons.Default.History, "History") }
-            IconButton({ onNav("help") }) { Icon(Icons.Default.Help, "Help") }
-            IconButton({ onNav("about") }) { Icon(Icons.Default.Info, "About") }
-            IconButton({ onNav("settings") }) { Icon(Icons.Default.Settings, "Settings") }
-        }
-        maintenance?.let { Banner(it, Bad) }
-        announcements.firstOrNull()?.let { Banner("${it.first}: ${it.second}", Blue) }
-        if (!cloud) Banner("Cloud sync is off (chat is saved on this phone). See Help > Troubleshooting.", Mute)
-
-        BadshahCharacter(state, level, vm.lowPower, Modifier.fillMaxWidth().weight(0.9f, fill = false).heightIn(min = 220.dp, max = 330.dp).align(Alignment.CenterHorizontally))
-        Text(if (partial.isNotEmpty()) partial else status, Modifier.fillMaxWidth().padding(horizontal = 24.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = if (state == CharState.Error) Bad else Mute, maxLines = 3)
-
-        LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 12.dp), state = listState, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(messages.takeLast(40)) { m ->
-                val mine = m.role == "user"
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start) {
-                    Text(m.content, Modifier.widthIn(max = 300.dp).background(if (mine) Panel2 else Color(0xFF3A2C0A), RoundedCornerShape(14.dp)).padding(10.dp), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(text, { text = it }, Modifier.weight(1f), placeholder = { Text("Ask or command...") }, maxLines = 3)
-            IconButton({ if (text.isNotBlank()) { vm.send(text); text = "" } }) { Icon(Icons.Default.Send, "Send") }
-            FilledIconButton({ if (state == CharState.Listening) vm.stopListening() else mic() }, colors = IconButtonDefaults.filledIconButtonColors(containerColor = if (state == CharState.Listening) Ok else Gold, contentColor = Ink)) {
-                Icon(if (state == CharState.Listening) Icons.Default.Stop else Icons.Default.Mic, "Microphone")
-            }
-        }
-    }
-
     pending?.let { a ->
         AlertDialog(onDismissRequest = vm::cancelPending, title = { Text("Confirm") },
             text = { Text(when (a) { is PhoneAction.Call -> "Open the dialer for ${a.target}? You still press the call button."
@@ -189,7 +180,77 @@ fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> 
     }
 }
 
-@Composable private fun Banner(text: String, color: Color) {
-    Text(text, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp).background(color.copy(alpha = 0.18f), RoundedCornerShape(10.dp)).padding(8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
+@Composable
+fun HomeScreen(session: SessionViewModel, vm: HomeViewModel, onNav: (String) -> Unit) {
+    val state by vm.charState.collectAsState(); val level by vm.micLevel.collectAsState()
+    val status by vm.status.collectAsState(); val partial by vm.partial.collectAsState()
+    val maintenance by session.maintenance.collectAsState(); val announcements by session.announcements.collectAsState(); val cloud by session.cloudReady.collectAsState()
+    var text by remember { mutableStateOf("") }
+
+    Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton({ onNav("about") }) { Icon(Icons.Default.Menu, "About") }
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("BADSHAH AI", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                Text("YOUR AI ASSISTANT", style = MaterialTheme.typography.labelSmall, color = Mute, letterSpacing = 3.sp)
+            }
+            IconButton({ onNav("settings") }) { Icon(Icons.Default.Settings, "Settings") }
+        }
+        maintenance?.let { Banner(it, Bad) }
+        announcements.firstOrNull()?.let { Banner("${it.first}: ${it.second}", Blue) }
+        if (!cloud) Banner("Cloud sync is off (chat is saved on this phone). See Help > Troubleshooting.", Mute)
+
+        HeroPortrait(vm.lowPower)
+
+        Text(stateLabel(state, status, partial), Modifier.fillMaxWidth().padding(horizontal = 24.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = if (state == CharState.Error) Bad else Mute, maxLines = 2)
+
+        Box(Modifier.fillMaxWidth().padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
+            VoiceOrb(state, level, vm.lowPower, Modifier.size(118.dp).clip(CircleShape).clickable { onNav("voice") })
+        }
+
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(text, { text = it }, Modifier.weight(1f), placeholder = { Text("Ask me anything…") }, maxLines = 3, shape = RoundedCornerShape(28.dp))
+            FilledIconButton({ if (text.isNotBlank()) { vm.send(text); text = ""; onNav("chat") } }, colors = IconButtonDefaults.filledIconButtonColors(containerColor = Violet, contentColor = Color.White)) {
+                Icon(Icons.Default.Send, "Send")
+            }
+        }
+
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            QuickCard(Modifier.weight(1f), Icons.Default.Chat, "Chat", "Get instant answers") { onNav("chat") }
+            QuickCard(Modifier.weight(1f), Icons.Default.Call, "Voice Call", "Talk to BADSHAH") { onNav("voice") }
+            QuickCard(Modifier.weight(1f), Icons.Default.Bolt, "Quick Actions", "Phone control") { onNav("quick") }
+        }
+        Spacer(Modifier.height(12.dp))
+    }
+    ActionDialogs(vm)
 }
 
+@Composable
+private fun HeroPortrait(lowPower: Boolean) {
+    val transition = rememberInfiniteTransition(label = "hero")
+    val floatY by transition.animateFloat(-6f, 6f, infiniteRepeatable(tween(2600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "float")
+    Box(Modifier.fillMaxWidth().height(248.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(240.dp).clip(CircleShape).background(Brush.radialGradient(listOf(Violet.copy(alpha = 0.35f), Color.Transparent))))
+        Box(Modifier.size(230.dp).border(1.5.dp, Violet.copy(alpha = 0.5f), CircleShape))
+        Box(Modifier.size(254.dp).border(1.dp, CyanAcc.copy(alpha = 0.22f), CircleShape))
+        Image(painterResource(R.drawable.badshah_cutout), "BADSHAH", Modifier.size(214.dp).offset(y = if (lowPower) 0.dp else floatY.dp).clip(CircleShape), contentScale = ContentScale.Crop)
+        Text("Hi, I'm\nBADSHAH", Modifier.align(Alignment.CenterStart).padding(start = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+        Text("Always\nhere for you", Modifier.align(Alignment.CenterEnd).padding(end = 10.dp), color = VioletSoft, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+    }
+}
+
+@Composable
+private fun QuickCard(modifier: Modifier, icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, sub: String, onClick: () -> Unit) {
+    Card(modifier.clickable { onClick() }, colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, title, tint = VioletSoft)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(sub, style = MaterialTheme.typography.bodySmall, color = Mute)
+        }
+    }
+}
+
+@Composable
+fun Banner(text: String, color: Color) {
+    Text(text, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp).background(color.copy(alpha = 0.18f), RoundedCornerShape(10.dp)).padding(8.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground)
+}
