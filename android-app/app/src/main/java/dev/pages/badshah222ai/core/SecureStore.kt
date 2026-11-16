@@ -27,6 +27,8 @@ class SecureStore(context: Context) {
     fun setApiKey(p: Provider, key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_${p.id}") else putString("key_${p.id}", key.trim()) }.apply()
     fun elevenKey(): String? = secrets.getString("key_elevenlabs", null)?.takeIf { it.isNotBlank() }
     fun setElevenKey(key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_elevenlabs") else putString("key_elevenlabs", key.trim()) }.apply()
+    fun googleTtsKey(): String? = secrets.getString("key_google_tts", null)?.takeIf { it.isNotBlank() }
+    fun setGoogleTtsKey(key: String?) = secrets.edit().apply { if (key.isNullOrBlank()) remove("key_google_tts") else putString("key_google_tts", key.trim()) }.apply()
     fun wipeAllSecrets() = secrets.edit().clear().apply()
 
     // ---- non-secret settings ----
@@ -57,6 +59,13 @@ class SecureStore(context: Context) {
     var liveModel: String? get() = prefs.getString("live_model", null); set(v) = prefs.edit().putString("live_model", v).apply()
     /** Use the Gemini Live engine on the Voice screen when a Gemini key exists. */
     var liveEnabled: Boolean get() = prefs.getBoolean("live_enabled", true); set(v) = prefs.edit().putBoolean("live_enabled", v).apply()
+    /** All live-capable models found for the key (comma-separated), best first — the Live engine tries them in order. */
+    var liveCandidates: String get() = prefs.getString("live_candidates", "") ?: ""; set(v) = prefs.edit().putString("live_candidates", v).apply()
+
+    // ---- FT Fusion images & Google voice ----
+    /** Image generation model: fusion-uni | fusion-astra */
+    var imageModel: String get() = prefs.getString("image_model", "fusion-uni") ?: "fusion-uni"; set(v) = prefs.edit().putString("image_model", v).apply()
+    var googleTtsVoice: String get() = prefs.getString("google_tts_voice", "en-US-Journey-D") ?: "en-US-Journey-D"; set(v) = prefs.edit().putString("google_tts_voice", v).apply()
 
     // ---- assistant identity & look ----
     var assistantName: String get() = prefs.getString("assistant_name", "BADSHAH")?.ifBlank { "BADSHAH" } ?: "BADSHAH"; set(v) = prefs.edit().putString("assistant_name", v).apply()
