@@ -15,8 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
@@ -68,6 +70,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     val elevenVoice = MutableStateFlow(c.store.elevenVoiceId)
     val elevenMsg = MutableStateFlow<Pair<Boolean, String>?>(null)
     val speak = MutableStateFlow(c.store.speakReplies); val lowPower = MutableStateFlow(c.store.lowPower); val language = MutableStateFlow(c.store.language)
+    val personalityId = MutableStateFlow(c.store.personalityId)
+    val voiceModeId = MutableStateFlow(c.store.voiceModeId)
 
     init { viewModelScope.launch { serverPresets.value = c.cloud.voiceProfiles() }; refreshVoices() }
     fun refreshVoices() = c.tts.refreshVoices()
@@ -107,6 +111,19 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     fun setLowPower(v: Boolean) { c.store.lowPower = v; lowPower.value = v }
     fun setLanguage(tag: String) { c.store.language = tag; language.value = tag; pushPrefs() }
 
+    // ---- personality & voice modes ----
+    fun setPersonality(p: Personality) { c.store.personalityId = p.id; personalityId.value = p.id }
+    fun applyVoiceMode(m: VoiceMode) {
+        val name = VoiceModes.resolveVoiceName(m, voices.value)
+        c.store.voiceModeId = m.id; voiceModeId.value = m.id
+        if (name != null) pickVoice(name)
+        c.store.styleId = m.id; styleId.value = m.id
+        setPitch(m.pitch); setSpeed(m.speed)
+        if (engine.value != "android") setEngine("android")
+        preview(name)
+    }
+    fun previewMode(m: VoiceMode) { val name = VoiceModes.resolveVoiceName(m, voices.value); c.tts.stop(); c.tts.speakAndroid("Hello, I am Badshah AI, your personal voice assistant.", name, m.pitch, m.speed) }
+
     // ---- ElevenLabs (optional) ----
     fun testEleven(key: String) {
         val k = key.ifBlank { c.store.elevenKey() }; if (k == null) { elevenMsg.value = false to "Paste your ElevenLabs API key first."; return }
@@ -139,6 +156,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val presets by vm.serverPresets.collectAsState(); val engineName by vm.engineName.collectAsState()
     val elevenSaved by vm.elevenSaved.collectAsState(); val elevenVoices by vm.elevenVoices.collectAsState(); val elevenVoice by vm.elevenVoice.collectAsState(); val elevenMsg by vm.elevenMsg.collectAsState()
     val speak by vm.speak.collectAsState(); val low by vm.lowPower.collectAsState(); val lang by vm.language.collectAsState()
+    val personalityId by vm.personalityId.collectAsState(); val voiceModeId by vm.voiceModeId.collectAsState()
     val user by session.user.collectAsState()
     var key by remember(provider) { mutableStateOf("") }; var showKey by remember { mutableStateOf(false) }
     var eKey by remember { mutableStateOf("") }; var maleOnly by remember { mutableStateOf(true) }; var modelMenu by remember { mutableStateOf(false) }
@@ -156,7 +174,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                         Column(Modifier.padding(start = 12.dp)) {
                             Text("BADSHAH", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             Text(user?.email ?: "Signed in", color = Mute, style = MaterialTheme.typography.bodySmall)
-                            Text("Your assistant · Male voice", color = VioletSoft, style = MaterialTheme.typography.bodySmall)
+                            Text("Your assistant · ${Personalities.fromId(personalityId).label}", color = VioletSoft, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
@@ -178,6 +196,15 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     DropdownMenu(modelMenu, { modelMenu = false }) { models.forEach { m -> DropdownMenuItem({ Text(m) }, { vm.selectModel(m); modelMenu = false }) } } }
                 if (keySaved && models.isEmpty()) Text("Press Test & save to load the list of models for your key.", style = MaterialTheme.typography.bodySmall, color = Mute)
             } }
+            item { Section("Personality", Icons.Default.Person) {
+                Text("Choose who BADSHAH is for you. The personality changes how he talks, advises and behaves with you.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Personalities.all.forEach { p ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(personalityId == p.id, { vm.setPersonality(p) })
+                        Column { Text(p.label, style = MaterialTheme.typography.bodyLarge); Text(p.tagline, style = MaterialTheme.typography.bodySmall, color = Mute) }
+                    }
+                }
+            } }
             item { Section("Voice & language", Icons.Default.RecordVoiceOver) {
                 Text("Installed speech engine: ${engineName.ifBlank { "unknown" }}", style = MaterialTheme.typography.bodySmall, color = Mute)
                 support.forEach { s -> Text("${s.label}: " + if (s.installed) "${s.voices.size} voice(s) installed" else "not installed on this phone", color = if (s.installed) Ok else Mute, style = MaterialTheme.typography.bodySmall) }
@@ -190,6 +217,14 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Text("Voice engine", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { FilterChip(engine == "android", { vm.setEngine("android") }, { Text("Phone voices (Google TTS)") }); FilterChip(engine == "elevenlabs", { if (elevenSaved) vm.setEngine("elevenlabs") }, { Text("ElevenLabs") }, enabled = elevenSaved) }
                 Row(verticalAlignment = Alignment.CenterVertically) { Text("Speak replies aloud", Modifier.weight(1f)); Switch(speak, vm::setSpeak) }
+            } }
+            item { Section("Voice modes", Icons.Default.Face) {
+                Text("One tap, a whole new voice. Modes are built from your phone's real installed voices, each with its own pitch and speed. Preview pehle sun lo, phir Use kar lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Text("Male voices", style = MaterialTheme.typography.labelLarge, color = Gold)
+                VoiceModes.male.forEach { m -> VoiceModeRow(m, voiceModeId == m.id, { vm.previewMode(m) }, { vm.applyVoiceMode(m) }) }
+                Text("Girls voices", style = MaterialTheme.typography.labelLarge, color = Gold)
+                VoiceModes.female.forEach { m -> VoiceModeRow(m, voiceModeId == m.id, { vm.previewMode(m) }, { vm.applyVoiceMode(m) }) }
+                Text("Want even more realistic voices? Connect ElevenLabs below (optional) — hundreds of premium voices, bilkul alag se.", style = MaterialTheme.typography.bodySmall, color = Mute)
             } }
             item { Section("Phone voices", Icons.Default.Mic) {
                 Text("Android does not tell apps a voice's gender. Voices whose engine name says \"male\" are marked MALE; the rest are unverified, so listen and choose. Styles change pitch and speed of the voice you pick; they are not separate voices.", style = MaterialTheme.typography.bodySmall, color = Mute)
@@ -230,6 +265,16 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 OutlinedButton(onPermissions) { Text("Permissions") }
                 OutlinedButton({ session.signOut() }) { Text("Sign out") }
             } }
+        }
+    }
+}
+
+@Composable private fun VoiceModeRow(m: VoiceMode, selected: Boolean, onPreview: () -> Unit, onUse: () -> Unit) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = if (selected) Panel2 else Panel)) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) { Text(m.label, style = MaterialTheme.typography.bodyMedium); Text(m.description, style = MaterialTheme.typography.bodySmall, color = Mute) }
+            TextButton(onPreview) { Text("Preview") }
+            TextButton(onUse) { Text(if (selected) "Selected" else "Use") }
         }
     }
 }
