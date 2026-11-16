@@ -291,6 +291,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(imageModel == "fusion-uni", { vm.setImageModel("fusion-uni") }, { Text("Fusion Uni") })
                     FilterChip(imageModel == "fusion-astra", { vm.setImageModel("fusion-astra") }, { Text("Fusion Astra") })
+                    FilterChip(imageModel == "pollinations", { vm.setImageModel("pollinations") }, { Text("Pollinations (free)") })
                 }
             } }
             item { Section("Personality", Icons.Default.Person) {
