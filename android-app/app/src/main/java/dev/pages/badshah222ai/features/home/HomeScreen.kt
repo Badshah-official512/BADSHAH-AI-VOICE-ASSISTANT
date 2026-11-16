@@ -151,8 +151,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Set when the user asks for the assistant's own browser; AppNav navigates, BrowserScreen consumes it. */
     val pendingBrowser = MutableStateFlow<String?>(null)
+    /** Set when the user asks to share their screen; AppNav navigates to the Screen Share screen. */
+    val pendingScreen = MutableStateFlow(false)
 
     private fun handleAction(a: PhoneAction) {
+        if (a is PhoneAction.OpenScreen) {
+            pendingScreen.value = true
+            reply("Screen share khol raha hoon, Boss. Wahan Start dabana — Android tumse permission mangega.")
+            return
+        }
         if (a is PhoneAction.OpenBrowser) {
             pendingBrowser.value = a.query
             reply(if (a.query.isBlank()) "Apna browser khol raha hoon, Boss." else "Browser mein '${a.query}' khol raha hoon, Boss.")

@@ -30,6 +30,7 @@ private val ACTIONS = listOf(
     QuickAction(Icons.Default.Timer, "Set a timer", "\"5 minute ka timer\"", "Set a timer for 5 minutes"),
     QuickAction(Icons.Default.Alarm, "Set an alarm", "\"Subah 7 baje ka alarm\"", "Set an alarm for 7 am"),
     QuickAction(Icons.Default.Image, "Create image", "\"Ek golden crown logo banao\"", "Ek golden crown ka premium logo banao, image banao"),
+    QuickAction(Icons.Default.ScreenShare, "Screen share", "\"Meri screen dekho\"", null, route = "screen"),
     QuickAction(Icons.Default.Public, "Assistant browser", "\"Browser kholo\"", null, route = "browser"),
     QuickAction(Icons.Default.Mic, "Talk to BADSHAH", "Start a voice conversation", null),
 )
