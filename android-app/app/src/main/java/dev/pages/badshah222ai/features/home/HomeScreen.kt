@@ -94,6 +94,13 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CharState.Idle)
 
     init {
+        // Owner's order: FT Fusion is the pre-connected default brain — no Test & Save step.
+        // One-time switch; his Gemini/Groq keys stay saved for whoever wants them.
+        if (!c.store.fusionDefaultApplied) {
+            if (c.store.model(Provider.FUSION) == null) c.store.setModel(Provider.FUSION, "fusion-flex")
+            c.store.provider = Provider.FUSION
+            c.store.fusionDefaultApplied = true
+        }
         if (uid.isNotEmpty()) messages.value = c.chats.load(uid)
         c.live.onTurn = { u, a ->
             if (c.store.emotionId == null && u.isNotEmpty()) emotion.value = Emotions.detect(u)
@@ -142,7 +149,15 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Set when the user asks for the assistant's own browser; AppNav navigates, BrowserScreen consumes it. */
+    val pendingBrowser = MutableStateFlow<String?>(null)
+
     private fun handleAction(a: PhoneAction) {
+        if (a is PhoneAction.OpenBrowser) {
+            pendingBrowser.value = a.query
+            reply(if (a.query.isBlank()) "Apna browser khol raha hoon, Boss." else "Browser mein '${a.query}' khol raha hoon, Boss.")
+            return
+        }
         if (a.needsConfirmation) { pending.value = a; status.value = "Please confirm."; return }
         runAction(a)
     }
@@ -171,23 +186,21 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             "poster banao", "wallpaper banao", "image generate", "tasveer bana do", "image bana do").any { l.contains(it) }
     }
 
+    private fun deliverImage(url: String) {
+        add(ChatMessage("assistant", "image_url:$url"))
+        status.value = "Image tayyar hai, Boss."
+        viewModelScope.launch { speak("Image tayyar hai, Boss.") }
+    }
+
     private suspend fun generateImage(prompt: String) {
         status.value = "Image ban raha hai…"
-        val first = c.store.imageModel
-        val second = if (first == "fusion-uni") "fusion-astra" else "fusion-uni"
-        try {
-            val url = FtFusion.image(first, prompt)
-            add(ChatMessage("assistant", "image_url:$url"))
-            status.value = "Image tayyar hai, Boss."
-            speak("Image tayyar hai, Boss.")
-        } catch (e: AiException) {
-            try {
-                val url = FtFusion.image(second, prompt)
-                add(ChatMessage("assistant", "image_url:$url"))
-                status.value = "Image tayyar hai, Boss."
-                speak("Image tayyar hai, Boss.")
-            } catch (e2: AiException) { error.value = e2.userMessage; status.value = e2.userMessage }
-        }
+        val chosen = c.store.imageModel
+        if (chosen == "pollinations") { deliverImage(Pollinations.imageUrl(prompt)); return }
+        val second = if (chosen == "fusion-uni") "fusion-astra" else "fusion-uni"
+        try { deliverImage(FtFusion.image(chosen, prompt)); return } catch (e: AiException) { /* try the other FT model */ }
+        try { deliverImage(FtFusion.image(second, prompt)); return } catch (e: AiException) { /* free fallback below */ }
+        // Both FT image models failed → the free Pollinations image always answers.
+        deliverImage(Pollinations.imageUrl(prompt))
     }
 
     // ---- classic voice-call loop: listen → reply → listen again, until the Boss ends the call ----

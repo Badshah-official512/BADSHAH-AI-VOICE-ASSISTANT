@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import dev.pages.badshah222ai.features.settings.TopBar
 import dev.pages.badshah222ai.ui.theme.*
 
-private data class QuickAction(val icon: ImageVector, val title: String, val example: String, val command: String?)
+private data class QuickAction(val icon: ImageVector, val title: String, val example: String, val command: String?, val route: String? = null)
 
 private val ACTIONS = listOf(
     QuickAction(Icons.Default.Apps, "Open an app", "\"YouTube kholo\"", "Open YouTube"),
@@ -30,6 +30,7 @@ private val ACTIONS = listOf(
     QuickAction(Icons.Default.Timer, "Set a timer", "\"5 minute ka timer\"", "Set a timer for 5 minutes"),
     QuickAction(Icons.Default.Alarm, "Set an alarm", "\"Subah 7 baje ka alarm\"", "Set an alarm for 7 am"),
     QuickAction(Icons.Default.Image, "Create image", "\"Ek golden crown logo banao\"", "Ek golden crown ka premium logo banao, image banao"),
+    QuickAction(Icons.Default.Public, "Assistant browser", "\"Browser kholo\"", null, route = "browser"),
     QuickAction(Icons.Default.Mic, "Talk to BADSHAH", "Start a voice conversation", null),
 )
 
@@ -46,7 +47,11 @@ fun QuickActionsScreen(vm: HomeViewModel, onBack: () -> Unit, onNav: (String) ->
             items(ACTIONS) { a ->
                 Card(
                     Modifier.fillMaxWidth().clickable {
-                        if (a.command == null) onNav("voice") else { vm.send(a.command); onNav("chat") }
+                        when {
+                            a.route != null -> onNav(a.route)
+                            a.command == null -> onNav("voice")
+                            else -> { vm.send(a.command); onNav("chat") }
+                        }
                     },
                     colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(18.dp),
                 ) {
