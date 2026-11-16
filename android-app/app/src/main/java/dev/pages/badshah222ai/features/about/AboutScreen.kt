@@ -40,9 +40,9 @@ fun AboutScreen(onBack: () -> Unit) {
                 Image(painterResource(R.drawable.hero_banner), "BADSHAH AI — Chat. Create. Imagine.", Modifier.fillMaxWidth().height(190.dp).clip(RoundedCornerShape(20.dp)), contentScale = ContentScale.Crop)
             }
             item {
-                Text("BADSHAH AI", style = MaterialTheme.typography.headlineMedium, color = Gold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Text("YOUR PERSONAL AI VOICE ASSISTANT", style = MaterialTheme.typography.labelLarge, color = Mute, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                Text("BADSHAH AI is a voice-first personal assistant created by BADSHAH. Talk to it, ask anything, and let it open your apps, prepare calls and messages, set alarms and timers, all with the AI provider and the voice you choose. Your keys stay on your phone.", Modifier.padding(top = 12.dp), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onBackground)
+                Text("BADSHAH-RANI AI", style = MaterialTheme.typography.headlineMedium, color = Gold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("BADSHAH (BOYFRIEND) · RANI (GIRLFRIEND) — DO ASSISTANT, EK APP", style = MaterialTheme.typography.labelLarge, color = Mute, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text("BADSHAH-RANI AI is a voice-first personal assistant created by BADSHAH. Talk to it, ask anything, and let it open your apps, prepare calls and messages, set alarms and timers, all with the AI provider and the voice you choose. Your keys stay on your phone.", Modifier.padding(top = 12.dp), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onBackground)
             }
             item {
                 Image(painterResource(R.drawable.about_creator), "About the creator — Zain Ullah Shah, Founder of BADSHAH AI", Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(20.dp)), contentScale = ContentScale.Crop)
@@ -56,6 +56,7 @@ fun AboutScreen(onBack: () -> Unit) {
                     }
                 }
             }
+            item { Text("Kuch Live-voice, floating-orb aur screen ideas open-source MYRA Ultra (MIT License, © Vikas) se liye gaye hain — un ka shukriya. BADSHAH-RANI AI ka apna code bhi mukammal open source hai.", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall) }
             item { Text("Version 1.0.0", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall) }
         }
     }
