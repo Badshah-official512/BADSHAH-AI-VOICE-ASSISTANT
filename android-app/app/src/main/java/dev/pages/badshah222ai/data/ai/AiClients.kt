@@ -54,6 +54,21 @@ class GeminiClient : AiClient {
             .map { it.getString("name").removePrefix("models/") }.filter { it.startsWith("gemini") }.sortedDescending()
     }
 
+    /**
+     * Models that can run a Gemini Live (bidirectional audio) session for this key.
+     * Detected from the key's own model list — never invented. Best first:
+     * native-audio models, then other live models.
+     */
+    suspend fun listLiveModels(apiKey: String): List<String> {
+        val (code, body) = execute(Request.Builder().url("$base/models?pageSize=200").header("x-goog-api-key", apiKey).build(), "Gemini")
+        if (code != 200) throw mapHttpError(provider, code, body)
+        val arr = JSONObject(body).optJSONArray("models") ?: JSONArray()
+        val live = (0 until arr.length()).map { arr.getJSONObject(it) }
+            .filter { m -> m.optJSONArray("supportedGenerationMethods")?.let { a -> (0 until a.length()).any { a.getString(it) == "bidiGenerateContent" } } == true }
+            .map { it.getString("name").removePrefix("models/") }
+        return live.sortedWith(compareByDescending<String> { it.contains("native-audio") }.thenByDescending { it.contains("live") }.thenByDescending { it })
+    }
+
     override suspend fun chat(apiKey: String, model: String, system: String, history: List<ChatMessage>): AiReply {
         val contents = JSONArray()
         history.forEach { m -> contents.put(JSONObject().put("role", if (m.role == "assistant") "model" else "user").put("parts", JSONArray().put(JSONObject().put("text", m.content)))) }

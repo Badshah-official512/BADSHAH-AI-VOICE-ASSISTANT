@@ -19,17 +19,38 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
         return models
     }
 
+    /**
+     * Finds (and remembers) a Gemini Live-capable model for the user's own Gemini key.
+     * Returns null when the key has no live model — the app then uses the classic voice mode.
+     */
+    suspend fun detectLiveModel(): String? {
+        val key = store.apiKey(Provider.GEMINI) ?: return null
+        val gemini = clients.getValue(Provider.GEMINI) as GeminiClient
+        val live = runCatching { gemini.listLiveModels(key) }.getOrDefault(emptyList())
+        val pick = live.firstOrNull()
+        if (pick != null) store.liveModel = pick
+        return pick
+    }
+
+    /** The composed system instruction for the current personality + brain + emotion + identity settings. */
+    fun systemPrompt(emotionStyle: String): String = SystemPrompt.build(
+        Personalities.fromId(store.personalityId).prompt,
+        Brains.fromId(store.brainId).prompt,
+        emotionStyle,
+        store.language,
+        store.assistantName,
+        store.responseStyle,
+    )
+
     suspend fun chat(
         history: List<ChatMessage>,
-        personality: String = "friendly, confident and respectful",
-        brain: String = "a sharp all-rounder mind",
-        feeling: String = "warm and heartfelt",
+        emotionStyle: String = "Speak warmly and heartily, like a close friend who is genuinely glad to talk.",
     ): AiReply {
         val p = store.provider
         val key = store.apiKey(p) ?: throw AiException("no_key", "no key", "Add your ${p.label} API key in Settings to start chatting.")
         val model = store.model(p) ?: throw AiException("no_model", "no model", "Test your ${p.label} key and choose a model in Settings.")
         return try {
-            val reply = client(p).chat(key, model, SystemPrompt.build(personality, brain, feeling, store.language), history.takeLast(20))
+            val reply = client(p).chat(key, model, systemPrompt(emotionStyle), history.takeLast(20))
             cloud.recordUsage(p.id, model, "chat", true, reply.inputTokens, reply.outputTokens, reply.latencyMs.toInt(), null)
             reply
         } catch (e: AiException) {
