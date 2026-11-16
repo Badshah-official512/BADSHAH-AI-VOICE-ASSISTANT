@@ -1,0 +1,259 @@
+package dev.pages.badshah222ai.data.voice
+
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.AudioFormat
+import android.media.AudioManager
+import android.media.AudioRecord
+import android.media.AudioTrack
+import android.media.MediaRecorder
+import android.util.Base64
+import androidx.core.content.ContextCompat
+import dev.pages.badshah222ai.core.SecureStore
+import dev.pages.badshah222ai.domain.Provider
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
+
+/**
+ * Gemini Live voice engine — the heart of the new BADSHAH AI.
+ *
+ * A real-time WebSocket conversation with Google's Gemini Live API: the phone streams
+ * microphone PCM (16 kHz) and the model streams back NATIVE audio (24 kHz) in one of
+ * the prebuilt human voices (see LiveVoices). This is the same technology the reference
+ * apps (LIA / MYRA) use — no robotic on-device text-to-speech anywhere in this path.
+ * Barge-in works: when the user starts talking over the assistant, the server sends
+ * "interrupted" and playback is cut instantly. If anything about Live is unavailable
+ * (no Gemini key, no live model for the key, connection failure), [onUnavailable] fires
+ * and the caller falls back to the classic listen→think→speak pipeline.
+ */
+class LiveSession(private val context: Context, private val store: SecureStore) {
+
+    enum class State { Idle, Connecting, Listening, Thinking, Speaking, Error }
+
+    private val _state = MutableStateFlow(State.Idle); val state: StateFlow<State> = _state
+    private val _level = MutableStateFlow(0f); val level: StateFlow<Float> = _level
+    private val _userText = MutableStateFlow(""); val userText: StateFlow<String> = _userText
+    private val _assistantText = MutableStateFlow(""); val assistantText: StateFlow<String> = _assistantText
+    private val _error = MutableStateFlow<String?>(null); val error: StateFlow<String?> = _error
+    val muted = MutableStateFlow(false)
+
+    /** Fired once per completed exchange with (user said, assistant said). */
+    var onTurn: ((user: String, assistant: String) -> Unit)? = null
+    /** Fired when Live cannot run at all — the caller should use the classic voice mode. */
+    var onUnavailable: ((reason: String) -> Unit)? = null
+
+    private val client = OkHttpClient.Builder().pingInterval(20, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS).readTimeout(0, TimeUnit.MILLISECONDS).build()
+
+    @Volatile private var running = false
+    @Volatile private var setupDone = false
+    @Volatile private var reconnects = 0
+    private var ws: WebSocket? = null
+    private var recorder: AudioRecord? = null
+    @Volatile private var micThread: Thread? = null
+    private var track: AudioTrack? = null
+    private val audioQueue = LinkedBlockingQueue<ByteArray>()
+    @Volatile private var playerRunning = false
+    private var systemInstruction: String = ""
+    private var userBuf = StringBuilder()
+    private var assistantBuf = StringBuilder()
+    @Volatile private var turnOpen = false
+
+    val isActive: Boolean get() = running
+
+    fun start(systemInstruction: String) {
+        if (running) return
+        val key = store.apiKey(Provider.GEMINI)
+        val model = store.liveModel
+        if (key == null) { onUnavailable?.invoke("Add your Google Gemini API key in Settings to use the real voice."); return }
+        if (model == null) { onUnavailable?.invoke("No live voice model was found for your Gemini key yet. Open Settings → Live Voice and press Test."); return }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            onUnavailable?.invoke("Microphone permission is needed for the voice call."); return
+        }
+        this.systemInstruction = systemInstruction
+        running = true; setupDone = false; reconnects = 0
+        _error.value = null; _userText.value = ""; _assistantText.value = ""
+        setCommMode(true)
+        connect(key, model)
+    }
+
+    private fun connect(key: String, model: String) {
+        _state.value = State.Connecting
+        val url = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=$key"
+        ws = client.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) { sendSetup(model) }
+            override fun onMessage(webSocket: WebSocket, text: String) { handleMessage(text) }
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                if (!running) return
+                if (setupDone && reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, model) }
+                else fail("Live voice connection failed. Check your internet and try again.")
+            }
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                if (!running) return
+                if (setupDone && reconnects < 1 && code != 1008) { reconnects++; if (running) connect(key, model) }
+                else if (code == 1008 || code == 1007) fail("The live voice was refused for this key or model. Open Settings → Live Voice and press Test to pick a working model.")
+            }
+        })
+    }
+
+    private fun sendSetup(model: String) {
+        val voice = store.liveVoiceName
+        val speech = JSONObject()
+            .put("voiceConfig", JSONObject().put("prebuiltVoiceConfig", JSONObject().put("voiceName", voice)))
+            .put("languageCode", store.language)
+        val gen = JSONObject()
+            .put("responseModalities", JSONArray().put("AUDIO"))
+            .put("speechConfig", speech)
+        val setup = JSONObject()
+            .put("model", "models/$model")
+            .put("generationConfig", gen)
+            .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put("text", systemInstruction))))
+            .put("inputAudioTranscription", JSONObject())
+            .put("outputAudioTranscription", JSONObject())
+        ws?.send(JSONObject().put("setup", setup).toString())
+    }
+
+    private fun handleMessage(text: String) {
+        val root = runCatching { JSONObject(text) }.getOrNull() ?: return
+        root.optJSONObject("error")?.let { e ->
+            fail("Live voice error: ${e.optString("message").take(140)}"); return
+        }
+        if (root.has("setupComplete")) {
+            setupDone = true
+            _state.value = State.Listening
+            startMic(); startPlayer()
+            return
+        }
+        val sc = root.optJSONObject("serverContent") ?: return
+        sc.optJSONObject("inputTranscription")?.optString("text")?.takeIf { it.isNotEmpty() }?.let {
+            userBuf.append(it); _userText.value = userBuf.toString(); turnOpen = true
+        }
+        sc.optJSONObject("outputTranscription")?.optString("text")?.takeIf { it.isNotEmpty() }?.let {
+            if (_state.value != State.Speaking) _state.value = State.Thinking
+            assistantBuf.append(it); _assistantText.value = assistantBuf.toString(); turnOpen = true
+        }
+        if (sc.optBoolean("interrupted")) {
+            audioQueue.clear()
+            track?.pause(); track?.flush(); track?.play()
+            if (_state.value == State.Speaking) _state.value = State.Listening
+        }
+        sc.optJSONObject("modelTurn")?.optJSONArray("parts")?.let { parts ->
+            for (i in 0 until parts.length()) {
+                val data = parts.optJSONObject(i)?.optJSONObject("inlineData")?.optString("data")
+                if (!data.isNullOrEmpty()) {
+                    val bytes = runCatching { Base64.decode(data, Base64.DEFAULT) }.getOrNull() ?: continue
+                    audioQueue.offer(bytes)
+                    if (_state.value != State.Speaking) _state.value = State.Speaking
+                }
+            }
+        }
+        if (sc.optBoolean("turnComplete")) {
+            // Wait for the playback queue to drain, then close the turn out.
+            thread(isDaemon = true) {
+                var waited = 0
+                while (running && audioQueue.isNotEmpty() && waited < 8000) { Thread.sleep(120); waited += 120 }
+                Thread.sleep(350)
+                if (!running) return@thread
+                if (_state.value == State.Speaking) _state.value = State.Listening
+                val u = userBuf.toString().trim(); val a = assistantBuf.toString().trim()
+                if (turnOpen && (u.isNotEmpty() || a.isNotEmpty())) onTurn?.invoke(u, a)
+                userBuf = StringBuilder(); assistantBuf = StringBuilder()
+                _userText.value = ""; _assistantText.value = ""
+                turnOpen = false
+            }
+        }
+    }
+
+    // ---- microphone → Live ----
+    private fun startMic() {
+        if (micThread != null) return
+        val minBuf = AudioRecord.getMinBufferSize(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        val rec = try {
+            AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, 16000,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, maxOf(minBuf, 4096))
+        } catch (e: Exception) { fail("Microphone could not start."); return }
+        recorder = rec
+        rec.startRecording()
+        micThread = thread(isDaemon = true) {
+            val buf = ByteArray(2560) // 80 ms of 16 kHz PCM16
+            while (running) {
+                val n = try { rec.read(buf, 0, buf.size) } catch (e: Exception) { -1 }
+                if (n <= 0) { Thread.sleep(30); continue }
+                var sum = 0.0
+                var i = 0
+                while (i + 1 < n) { val s = (buf[i].toInt() and 0xFF) or (buf[i + 1].toInt() shl 8); sum += s * s; i += 2 }
+                _level.value = (Math.sqrt(sum / (n / 2)) / 9000.0).toFloat().coerceIn(0f, 1f)
+                if (muted.value) continue
+                val chunk = Base64.encodeToString(buf.copyOf(n), Base64.NO_WRAP)
+                val msg = JSONObject().put("realtimeInput",
+                    JSONObject().put("audio", JSONObject().put("mimeType", "audio/pcm;rate=16000").put("data", chunk)))
+                ws?.send(msg.toString())
+            }
+        }
+    }
+
+    // ---- Live → speaker ----
+    private fun startPlayer() {
+        if (playerRunning) return
+        val minBuf = AudioTrack.getMinBufferSize(24000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        val t = AudioTrack.Builder()
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            .setAudioFormat(AudioFormat.Builder().setSampleRate(24000).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
+            .setBufferSizeInBytes(maxOf(minBuf, 8192) * 2)
+            .setTransferMode(AudioTrack.MODE_STREAM)
+            .build()
+        track = t; t.play(); playerRunning = true
+        thread(isDaemon = true) {
+            while (running) {
+                val chunk = try { audioQueue.poll(200, TimeUnit.MILLISECONDS) } catch (e: InterruptedException) { null }
+                if (chunk == null) continue
+                var sum = 0.0
+                var i = 0
+                while (i + 1 < chunk.size) { val s = (chunk[i].toInt() and 0xFF) or (chunk[i + 1].toInt() shl 8); sum += s * s; i += 2 }
+                if (_state.value == State.Speaking) _level.value = (Math.sqrt(sum / (chunk.size / 2)) / 7000.0).toFloat().coerceIn(0f, 1f)
+                try { t.write(chunk, 0, chunk.size) } catch (e: Exception) { break }
+            }
+            playerRunning = false
+        }
+    }
+
+    fun setMuted(m: Boolean) { muted.value = m }
+
+    fun stop() {
+        running = false; setupDone = false
+        micThread = null
+        runCatching { recorder?.stop() }; runCatching { recorder?.release() }; recorder = null
+        audioQueue.clear()
+        runCatching { track?.stop() }; runCatching { track?.release() }; track = null
+        ws?.close(1000, "user ended"); ws = null
+        _level.value = 0f
+        if (_state.value != State.Error) _state.value = State.Idle
+        setCommMode(false)
+    }
+
+    private fun fail(message: String) {
+        _error.value = message
+        _state.value = State.Error
+        val wasRunning = running
+        stop()
+        _state.value = State.Error
+        if (wasRunning) onUnavailable?.invoke(message)
+    }
+
+    private fun setCommMode(on: Boolean) {
+        val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        runCatching { am.mode = if (on) AudioManager.MODE_IN_COMMUNICATION else AudioManager.MODE_NORMAL }
+    }
+}
