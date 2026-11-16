@@ -88,6 +88,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     // ---- emotions & identity ----
     val emotionId = MutableStateFlow(c.store.emotionId)
     val assistantName = MutableStateFlow(c.store.assistantName)
+    val assistantMode = MutableStateFlow(c.store.assistantMode)
     val responseStyle = MutableStateFlow(c.store.responseStyle)
     val avatarChoice = MutableStateFlow(c.store.avatarChoice)
 
@@ -156,6 +157,18 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     // ---- identity, emotion, look ----
     fun setEmotion(e: Emotion?) { c.store.emotionId = e?.id; emotionId.value = e?.id }
     fun setAssistantName(n: String) { c.store.assistantName = n.trim().ifBlank { "BADSHAH" }; assistantName.value = c.store.assistantName }
+
+    /** BADSHAH (boyfriend) ya RANI (girlfriend) — naam, chehra, personality aur Live awaaz, sab ek saath badal jata hai. RANI ki awaaz Aoede (MYRA ki female voice), BADSHAH ki Charon (male). */
+    fun setAssistantMode(m: String) {
+        c.store.assistantMode = m; assistantMode.value = m
+        if (m == "rani") {
+            setAssistantName("RANI"); setAvatar("girl"); c.store.personalityId = "girlfriend"
+            c.store.liveVoiceName = "Aoede"; liveVoiceName.value = "Aoede"
+        } else {
+            setAssistantName("BADSHAH"); setAvatar("photo"); c.store.personalityId = "assistant"
+            c.store.liveVoiceName = "Charon"; liveVoiceName.value = "Charon"
+        }
+    }
     fun setResponseStyle(s: String) { c.store.responseStyle = s; responseStyle.value = s }
     fun setAvatar(a: String) { c.store.avatarChoice = a; avatarChoice.value = a }
     fun setCustomWakeWord(w: String) { c.store.customWakeWord = w.trim(); customWakeWord.value = c.store.customWakeWord }
@@ -214,7 +227,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val liveVoiceName by vm.liveVoiceName.collectAsState(); val liveModel by vm.liveModel.collectAsState(); val liveEnabled by vm.liveEnabled.collectAsState()
     val geminiSaved by vm.geminiSaved.collectAsState(); val liveCandidates by vm.liveCandidates.collectAsState(); val lastLiveError by vm.lastLiveError.collectAsState()
     val liveMsg by vm.liveMsg.collectAsState(); val liveTesting by vm.liveTesting.collectAsState()
-    val emotionId by vm.emotionId.collectAsState(); val assistantName by vm.assistantName.collectAsState()
+    val emotionId by vm.emotionId.collectAsState(); val assistantName by vm.assistantName.collectAsState(); val assistantMode by vm.assistantMode.collectAsState()
     val imageModel by vm.imageModel.collectAsState()
     val hfSaved by vm.hfSaved.collectAsState(); val hfModel by vm.hfModel.collectAsState()
     val googleSaved by vm.googleSaved.collectAsState(); val googleVoice by vm.googleVoice.collectAsState(); val googleMsg by vm.googleMsg.collectAsState()
@@ -223,6 +236,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     val user by session.user.collectAsState()
     var emotionFamily by remember { mutableStateOf(Emotions.families.first()) }
     var nameDraft by remember(assistantName) { mutableStateOf(assistantName) }
+    var orbOn by remember { mutableStateOf(dev.pages.badshah222ai.core.FloatingOrbService.running) }
     var wakeDraft by remember { mutableStateOf(vm.customWakeWord.value) }
     val wakeMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok && vm.wakeWord.value) WakeWordService.start(ctx) else if (!ok) vm.setWakeWord(false)
@@ -350,6 +364,12 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 }
             } }
             item { Section("Assistant", Icons.Default.Face) {
+                Text("Tumhara assistant kaun ho?", style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(assistantMode == "badshah", { vm.setAssistantMode("badshah") }, { Text("👑 BADSHAH · Boyfriend") })
+                    FilterChip(assistantMode == "rani", { vm.setAssistantMode("rani") }, { Text("🌙 RANI · Girlfriend") })
+                }
+                Text("Ek hi app, do assistant — BADSHAH (ladka) ya RANI (ladki). Naam, chehra, personality aur Live awaaz sab usi ke hisaab se ho jayega.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Text("Assistant name", style = MaterialTheme.typography.labelLarge)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(nameDraft, { nameDraft = it }, Modifier.weight(1f), singleLine = true, label = { Text("Name") })
@@ -368,9 +388,19 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(avatarChoice == "photo", { vm.setAvatar("photo") }, { Text("My photo") })
                     FilterChip(avatarChoice == "logo", { vm.setAvatar("logo") }, { Text("Crown logo") })
-                    FilterChip(avatarChoice == "girl", { vm.setAvatar("girl") }, { Text("AISHA") })
+                    FilterChip(avatarChoice == "girl", { vm.setAvatar("girl") }, { Text("RANI") })
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("Low-power mode"); Text("Simpler animation for older phones", style = MaterialTheme.typography.bodySmall, color = Mute) }; Switch(low, vm::setLowPower) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { Text("Floating orb (MYRA style)"); Text("Doosri apps ke upar chhota gola — tap karo to voice call, long-press karo to gayab. Pehli baar Android overlay permission mangega.", style = MaterialTheme.typography.bodySmall, color = Mute) }
+                    Switch(orbOn, { on ->
+                        orbOn = on
+                        if (on) {
+                            if (android.provider.Settings.canDrawOverlays(ctx)) dev.pages.badshah222ai.core.FloatingOrbService.start(ctx)
+                            else runCatching { ctx.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + ctx.packageName)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                        } else dev.pages.badshah222ai.core.FloatingOrbService.stop(ctx)
+                    })
+                }
             } }
             item { Section("Language", Icons.Default.RecordVoiceOver) {
                 Text("Assistant isi language mein sunega aur bolega. Urdu, English, Hindi, Pashto samet 30 international languages.", style = MaterialTheme.typography.bodySmall, color = Mute)
