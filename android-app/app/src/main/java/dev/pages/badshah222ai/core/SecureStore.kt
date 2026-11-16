@@ -70,6 +70,9 @@ class SecureStore(context: Context) {
     var fusionDefaultApplied: Boolean get() = prefs.getBoolean("fusion_default_applied", false); set(v) = prefs.edit().putBoolean("fusion_default_applied", v).apply()
     /** Which Live setup variant worked last time (0 = full, 1 = no language code, 2 = bare). Tried first next time. */
     var liveSetupLevel: Int get() = prefs.getInt("live_setup_level", 0); set(v) = prefs.edit().putInt("live_setup_level", v).apply()
+    var liveVersion: String get() = prefs.getString("live_version", "v1beta") ?: "v1beta"; set(v) = prefs.edit().putString("live_version", v).apply()
+    /** Which assistant fronts the app: "badshah" (boy) or "rani" (girl) — BADSHAH-RANI AI. */
+    var assistantMode: String get() = prefs.getString("assistant_mode", "badshah") ?: "badshah"; set(v) = prefs.edit().putString("assistant_mode", v).apply()
     /** Why the last Live attempt could not run (shown in Settings + on the call screen). Cleared when Live connects. */
     var lastLiveError: String? get() = prefs.getString("live_last_error", null); set(v) = prefs.edit().putString("live_last_error", v).apply()
 
