@@ -36,12 +36,16 @@ class SecureStore(context: Context) {
     var voiceEngine: String get() = prefs.getString("voice_engine", "android") ?: "android"; set(v) = prefs.edit().putString("voice_engine", v).apply()
     var ttsVoiceName: String? get() = prefs.getString("tts_voice", null); set(v) = prefs.edit().putString("tts_voice", v).apply()
     var styleId: String get() = prefs.getString("style", "deep") ?: "deep"; set(v) = prefs.edit().putString("style", v).apply()
-    var pitch: Float get() = prefs.getFloat("pitch", 0.8f); set(v) = prefs.edit().putFloat("pitch", v).apply()
-    var speed: Float get() = prefs.getFloat("speed", 0.95f); set(v) = prefs.edit().putFloat("speed", v).apply()
+    var pitch: Float get() = prefs.getFloat("pitch", 0.95f); set(v) = prefs.edit().putFloat("pitch", v).apply()
+    var speed: Float get() = prefs.getFloat("speed", 1.0f); set(v) = prefs.edit().putFloat("speed", v).apply()
     var elevenVoiceId: String? get() = prefs.getString("eleven_voice", null); set(v) = prefs.edit().putString("eleven_voice", v).apply()
     var speakReplies: Boolean get() = prefs.getBoolean("speak", true); set(v) = prefs.edit().putBoolean("speak", v).apply()
     var lowPower: Boolean get() = prefs.getBoolean("low_power", false); set(v) = prefs.edit().putBoolean("low_power", v).apply()
     var language: String get() = prefs.getString("lang", "en-US") ?: "en-US"; set(v) = prefs.edit().putString("lang", v).apply()
     var personalityId: String get() = prefs.getString("personality", "assistant") ?: "assistant"; set(v) = prefs.edit().putString("personality", v).apply()
     var voiceModeId: String? get() = prefs.getString("voice_mode", null); set(v) = prefs.edit().putString("voice_mode", v).apply()
+    var brainId: String get() = prefs.getString("brain", "general") ?: "general"; set(v) = prefs.edit().putString("brain", v).apply()
+    /** null = Auto: the feeling is detected from the user's words on every message. */
+    var feelingId: String? get() = prefs.getString("feeling", null); set(v) = prefs.edit().putString("feeling", v).apply()
+    var wakeWord: Boolean get() = prefs.getBoolean("wake_word", false); set(v) = prefs.edit().putBoolean("wake_word", v).apply()
 }
