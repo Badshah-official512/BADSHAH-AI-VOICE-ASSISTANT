@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />        <!-- "call Ali": find a number -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />  <!-- alarms and timers -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />   <!-- support replies / announcements -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />  <!-- floating orb (only after the user grants it in Settings) -->
     <!-- No CALL_PHONE and no SEND_SMS: calls open the dialer and messages open the composer,
          so nothing is ever placed or sent without the user pressing the final button. -->
 
@@ -66,6 +67,10 @@
             android:name=".core.ScreenShareService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
+
+        <service
+            android:name=".core.FloatingOrbService"
+            android:exported="false" />
 
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="badshah_updates" />
     </application>
