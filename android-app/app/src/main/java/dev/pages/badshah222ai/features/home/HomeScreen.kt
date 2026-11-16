@@ -91,7 +91,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             busy.value = true; status.value = "Thinking..."
             try {
-                val reply = c.ai.chat(messages.value)
+                val reply = c.ai.chat(messages.value, Personalities.fromId(c.store.personalityId).prompt)
                 add(ChatMessage("assistant", reply.text)); status.value = "Speaking..."
                 syncToCloud(t, reply)
                 busy.value = false
