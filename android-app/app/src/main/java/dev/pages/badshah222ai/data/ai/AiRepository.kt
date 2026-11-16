@@ -6,7 +6,7 @@ import dev.pages.badshah222ai.domain.*
 
 /** Provider switching + per-user keys + usage reporting. There is NO shared developer key anywhere. */
 class AiRepository(private val store: SecureStore, private val cloud: SupabaseApi) {
-    private val clients = mapOf(Provider.GEMINI to GeminiClient(), Provider.GROQ to GroqClient(), Provider.FUSION to FtFusionClient())
+    private val clients = mapOf(Provider.GEMINI to GeminiClient(), Provider.GROQ to GroqClient(), Provider.OPENROUTER to OpenRouterClient(), Provider.FUSION to FtFusionClient())
     private fun client(p: Provider) = clients.getValue(p)
 
     fun isConfigured(p: Provider) = if (p == Provider.FUSION) store.model(p) != null else store.apiKey(p) != null && store.model(p) != null

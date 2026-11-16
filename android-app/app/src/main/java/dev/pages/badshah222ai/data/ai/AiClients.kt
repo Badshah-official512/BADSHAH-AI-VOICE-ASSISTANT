@@ -88,6 +88,38 @@ class GeminiClient : AiClient {
     }
 }
 
+/**
+ * OpenRouter — one free account key, many free models (Llama 3.3, DeepSeek, Qwen, Gemini
+ * experimental…). listModels returns only the genuinely free (":free") models, live from
+ * OpenRouter's own catalogue, so the list never goes stale.
+ */
+class OpenRouterClient : AiClient {
+    override val provider = Provider.OPENROUTER
+    private val base = "https://openrouter.ai/api/v1"
+
+    override suspend fun listModels(apiKey: String): List<String> {
+        val (code, body) = execute(Request.Builder().url("$base/models").header("Authorization", "Bearer $apiKey").build(), "OpenRouter")
+        if (code != 200) throw mapHttpError(provider, code, body)
+        val arr = JSONObject(body).optJSONArray("data") ?: JSONArray()
+        return (0 until arr.length()).map { arr.getJSONObject(it).getString("id") }
+            .filter { it.endsWith(":free") }.sorted()
+    }
+
+    override suspend fun chat(apiKey: String, model: String, system: String, history: List<ChatMessage>): AiReply {
+        val msgs = JSONArray().put(JSONObject().put("role", "system").put("content", system))
+        history.forEach { msgs.put(JSONObject().put("role", it.role).put("content", it.content)) }
+        val payload = JSONObject().put("model", model).put("messages", msgs).put("temperature", 0.7)
+        val t0 = System.currentTimeMillis()
+        val (code, body) = execute(Request.Builder().url("$base/chat/completions").header("Authorization", "Bearer $apiKey").post(payload.toString().toRequestBody(JSON)).build(), "OpenRouter")
+        if (code != 200) throw mapHttpError(provider, code, body)
+        val j = JSONObject(body)
+        val text = j.optJSONArray("choices")?.optJSONObject(0)?.optJSONObject("message")?.optString("content").orEmpty()
+        if (text.isBlank()) throw AiException("empty_reply", "empty OpenRouter reply", "OpenRouter returned an empty answer. Try again.")
+        val u = j.optJSONObject("usage")
+        return AiReply(text.trim(), provider, model, u?.optLong("prompt_tokens") ?: 0, u?.optLong("completion_tokens") ?: 0, System.currentTimeMillis() - t0)
+    }
+}
+
 class GroqClient : AiClient {
     override val provider = Provider.GROQ
     private val base = "https://api.groq.com/openai/v1"
