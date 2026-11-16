@@ -8,6 +8,8 @@ sealed class PhoneAction {
     object OpenChrome : PhoneAction()
     object OpenCamera : PhoneAction()
     object OpenGallery : PhoneAction()
+    object OpenVideos : PhoneAction()
+    object OpenFiles : PhoneAction()
     object PickContact : PhoneAction()
     data class Call(val target: String) : PhoneAction()
     data class WhatsAppMessage(val target: String, val message: String) : PhoneAction()

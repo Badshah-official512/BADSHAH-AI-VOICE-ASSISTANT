@@ -46,6 +46,10 @@ object CommandParser {
         if (Regex("^(?:pick|select|choose|show|open) (?:a |my )?contacts?$").matches(l)) return PhoneAction.PickContact
         Regex("^(?:search|google|look up)(?: the web)?(?: for)? (.+)$").find(l)?.let { return PhoneAction.WebSearch(original(t, it.groupValues[1])) }
 
+        // ---- gallery videos / files (before generic open: they contain "video"/"file") ----
+        if (Regex("\\b(videos?|movies?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|lagao|dikhao|play|watch)\\b").containsMatchIn(l)) return PhoneAction.OpenVideos
+        if (Regex("\\b(files?|downloads?|file manager|documents?)\\b").containsMatchIn(l) && Regex("\\b(open|kholo|khol|chalao|dikhao|show)\\b").containsMatchIn(l)) return PhoneAction.OpenFiles
+
         // ---- open things ----
         val opened = Regex("^(?:$OPEN_VERBS) (?:the )?(.+?)(?: app)?$").find(l)?.groupValues?.get(1)
             ?: Regex("^(.+?)(?: app)? (?:open karo|open kar do|kholo|khol do|chalao|chala do|open)$").find(l)?.groupValues?.get(1)
@@ -59,6 +63,8 @@ object CommandParser {
         "chrome", "google chrome", "browser" -> PhoneAction.OpenChrome
         "camera", "the camera" -> PhoneAction.OpenCamera
         "gallery", "photos", "my photos", "photo gallery", "google photos" -> PhoneAction.OpenGallery
+        "videos", "my videos", "gallery videos", "movies" -> PhoneAction.OpenVideos
+        "files", "file manager", "downloads", "my files", "documents" -> PhoneAction.OpenFiles
         else -> PhoneAction.OpenApp(name)
     }
 
