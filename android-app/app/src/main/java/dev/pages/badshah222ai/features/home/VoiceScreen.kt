@@ -195,6 +195,16 @@ fun VoiceScreen(vm: HomeViewModel, onBack: () -> Unit) {
                 if (liveMode) "Real voice · Gemini Live" else "Classic voice mode",
                 Modifier.fillMaxWidth().padding(top = 4.dp), textAlign = TextAlign.Center, color = Mute, style = MaterialTheme.typography.bodySmall,
             )
+            // Live equalizer — bars dance with the voice level while talking/listening.
+            if (orbState == CharState.Speaking || orbState == CharState.Listening) {
+                Row(Modifier.fillMaxWidth().padding(top = 14.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    for (i in 0 until 5) {
+                        val wave = kotlin.math.abs(kotlin.math.sin(Math.toRadians((spin * 2 + i * 38).toDouble()))).toFloat()
+                        val h = 6f + orbLevel * 20f * wave + 4f * wave
+                        Box(Modifier.padding(horizontal = 3.dp).size(5.dp, h.dp).background(if (i % 2 == 0) emotion.composeColor else CyanAcc, RoundedCornerShape(3.dp)))
+                    }
+                }
+            }
             if (!liveMode && fallback != null) {
                 Text(
                     "Live voice kyun nahi chali: $fallback",
