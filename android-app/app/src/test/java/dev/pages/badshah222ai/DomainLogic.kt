@@ -57,9 +57,9 @@ object DomainLogic {
         eq("downloads kholo", p("downloads kholo"), PhoneAction.OpenFiles)
 
         // ---- Gemini Live voices (the real human voices) ----
-        eq("30 live voices in total", LiveVoices.all.size, 30)
-        eq("14 male live voices", LiveVoices.male.size, 14)
-        eq("16 female live voices", LiveVoices.female.size, 16)
+        eq("12 live voices in total", LiveVoices.all.size, 12)
+        eq("6 male live voices", LiveVoices.male.size, 6)
+        eq("6 female live voices", LiveVoices.female.size, 6)
         eq("every live voice has a style", LiveVoices.all.all { it.style.isNotBlank() }, true)
         eq("male list has no female voice", LiveVoices.male.none { it.female }, true)
         eq("female list is all female", LiveVoices.female.all { it.female }, true)
