@@ -31,16 +31,19 @@ class AiRepository(private val store: SecureStore, private val cloud: SupabaseAp
     }
 
     /**
-     * Finds (and remembers) a Gemini Live-capable model for the user's own Gemini key.
-     * Returns null when the key has no live model — the app then uses the classic voice mode.
+     * Checks the ONE Live model this app uses — Gemini 3.8 Live (owner's rule,
+     * 2026-11-17: no other Live model is picked or shown). Returns
+     * "gemini-3.8-live" when the user's Gemini key offers it, else null —
+     * the app then uses the classic voice mode.
      */
     suspend fun detectLiveModel(): String? {
         val key = store.apiKey(Provider.GEMINI) ?: return null
         val gemini = clients.getValue(Provider.GEMINI) as GeminiClient
         val live = runCatching { gemini.listLiveModels(key) }.getOrDefault(emptyList())
-        val pick = live.firstOrNull()
-        if (pick != null) { store.liveModel = pick; store.liveCandidates = live.joinToString(",") }
-        return pick
+        val has = live.any { it == "gemini-3.8-live" }
+        store.liveCandidates = live.joinToString(",")
+        store.liveModel = if (has) "gemini-3.8-live" else null
+        return if (has) "gemini-3.8-live" else null
     }
 
     /** The composed system instruction for the current personality + brain + emotion + identity settings. */
