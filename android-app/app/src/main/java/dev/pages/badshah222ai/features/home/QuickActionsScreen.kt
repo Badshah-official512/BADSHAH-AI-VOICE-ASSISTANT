@@ -32,6 +32,7 @@ private val ACTIONS = listOf(
     QuickAction(Icons.Default.Image, "Create image", "\"Ek golden crown logo banao\"", "Ek golden crown ka premium logo banao, image banao"),
     QuickAction(Icons.Default.ScreenShare, "Screen share", "\"Meri screen dekho\"", null, route = "screen"),
     QuickAction(Icons.Default.Public, "Assistant browser", "\"Browser kholo\"", null, route = "browser"),
+    QuickAction(Icons.Default.Lock, "Secret Chat", "\"Heavy work — password protected\"", null, route = "secret"),
     QuickAction(Icons.Default.Mic, "Talk to BADSHAH", "Start a voice conversation", null),
 )
 
