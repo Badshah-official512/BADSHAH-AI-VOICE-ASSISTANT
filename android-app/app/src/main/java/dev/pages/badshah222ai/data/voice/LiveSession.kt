@@ -60,7 +60,6 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
     @Volatile private var running = false
     @Volatile private var setupDone = false
     @Volatile private var reconnects = 0
-    private var candidates: List<String> = emptyList()
     /** One connection attempt: a model + a setup variant + an API version. The engine walks
      *  this list until the server accepts a setup — different Live models accept different
      *  setup fields (native-audio models reject an explicit languageCode, for example). */
@@ -89,8 +88,6 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         if (running) return
         val key = store.apiKey(Provider.GEMINI)
         if (key == null) { onUnavailable?.invoke("Add your Google Gemini API key in Settings to use the real voice."); return }
-        candidates = store.liveCandidates.split(",").map { it.trim() }.filter { it.isNotBlank() }
-            .ifEmpty { listOfNotNull(store.liveModel) }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             onUnavailable?.invoke("Microphone permission is needed for the voice call."); return
         }
@@ -99,26 +96,14 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         running = true; setupDone = false; reconnects = 0; attempt = 0; advancing = false; resumeHandle = null
         _error.value = null; _userText.value = ""; _assistantText.value = ""
         setCommMode(true)
-        // Attempt ladder, MYRA-style first: the open-source MYRA assistant (MIT) connects
-        // Gemini Live with (model, API-version) PAIRS and a specific setup payload — the
-        // native-audio models only exist on v1alpha, and no languageCode is ever sent.
-        // Level 0 = that exact payload shape. Older camelCase variants follow as backup,
-        // then the models this key's own list reported. The winning combo is remembered.
-        val myraPairs = listOf(
-            Attempt("gemini-3.1-flash-live-preview", 0, "v1beta"),
-            Attempt("gemini-2.5-flash-native-audio-latest", 0, "v1alpha"),
-            Attempt("gemini-2.5-flash-native-audio-preview-12-2025", 0, "v1alpha"),
+        // Owner's rule (2026-11-17): Live uses ONE model only — Gemini 3.8 Live on
+        // v1beta, the exact pair MYRA uses, with the MYRA-style setup payload. The
+        // only backup is the same model with a bare payload. No other model is
+        // ever tried or shown.
+        attempts = listOf(
             Attempt("gemini-3.8-live", 0, "v1beta"),
+            Attempt("gemini-3.8-live", 3, "v1beta"),
         )
-        val ladder = mutableListOf<Attempt>()
-        store.liveModel?.takeIf { it.isNotBlank() }?.let { ladder += Attempt(it, store.liveSetupLevel, store.liveVersion) }
-        ladder += candidates.map { Attempt(it, 0, "v1beta") }
-        ladder += myraPairs
-        if (candidates.isNotEmpty()) {
-            ladder += listOf(1, 2, 3).map { Attempt(candidates[0], it, "v1beta") }
-            ladder += Attempt(candidates[0], 3, "v1alpha")
-        }
-        attempts = ladder.distinctBy { "${it.model}|${it.level}|${it.version}" }
         connect(key, attempts[0])
     }
 
