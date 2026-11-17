@@ -289,16 +289,9 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                 lastLiveError?.let { Text("Aakhri Live koshish ki wajah: $it", style = MaterialTheme.typography.bodySmall, color = Bad) }
                 Button(vm::testLive, enabled = !liveTesting) { if (liveTesting) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test Gemini 3.8 Live") }
                 Msg(liveMsg)
-                Text("MYRA ki asal voices yahi do hain — BADSHAH = Charon (male), RANI = Aoede (female) — ye dono default hain. Neeche Google ki mukammal voice list hai, jo pasand ho chun lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
-                Text("Male voices", style = MaterialTheme.typography.labelLarge, color = Gold)
-                LiveVoices.male.forEach { v ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(liveVoiceName == v.name, { vm.setLiveVoice(v) })
-                        Column { Text(v.name, style = MaterialTheme.typography.bodyLarge); Text(v.style, style = MaterialTheme.typography.bodySmall, color = Mute) }
-                    }
-                }
-                Text("Girls voices", style = MaterialTheme.typography.labelLarge, color = Gold)
-                LiveVoices.female.forEach { v ->
+                Text("Sirf do mode hain — Boyfriend aur Girlfriend — aur har mode ki apni best voices hain, saari Gemini 3.8 Live par chalti hain. BADSHAH ki default = Charon, RANI ki default = Aoede (MYRA wali pair). Mode Assistant wale section se badalta hai.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Text(if (assistantMode == "rani") "RANI ki voices — Girlfriend mode" else "BADSHAH ki voices — Boyfriend mode", style = MaterialTheme.typography.labelLarge, color = Gold)
+                (if (assistantMode == "rani") LiveVoices.female else LiveVoices.male).forEach { v ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         RadioButton(liveVoiceName == v.name, { vm.setLiveVoice(v) })
                         Column { Text(v.name, style = MaterialTheme.typography.bodyLarge); Text(v.style, style = MaterialTheme.typography.bodySmall, color = Mute) }
