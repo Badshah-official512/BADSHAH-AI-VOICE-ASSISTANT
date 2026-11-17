@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BADSHAH AI — Admin Panel</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0C0918">
+<link rel="icon" href="../icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#07040F;--ink2:#0C0918;--panel:#171130;--panel2:#211947;--violet:#8B5CF6;--vdeep:#6D28D9;--vsoft:#B79CFF;--blue:#22D3EE;--red:#FF4D5E;--txt:#F2EFFF;--mut:#A79FD1;--line:rgba(183,156,255,.16);--ok:#34D399;--gold:#FFC94D}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);color:var(--txt);font-family:Inter,system-ui,sans-serif;min-height:100dvh}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit}
+.hidden{display:none!important}
+.lights{position:fixed;inset:0;z-index:0;pointer-events:none}
+.glow{position:absolute;border-radius:50%;filter:blur(100px);opacity:.38}
+.g-blue{width:460px;height:460px;background:#1248b8;top:-150px;left:-110px}
+.g-red{width:420px;height:420px;background:#8f1220;bottom:-150px;right:-90px}
+.center{position:relative;z-index:2;min-height:100dvh;display:grid;place-items:center;padding:20px}
+.login-card{width:min(400px,100%);background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:26px;padding:34px 30px;text-align:center;box-shadow:0 40px 90px rgba(0,0,0,.55)}
+.login-card img{width:76px;height:76px;border-radius:20px}
+.login-card h1{font-family:"Space Grotesk";font-size:24px;margin-top:14px}
+.login-card p{color:var(--mut);font-size:13.5px;margin-top:6px}
+.field{width:100%;padding:13px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(7,4,15,.6);color:#fff;font-size:15px;margin-top:14px;outline:none}
+.field:focus{border-color:var(--violet)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:999px;font-weight:600;font-size:14px;border:1px solid transparent;background:linear-gradient(135deg,var(--violet),var(--vdeep));color:#fff;width:100%;margin-top:14px}
+.btn.g{background:rgba(183,156,255,.08);border-color:var(--line)}
+.btn.s{width:auto;padding:7px 14px;font-size:12.5px;margin-top:0}
+.btn.ok{background:#1FA855}.btn.bad{background:var(--red)}.btn.warn{background:var(--gold);color:#000}
+.err{color:#FF8A94;font-size:13.5px;margin-top:12px;min-height:18px}
+.shell{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:22px}
+header{display:flex;align-items:center;gap:13px;padding:8px 0 20px}
+header img{width:42px;height:42px;border-radius:12px}
+header h1{font-family:"Space Grotesk";font-size:22px}
+header .sp{margin-left:auto;display:flex;gap:9px}
+.tabs{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:20px}
+.tab{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(23,17,48,.6);color:var(--mut);font-weight:600;font-size:14px}
+.tab.on{background:linear-gradient(135deg,var(--violet),var(--vdeep));color:#fff;border-color:transparent}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.stats{grid-template-columns:1fr 1fr}}
+.stat{border:1px solid var(--line);border-radius:20px;padding:22px;background:linear-gradient(180deg,var(--panel),var(--ink2))}
+.stat b{font-family:"Space Grotesk";font-size:32px;display:block}
+.stat span{color:var(--mut);font-size:13px}
+.stat .up{color:var(--ok);font-size:12.5px}
+.card{border:1px solid var(--line);border-radius:20px;padding:22px;background:linear-gradient(180deg,rgba(23,17,48,.85),rgba(12,9,24,.9));margin-bottom:16px;overflow-x:auto}
+.card h3{font-size:17px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+th{text-align:left;color:var(--mut);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid rgba(183,156,255,.07);vertical-align:top}
+tr:hover td{background:rgba(139,92,246,.04)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.pill.free{background:rgba(183,156,255,.13);color:var(--vsoft)}
+.pill.paid{background:rgba(255,201,77,.16);color:var(--gold)}
+.pill.pending{background:rgba(34,211,238,.14);color:var(--blue)}
+.pill.approved{background:rgba(52,211,153,.15);color:var(--ok)}
+.pill.rejected,.pill.blocked{background:rgba(255,77,94,.15);color:#FF8A94}
+.pill.open{background:rgba(34,211,238,.14);color:var(--blue)}
+.pill.answered{background:rgba(52,211,153,.15);color:var(--ok)}
+.row-btns{display:flex;gap:6px;flex-wrap:wrap}
+.empty{color:var(--mut);text-align:center;padding:26px;font-size:14px}
+.search{display:flex;gap:9px;margin-bottom:14px}
+.search input{flex:1;padding:11px 15px;border-radius:12px;border:1px solid var(--line);background:rgba(7,4,15,.6);color:#fff;outline:none}
+textarea.field{resize:vertical}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--violet);padding:12px 22px;border-radius:999px;font-size:14px;z-index:99;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<div class="lights"><div class="glow g-blue"></div><div class="glow g-red"></div></div>
+
+<!-- LOGIN -->
+<div class="center" id="loginView">
+  <div class="login-card">
+    <img src="../assets/image2.png" alt="BADSHAH AI">
+    <h1>Admin Panel 👑</h1>
+    <p>BADSHAH AI ka control room. Password dalo.</p>
+    <input class="field" id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
+    <div class="err" id="loginErr"></div>
+    <button class="btn" id="btnLogin">Login →</button>
+    <p style="margin-top:14px;font-size:12px">Password Cloudflare secret <b>ADMIN_PASSWORD</b> se match hota hai — code mein kahin nahi likha.</p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="shell hidden" id="panelView">
+  <header>
+    <img src="../assets/image2.png" alt="">
+    <div><h1>BADSHAH AI — Admin</h1><small style="color:var(--mut)">badshah222-ai.pages.dev/admin</small></div>
+    <div class="sp">
+      <button class="btn g s" id="btnRefresh">↻ Refresh</button>
+      <button class="btn g s" id="btnLogout">Logout</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="dash">📊 Dashboard</button>
+    <button class="tab" data-tab="payments">💰 Paid Requests <span id="payCount"></span></button>
+    <button class="tab" data-tab="users">👥 Users</button>
+    <button class="tab" data-tab="tickets">🛟 Help Inbox <span id="tickCount"></span></button>
+    <button class="tab" data-tab="announce">📣 Announce</button>
+  </div>
+
+  <section id="tab-dash">
+    <div class="stats">
+      <div class="stat"><b id="stUsers">–</b><span>Total users joined</span><div class="up" id="stNew"></div></div>
+      <div class="stat"><b id="stPaid">–</b><span>Paid users (active)</span><div class="up" id="stFree"></div></div>
+      <div class="stat"><b id="stRevenue">–</b><span>Revenue collected (Rs)</span><div class="up">approved payments</div></div>
+      <div class="stat"><b id="stPending">–</b><span>Pending paid requests</span><div class="up" id="stTickets"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Quick nazar</h3><p style="color:var(--mut);line-height:1.7;font-size:14.5px">Paid requests approve karne se user ka plan foran active ho jata hai. Help inbox ke jawab user ko app mein nazar aate hain. Koi user ghalat istemal kare to Users tab se block kar sakte ho.</p></div>
+  </section>
+
+  <section id="tab-payments" class="hidden">
+    <div class="card"><h3>💰 Paid Requests</h3><div id="payTable"></div></div>
+  </section>
+
+  <section id="tab-users" class="hidden">
+    <div class="card"><h3>👥 Users</h3>
+      <div class="search"><input id="userQ" placeholder="Naam ya email se search…"><button class="btn s" id="btnUserSearch" style="width:auto;margin-top:0">Search</button></div>
+      <div id="userTable"></div>
+    </div>
+  </section>
+
+  <section id="tab-tickets" class="hidden">
+    <div class="card"><h3>🛟 Help Center Inbox</h3><div id="tickTable"></div></div>
+  </section>
+
+  <section id="tab-announce" class="hidden">
+    <div class="card"><h3>📣 Announcement bhejo</h3>
+      <input class="field" id="annTitle" placeholder="Title" style="margin-top:0">
+      <textarea class="field" id="annBody" rows="4" placeholder="Message — saare users ko app mein nazar aayega"></textarea>
+      <button class="btn" id="btnAnnounce" style="width:auto;padding:11px 26px">Publish</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let PW=sessionStorage.getItem('ba_admin_pw')||'';
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3200); }
+async function api(action, body={}){
+  const r=await fetch('/admin-api/'+action,{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':PW},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||('Server '+r.status));
+  return d;
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function dt(s){ return s? new Date(s).toLocaleString('en-PK',{dateStyle:'medium',timeStyle:'short'}) : '—'; }
+
+async function loadDash(){
+  const s=await api('stats');
+  $('stUsers').textContent=s.totalUsers; $('stNew').textContent='Aaj '+s.newToday+' • 7 din mein '+s.new7d+' naye';
+  $('stPaid').textContent=s.paidUsers; $('stFree').textContent=s.freeUsers+' free users';
+  $('stRevenue').textContent='Rs '+Number(s.revenue).toLocaleString();
+  $('stPending').textContent=s.pendingPayments; $('stTickets').textContent=s.openTickets+' open help tickets';
+  $('payCount').textContent=s.pendingPayments? '('+s.pendingPayments+')':'';
+  $('tickCount').textContent=s.openTickets? '('+s.openTickets+')':'';
+}
+async function loadPayments(){
+  const d=await api('payments');
+  if(!d.rows.length){ $('payTable').innerHTML='<div class="empty">Abhi koi paid request nahi.</div>'; return; }
+  $('payTable').innerHTML='<table><tr><th>Date</th><th>User</th><th>Plan</th><th>Amount</th><th>Sender</th><th>Status</th><th>Action</th></tr>'+
+    d.rows.map(r=>`<tr><td>${dt(r.created_at)}</td><td>${esc(r.user_email||'—')}<br><small style="color:var(--mut)">${esc(r.firebase_uid||'')}</small></td><td>${r.months} month</td><td><b>Rs ${r.amount}</b></td><td>${esc(r.sender_name||'')}<br><small style="color:var(--mut)">${esc(r.sender_number||'')}</small></td><td><span class="pill ${r.status}">${r.status}</span></td><td>${r.status==='pending'?`<div class="row-btns"><button class="btn ok s" onclick="approve('${r.id}')">✓ Approve</button><button class="btn bad s" onclick="reject('${r.id}')">✕ Reject</button></div>`:'—'}</td></tr>`).join('')+'</table>';
+}
+window.approve=async id=>{ try{ const d=await api('payment-approve',{id}); toast('✅ Plan active — expiry '+new Date(d.expiry).toLocaleDateString()); loadPayments(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+window.reject=async id=>{ try{ await api('payment-reject',{id}); toast('Request reject ho gayi'); loadPayments(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+async function loadUsers(){
+  const d=await api('users',{q:$('userQ').value.trim()});
+  if(!d.rows.length){ $('userTable').innerHTML='<div class="empty">Koi user nahi mila.</div>'; return; }
+  $('userTable').innerHTML='<table><tr><th>Joined</th><th>User</th><th>Plan</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>'+
+    d.rows.map(u=>{ const paid=u.plan&&u.plan!=='free'; return `<tr><td>${dt(u.created_at)}</td><td>${esc(u.display_name||'—')}<br><small style="color:var(--mut)">${esc(u.email||'')}</small></td><td><span class="pill ${paid?'paid':'free'}">${paid?'PAID':'FREE'}</span></td><td>${u.plan_expires_at?dt(u.plan_expires_at):'—'}</td><td>${u.blocked?'<span class="pill blocked">BLOCKED</span>':'<span class="pill answered">active</span>'}</td><td><div class="row-btns"><button class="btn s" onclick="extendPlan('${u.firebase_uid}')">+1 Month</button><button class="btn ${u.blocked?'ok':'bad'} s" onclick="blockUser('${u.firebase_uid}',${!u.blocked})">${u.blocked?'Unblock':'Block'}</button></div></td></tr>`; }).join('')+'</table>';
+}
+window.extendPlan=async uid=>{ if(!uid) return toast('Is user ka uid nahi'); try{ const d=await api('user-plan',{firebase_uid:uid,months:1}); toast('✅ Plan extend — expiry '+new Date(d.expiry).toLocaleDateString()); loadUsers(); }catch(e){ toast('⚠️ '+e.message); } };
+window.blockUser=async (uid,blocked)=>{ if(!uid) return toast('Is user ka uid nahi'); try{ await api('user-block',{firebase_uid:uid,blocked}); toast(blocked?'User block ho gaya':'User unblock ho gaya'); loadUsers(); }catch(e){ toast('⚠️ '+e.message); } };
+async function loadTickets(){
+  const d=await api('tickets');
+  if(!d.rows.length){ $('tickTable').innerHTML='<div class="empty">Inbox khaali hai.</div>'; return; }
+  $('tickTable').innerHTML='<table><tr><th>Date</th><th>User</th><th>Subject</th><th>Message</th><th>Status</th><th>Reply</th></tr>'+
+    d.rows.map(t=>`<tr><td>${dt(t.created_at)}</td><td>${esc(t.user_email||'—')}</td><td>${esc(t.subject||'—')}</td><td style="max-width:300px">${esc(t.message||'')}${t.admin_reply?'<br><small style="color:var(--ok)">↪ '+esc(t.admin_reply)+'</small>':''}</td><td><span class="pill ${t.status}">${t.status}</span></td><td>${t.status!=='answered'?`<div class="row-btns"><input id="rep-${t.id}" placeholder="Jawab likho…" style="padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:rgba(7,4,15,.6);color:#fff"><button class="btn ok s" onclick="replyTicket('${t.id}')">Send</button></div>`:'—'}</td></tr>`).join('')+'</table>';
+}
+window.replyTicket=async id=>{ const v=$('rep-'+id).value.trim(); if(!v) return; try{ await api('ticket-reply',{id,reply:v}); toast('✅ Jawab bhej diya'); loadTickets(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+$('btnAnnounce').onclick=async()=>{ try{ await api('announce',{title:$('annTitle').value.trim(),body:$('annBody').value.trim()}); toast('📣 Announcement publish ho gayi'); $('annTitle').value=''; $('annBody').value=''; }catch(e){ toast('⚠️ '+e.message); } };
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+  ['dash','payments','users','tickets','announce'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab));
+  if(t.dataset.tab==='payments') loadPayments();
+  if(t.dataset.tab==='users') loadUsers();
+  if(t.dataset.tab==='tickets') loadTickets();
+});
+$('btnUserSearch').onclick=loadUsers;
+$('btnRefresh').onclick=()=>{ loadDash(); toast('Refresh ho gaya'); };
+$('btnLogout').onclick=()=>{ sessionStorage.removeItem('ba_admin_pw'); location.reload(); };
+async function tryLogin(){
+  $('loginErr').textContent='';
+  try{ await api('stats'); sessionStorage.setItem('ba_admin_pw',PW); $('loginView').classList.add('hidden'); $('panelView').classList.remove('hidden'); loadDash(); }
+  catch(e){ $('loginErr').textContent=e.message; }
+}
+$('btnLogin').onclick=()=>{ PW=$('pw').value; tryLogin(); };
+$('pw').addEventListener('keydown',e=>{ if(e.key==='Enter'){ PW=$('pw').value; tryLogin(); }});
+if(PW) tryLogin();
+</script>
+</body>
+</html>
