@@ -15,12 +15,12 @@ window.BADSHAH_CONFIG = {
   // Firebase Auth (project badshah-ai-badshah222)
   // OWNER STEP: paste apiKey + appId from Firebase Console → Project settings → Your apps → Web app.
   firebase: {
-    apiKey: "PASTE_FROM_FIREBASE_CONSOLE",
+    apiKey: "AIzaSyCy_uK_4kR3rEIrhdKIyVnlRYCil2zo25Y",
     authDomain: "badshah-ai-badshah222.firebaseapp.com",
     projectId: "badshah-ai-badshah222",
     storageBucket: "badshah-ai-badshah222.firebasestorage.app",
     messagingSenderId: "949903255351",
-    appId: "PASTE_FROM_FIREBASE_CONSOLE"
+    appId: "1:949903255351:web:24181015a2dfbe76ae1cb2"
   },
 
   whatsapp: "https://wa.me/923251787969",

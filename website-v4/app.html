@@ -495,7 +495,15 @@ async function openCall(){
   $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden');
 }
 function closeCall(){ stopLive(); $('callView').classList.add('hidden'); }
-$('btnCall').onclick=openCall; $('btnCallSide').onclick=openCall;
+async function getLiveKey(){
+  try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
+  return localStorage.getItem('ba_gemini_key')||null;
+}
+function openCallSmart(){
+  if(state.mode==='rani' && window.RaniVoice){ RaniVoice.start({keyProvider:getLiveKey}); return; }
+  openCall();
+}
+$('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=closeCall;
 $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startLive(k); };
 $('btnEnd').onclick=closeCall;
@@ -587,6 +595,7 @@ function stopLive(){
 function renderAll(){ setMode(state.mode); buildModels(); renderChats(); renderMsgs(); }
 renderAll();
 </script>
+<script src="rani-voice.js"></script>
 <script src="bh-app.js"></script>
 </body>
 </html>
