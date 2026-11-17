@@ -12,21 +12,16 @@ data class LiveVoice(val name: String, val style: String, val female: Boolean) {
 }
 
 object LiveVoices {
+    // Owner's rule (2026-11-17): only Boyfriend-mode and Girlfriend-mode voices —
+    // the best few of Google's Gemini Live voices for each mode, MYRA-style.
+    // BF default = Charon, GF default = Aoede (MYRA's own pair).
     val male = listOf(
         LiveVoice("Charon", "Informative, clear", false),
-        LiveVoice("Orus", "Firm, strong", false),
         LiveVoice("Fenrir", "Excitable, lively", false),
         LiveVoice("Puck", "Upbeat, cheerful", false),
+        LiveVoice("Orus", "Firm, strong", false),
         LiveVoice("Algieba", "Smooth, deep", false),
-        LiveVoice("Alnilam", "Firm, commanding", false),
-        LiveVoice("Enceladus", "Breathy, soft", false),
-        LiveVoice("Iapetus", "Clear, crisp", false),
-        LiveVoice("Umbriel", "Easy-going, relaxed", false),
-        LiveVoice("Rasalgethi", "Informative, steady", false),
-        LiveVoice("Sadaltager", "Knowledgeable, wise", false),
-        LiveVoice("Zubenelgenubi", "Casual, friendly", false),
         LiveVoice("Achird", "Friendly, warm", false),
-        LiveVoice("Algenib", "Gravelly, rugged", false),
     )
     val female = listOf(
         LiveVoice("Aoede", "Breezy, sweet", true),
@@ -35,16 +30,6 @@ object LiveVoices {
         LiveVoice("Leda", "Youthful, lovely", true),
         LiveVoice("Sulafat", "Warm, gentle", true),
         LiveVoice("Callirrhoe", "Easy-going, soft", true),
-        LiveVoice("Autonoe", "Bright, shining", true),
-        LiveVoice("Despina", "Smooth, silky", true),
-        LiveVoice("Erinome", "Clear, pure", true),
-        LiveVoice("Laomedeia", "Upbeat, joyful", true),
-        LiveVoice("Achernar", "Soft, tender", true),
-        LiveVoice("Gacrux", "Mature, graceful", true),
-        LiveVoice("Pulcherrima", "Forward, bold", true),
-        LiveVoice("Vindemiatrix", "Gentle, kind", true),
-        LiveVoice("Sadachbia", "Lively, sparkling", true),
-        LiveVoice("Schedar", "Even, calm", true),
     )
     val all: List<LiveVoice> = male + female
     fun fromName(name: String?): LiveVoice = all.firstOrNull { it.name.equals(name, ignoreCase = true) } ?: male.first()
