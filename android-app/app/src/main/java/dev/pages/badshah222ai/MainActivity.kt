@@ -41,8 +41,8 @@ class MainActivity : ComponentActivity() {
     private var triedFallback = false
 
     companion object {
-        const val PRIMARY_URL = "https://badshah-xjc.pages.dev/app.html"
-        const val FALLBACK_URL = "https://badshah222-ai.pages.dev/app.html"
+        const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
+        const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_MIC = 41
     }
 
