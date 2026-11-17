@@ -127,7 +127,7 @@ async function handleChat(req, env, url) {
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Groq abhi setup nahi — owner ko Supabase service key lagana hai.' });
     const keys = await poolKeys(env, 'groq').catch(() => []);
     if (!keys.length) return json(501, { error: 'Groq key pool khaali hai — admin panel se key add karo.' });
-    const model = url.searchParams.get('model') || 'llama-3.3-70b-versatile';
+    const model = url.searchParams.get('model') || 'openai/gpt-oss-120b';
     for (const k of keys) {
       const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',

@@ -31,8 +31,8 @@ window.BADSHAH_CONFIG = {
   chatModels: ["fusion-flex", "fusion-max", "fusion-pulse", "fusion-spark", "fusion-lexus", "fusion-synth", "fusion-void", "fusion-reaper", "fusion-dread", "fusion-shadow", "fusion-abyss", "fusion-vortex"],
   imageModels: ["fusion-uni", "fusion-astra"],
   groqModels: [
-    { id: "llama-3.3-70b-versatile", label: "Groq Llama 3.3 (fast)" },
-    { id: "llama-3.1-8b-instant", label: "Groq Llama 3.1 (fastest)" }
+    { id: "openai/gpt-oss-120b", label: "Groq GPT-OSS 120B (smart)" },
+    { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B (fast)" }
   ],
 
   // Gemini Live (call) — key comes from the owner's pool via /api/live-key
