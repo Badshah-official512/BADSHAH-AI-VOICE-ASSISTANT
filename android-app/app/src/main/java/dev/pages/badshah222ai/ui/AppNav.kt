@@ -35,6 +35,8 @@ import dev.pages.badshah222ai.features.auth.SessionViewModel
 import dev.pages.badshah222ai.features.chat.ChatHistoryScreen
 import dev.pages.badshah222ai.features.chat.ChatScreen
 import dev.pages.badshah222ai.features.chat.HistoryViewModel
+import dev.pages.badshah222ai.features.chat.SecretChatScreen
+import dev.pages.badshah222ai.features.chat.SecretChatViewModel
 import dev.pages.badshah222ai.features.help.HelpScreen
 import dev.pages.badshah222ai.features.help.HelpViewModel
 import dev.pages.badshah222ai.features.home.HomeScreen
@@ -71,7 +73,7 @@ private val TABS = setOf("home", "chat", "history", "settings")
 private fun SignedInNav(session: SessionViewModel) {
     val nav = rememberNavController()
     // ViewModels are created here (nav-graph scope) so Home state survives opening Settings/Help.
-    val home: HomeViewModel = viewModel(); val settings: SettingsViewModel = viewModel(); val help: HelpViewModel = viewModel(); val history: HistoryViewModel = viewModel(); val browser: BrowserViewModel = viewModel(); val screen: ScreenViewModel = viewModel()
+    val home: HomeViewModel = viewModel(); val settings: SettingsViewModel = viewModel(); val help: HelpViewModel = viewModel(); val history: HistoryViewModel = viewModel(); val browser: BrowserViewModel = viewModel(); val screen: ScreenViewModel = viewModel(); val secret: SecretChatViewModel = viewModel()
     val backStack by nav.currentBackStackEntryAsState()
     val route = backStack?.destination?.route ?: "home"
     fun tab(r: String) { nav.navigate(r) { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true } }
@@ -100,6 +102,7 @@ private fun SignedInNav(session: SessionViewModel) {
                 composable("quick") { QuickActionsScreen(home, { nav.popBackStack() }, { nav.navigate(it) }) }
                 composable("browser") { BrowserScreen(home, browser) { nav.popBackStack() } }
                 composable("screen") { ScreenShareScreen(screen) { nav.popBackStack() } }
+                composable("secret") { SecretChatScreen(secret, { nav.popBackStack() }, { nav.navigate(it) }) }
                 composable("settings") { SettingsScreen(session, settings, { nav.popBackStack() }, { nav.navigate("permissions") }) }
                 composable("help") { HelpScreen(help) { nav.popBackStack() } }
                 composable("about") { AboutScreen { nav.popBackStack() } }
