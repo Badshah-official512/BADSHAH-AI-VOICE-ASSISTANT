@@ -1,0 +1,16 @@
+/* BADSHAH living logo orb — shared by index.html and app.html */
+.bhorb{--mc:46,230,166;--lv:0;position:relative;width:100%;height:100%;aspect-ratio:1;perspective:900px;user-select:none;-webkit-tap-highlight-color:transparent}
+.bhorb canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.orb-3d{position:absolute;inset:0;display:grid;place-items:center;transform-style:preserve-3d;will-change:transform}
+.orb-logo{width:60%;height:60%;object-fit:contain;pointer-events:none;
+  filter:drop-shadow(0 calc(8px + var(--lv)*10px) calc(14px + var(--lv)*34px) rgba(var(--mc),calc(.35 + var(--lv)*.6)));
+  transform:translateZ(46px);will-change:transform,filter}
+.orb-sheen{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle at var(--sx,35%) var(--sy,28%),rgba(255,255,255,.16),transparent 55%);mix-blend-mode:screen;pointer-events:none;transform:translateZ(60px)}
+.bhorb[data-state="thinking"] .orb-logo{animation:orbThink 1.6s ease-in-out infinite}
+@keyframes orbThink{0%,100%{transform:translateZ(46px) rotateY(-10deg)}50%{transform:translateZ(46px) rotateY(10deg)}}
+
+/* status pill under the orb */
+.orb-status{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;border-radius:999px;font-size:13px;font-weight:600;
+  background:rgba(8,32,26,.72);border:1px solid rgba(var(--mc,46,230,166),.35);color:#d9fff0;backdrop-filter:blur(8px);transition:.4s}
+.orb-status i{width:8px;height:8px;border-radius:50%;background:rgb(var(--mc,46,230,166));box-shadow:0 0 12px rgb(var(--mc,46,230,166));animation:osPulse 1.6s infinite}
+@keyframes osPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.55);opacity:.5}}

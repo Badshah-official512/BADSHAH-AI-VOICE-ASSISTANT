@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-api/
+Disallow: /api/
+
+Sitemap: https://badshah222-ai.pages.dev/sitemap.xml
