@@ -141,7 +141,7 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
 /* ---------- living logo stage (v4) ---------- */
 #chatPanel{--mc:46,230,166}
 .stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px 18px 14px;flex:1;min-height:0;overflow-y:auto;transition:padding .5s}
-.orb-host{width:min(330px,38vh);height:min(330px,38vh);flex:none;transition:width .6s cubic-bezier(.2,.7,.2,1),height .6s cubic-bezier(.2,.7,.2,1)}
+.orb-host{width:min(300px,32vh);height:min(300px,32vh);flex:none;transition:width .6s cubic-bezier(.2,.7,.2,1),height .6s cubic-bezier(.2,.7,.2,1)}
 .stage-info{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
 .stage h2{font-family:"Space Grotesk";font-size:clamp(22px,3.6vw,34px);line-height:1.15;letter-spacing:-.5px}
 .stage h2 .grad{background:linear-gradient(92deg,#8FF5CF,#2EE6A6 40%,#38BDF8 75%,#FFC94D);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -149,9 +149,11 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
 .stage-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:760px;margin-top:4px}
 .stage-chips button{background:rgba(13,42,34,.75);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:13.5px;font-weight:600;backdrop-filter:blur(8px);transition:.25s}
 .stage-chips button:hover{transform:translateY(-2px);border-color:rgba(var(--mc),.7);box-shadow:0 10px 26px rgba(var(--mc),.22)}
-#chatPanel.has-msgs .stage{flex:none;flex-direction:row;justify-content:flex-start;padding:6px 18px;gap:12px;border-bottom:1px solid var(--line);background:rgba(6,19,15,.6);backdrop-filter:blur(12px);overflow:visible}
-#chatPanel.has-msgs .orb-host{width:86px;height:86px}
-#chatPanel.has-msgs .stage-info{align-items:flex-start;gap:4px;text-align:left}
+#chatPanel.has-msgs .stage{flex:none;flex-direction:row;justify-content:flex-start;padding:4px 14px;gap:10px;border-bottom:1px solid var(--line);background:rgba(6,19,15,.6);backdrop-filter:blur(12px);overflow:visible}
+#chatPanel.has-msgs .orb-host{width:54px;height:54px}
+#chatPanel.has-msgs .stage-info{align-items:flex-start;gap:0;text-align:left}
+#chatPanel.has-msgs .orb-status{display:none}
+#chatPanel.has-msgs .stage-live{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54vw}
 #chatPanel.has-msgs .stage h2,#chatPanel.has-msgs .stage-sub,#chatPanel.has-msgs .stage-chips{display:none}
 #chatPanel:not(.has-msgs) #msgs{display:none}
 .stage-live{display:none;color:var(--mut);font-size:12.5px}
@@ -163,6 +165,8 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
 .msg{animation:msgIn .45s cubic-bezier(.2,.7,.2,1)}
 @keyframes msgIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
 .msg:not(.user) .body{background:rgba(13,42,34,.55);border:1px solid var(--line);border-radius:18px;padding:12px 16px;backdrop-filter:blur(6px)}
+@media (max-height:680px){.orb-host{width:min(185px,26vh);height:min(185px,26vh)}.stage h2{font-size:21px}.stage-sub{display:none}.stage{gap:6px}.stage-info{gap:8px}}
+@media (max-width:560px){.stage-chips button{padding:8px 13px;font-size:12.5px}.stage{padding:6px 12px 10px}}
 .caret{display:inline-block;width:8px;height:1em;background:rgb(var(--mc));vertical-align:-2px;margin-left:2px;animation:blink .8s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
 .auth-orb{width:150px;height:150px;margin:-8px auto 0}
@@ -404,7 +408,7 @@ function renderChats(){
 function renderMsgs(){
   const w=$('msgWrap'); w.innerHTML='';
   chat().msgs.forEach(m=>addMsgEl(m.role,m.content,m.img));
-  if(!chat().msgs.length) addMsgEl('ai', state.mode==='rani' ? 'Assalam o Alaikum! Main RANI hoon 💜 Kuch bhi poochho, ya Call par baat karte hain.' : 'Assalam o Alaikum! Main BADSHAH hoon 👑 Kuch bhi poochho — chat, image, ya seedha Call kar lo.');
+  if(!chat().msgs.length && !document.getElementById('stage')) addMsgEl('ai', state.mode==='rani' ? 'Assalam o Alaikum! Main RANI hoon 💜 Kuch bhi poochho, ya Call par baat karte hain.' : 'Assalam o Alaikum! Main BADSHAH hoon 👑 Kuch bhi poochho — chat, image, ya seedha Call kar lo.');
   $('msgs').scrollTop=$('msgs').scrollHeight;
 }
 function addMsgEl(role, content, img){
