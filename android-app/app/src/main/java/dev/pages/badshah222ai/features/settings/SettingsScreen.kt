@@ -125,10 +125,11 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 val keep = c.store.model(p)?.takeIf { it in list } ?: list.first(); c.store.setModel(p, keep); selectedModel.value = keep
                 aiMsg.value = true to "Connected. ${list.size} models available."
                 if (p == Provider.GEMINI) {
-                    // Detect the Live model right away, so the Voice Call connects in seconds later.
+                    // Check the one Live model right away, so the Voice Call connects in seconds later.
                     val lm = runCatching { c.ai.detectLiveModel() }.getOrNull()
                     liveModel.value = lm; liveCandidates.value = c.store.liveCandidates; geminiSaved.value = true
-                    if (lm != null) aiMsg.value = true to "Connected. ${list.size} models available. Live voice bhi ready hai ($lm)."
+                    if (lm != null) aiMsg.value = true to "Key is valid. Live voice is available (Gemini 3.8 Live)."
+                    else aiMsg.value = true to "Key valid hai — chat chalega. Lekin is key par Gemini 3.8 Live nahi mila, is liye Live voice call nahi chalegi."
                 }
                 uid?.let { runCatching { c.cloud.saveProviderStatus(it, p.id, true, "ok") } }; pushPrefs()
             } catch (e: AiException) { aiMsg.value = false to e.userMessage; uid?.let { runCatching { c.cloud.saveProviderStatus(it, p.id, c.store.apiKey(p) != null, "failed") } } }
@@ -148,7 +149,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val m = c.ai.detectLiveModel()
                 liveModel.value = m; liveCandidates.value = c.store.liveCandidates; lastLiveError.value = c.store.lastLiveError
-                liveMsg.value = if (m != null) true to "Live ready — model: $m" else false to "Is key par koi Live model nahi mila. Voice Call classic mode mein chalegi."
+                liveMsg.value = if (m != null) true to "Live ready — Gemini 3.8 Live available hai." else false to "Is key par Gemini 3.8 Live nahi hai. Voice Call classic mode mein chalegi."
             } catch (e: Exception) { liveMsg.value = false to "Live test failed. Internet check karke dobara try karo." }
             finally { liveTesting.value = false }
         }
@@ -261,34 +262,34 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
             }
             item { Text("AI SETTINGS", color = Mute, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(start = 4.dp)) }
             item { Section("Connections", Icons.Default.Key) {
-                Text("Each person uses their own API key. It is stored encrypted on this phone only.", style = MaterialTheme.typography.bodySmall, color = Mute)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Provider.entries.forEach { p -> FilterChip(provider == p, { vm.selectProvider(p) }, { Text(p.label) }) } }
+                Text("Chat, images aur coding FT Fusion par chalte hain — built-in hai, pehle se connected, koi key nahi chahiye. Neeche wale providers sirf optional add-ons hain; Gemini key Voice Call (Live voice) ke liye zaroori hai. Keys sirf is phone par encrypted rehti hain.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Provider.entries.filter { it != Provider.FUSION }.forEach { p -> FilterChip(provider == p, { vm.selectProvider(p) }, { Text(p.label) }) } }
                 if (provider == Provider.FUSION) {
-                    Text("FT Fusion built-in hai — koi key nahi chahiye. Test dabao: 12 models chat aur coding ke liye ready ho jayenge. Images ke liye neeche Image Studio dekho.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                    Text("FT Fusion abhi chat ka engine hai — ye hamesha ready hai, yahan kuch save nahi karna. Kisi add-on ki key lagani ho to upar se chip chuno.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 } else {
                 OutlinedTextField(key, { key = it }, Modifier.fillMaxWidth(), label = { Text(if (keySaved) "API key saved (paste a new one to replace)" else "${provider.label} API key") }, singleLine = true,
                     visualTransformation = if (showKey) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     trailingIcon = { TextButton({ showKey = !showKey }) { Text(if (showKey) "Hide" else "Show") } })
-                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button({ vm.testAndSave(key); key = "" }, enabled = !testing) { if (testing) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test & save") }
-                    if (provider != Provider.FUSION) OutlinedButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(provider.keyUrl))) }) { Text("Get a key") }
-                    if (keySaved && provider != Provider.FUSION) TextButton(vm::removeKey) { Text("Remove") }
+                    OutlinedButton({ ctx.startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(provider.keyUrl))) }) { Text("Get a key") }
+                    if (keySaved) TextButton(vm::removeKey) { Text("Remove") }
                 }
                 Msg(aiMsg)
-                if (keySaved || provider == Provider.FUSION) Box { OutlinedButton({ modelMenu = true }, enabled = models.isNotEmpty() || selModel != null) { Text("Model: ${selModel ?: "-"}") }
+                if (keySaved) Box { OutlinedButton({ modelMenu = true }, enabled = models.isNotEmpty() || selModel != null) { Text("Model: ${selModel ?: "-"}") }
                     DropdownMenu(modelMenu, { modelMenu = false }) { models.forEach { m -> DropdownMenuItem({ Text(m) }, { vm.selectModel(m); modelMenu = false }) } } }
                 if (keySaved && models.isEmpty()) Text("Press Test & save to load the list of models for your key.", style = MaterialTheme.typography.bodySmall, color = Mute)
+                }
             } }
             item { Section("Live Voice — real human voices", Icons.Default.RecordVoiceOver) {
                 Text("Voice Call ab Gemini Live par chalti hai — Google ki asli insani voices, bilkul LIA AI ki tarah. Koi robotic phone voice nahi. Apni Gemini key ka Live model pehle test kar lo, phir apni pasand ki voice chun lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Row(verticalAlignment = Alignment.CenterVertically) { Text("Use Live voice on Voice Call", Modifier.weight(1f)); Switch(liveEnabled, vm::setLiveEnabled) }
-                Text("Live model: ${liveModel ?: "not tested yet"}", style = MaterialTheme.typography.bodySmall, color = if (liveModel != null) Ok else Mute)
+                Text("Live model: Gemini 3.8 Live ${if (liveModel == "gemini-3.8-live") "— available ✓" else "— abhi confirm nahi"}", style = MaterialTheme.typography.bodySmall, color = if (liveModel == "gemini-3.8-live") Ok else Mute)
                 Text("Gemini key: ${if (geminiSaved) "saved hai ✓" else "NAHI daali — Live sirf Gemini key se chalta hai (Groq/FT Fusion se nahi). Connections mein Google Gemini select karke key daalo."}", style = MaterialTheme.typography.bodySmall, color = if (geminiSaved) Ok else Bad)
-                if (liveCandidates.isNotBlank()) Text("Live models mile: ${liveCandidates.split(",").size} — ${liveCandidates.take(110)}", style = MaterialTheme.typography.bodySmall, color = Mute)
                 lastLiveError?.let { Text("Aakhri Live koshish ki wajah: $it", style = MaterialTheme.typography.bodySmall, color = Bad) }
-                Button(vm::testLive, enabled = !liveTesting) { if (liveTesting) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test Live model") }
+                Button(vm::testLive, enabled = !liveTesting) { if (liveTesting) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp) else Text("Test Gemini 3.8 Live") }
                 Msg(liveMsg)
+                Text("MYRA ki asal voices yahi do hain — BADSHAH = Charon (male), RANI = Aoede (female) — ye dono default hain. Neeche Google ki mukammal voice list hai, jo pasand ho chun lo.", style = MaterialTheme.typography.bodySmall, color = Mute)
                 Text("Male voices", style = MaterialTheme.typography.labelLarge, color = Gold)
                 LiveVoices.male.forEach { v ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
