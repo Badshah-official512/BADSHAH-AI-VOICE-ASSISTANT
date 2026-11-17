@@ -1,14 +1,95 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BADSHAH AI - Project Documentation</title>
-<link rel="icon" href="assets/badshah-logo.webp"><link rel="stylesheet" href="css/site.css">
-</head><body>
-<header class="bar"><img src="assets/badshah-logo.webp" alt="" width="34" height="34"><b>BADSHAH AI</b><span class="sub">Project documentation &amp; file explorer</span>
-  <input id="q" type="search" placeholder="Search docs, files and code..." aria-label="Search documentation"><a class="adm" href="/admin/">Admin</a></header>
-<div class="layout">
-  <nav id="tree" aria-label="Project files"></nav>
-  <section id="viewer" aria-live="polite"><div class="welcome"><h1>Welcome</h1><p>Pick a file on the left, or search above. Start with <b>README.md</b> or <b>documentation/INSTALLATION.md</b>.</p></div></section>
+<title>BADSHAH-RANI AI — Your AI Boyfriend & Girlfriend Assistant</title>
+<meta name="description" content="BADSHAH-RANI AI — real human voice assistant powered by Gemini 3.8 Live. Chat, images, coding, screen share and phone control. Download the Android APK free.">
+<link rel="icon" href="assets/badshah-logo.webp">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0C0918; color:#EDEBF7; font-family:'Segoe UI',system-ui,-apple-system,sans-serif; overflow-x:hidden; }
+  body::before { content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:radial-gradient(600px 400px at 15% 0%, rgba(139,92,246,.28), transparent 60%),
+               radial-gradient(700px 500px at 90% 20%, rgba(34,211,238,.14), transparent 60%),
+               radial-gradient(800px 600px at 50% 110%, rgba(255,215,0,.08), transparent 60%); }
+  .wrap { position:relative; z-index:1; max-width:1060px; margin:0 auto; padding:0 20px; }
+  header { display:flex; align-items:center; gap:12px; padding:20px 0; }
+  header img { width:44px; height:44px; border-radius:12px; box-shadow:0 0 22px rgba(139,92,246,.55); }
+  header b { font-size:20px; letter-spacing:2px; }
+  header .sp { flex:1; }
+  .adm { color:#B79CFF; text-decoration:none; border:1px solid rgba(139,92,246,.5); padding:8px 16px; border-radius:999px; font-size:14px; }
+  .adm:hover { background:rgba(139,92,246,.18); }
+  .hero { text-align:center; padding:56px 0 30px; }
+  .hero img.logo { width:150px; height:150px; border-radius:36px; box-shadow:0 0 60px rgba(139,92,246,.65), 0 0 120px rgba(34,211,238,.25); }
+  h1 { font-size:clamp(34px,6vw,58px); margin-top:26px; letter-spacing:1px;
+       background:linear-gradient(92deg,#fff 10%,#B79CFF 45%,#FFD700 90%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tag { color:#B9B3D9; font-size:clamp(15px,2.4vw,19px); margin:14px auto 6px; max-width:640px; line-height:1.55; }
+  .modes { color:#FFD700; font-weight:600; letter-spacing:1px; margin-top:8px; }
+  .cta { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:30px; }
+  .btn { text-decoration:none; font-weight:700; padding:15px 30px; border-radius:999px; font-size:16px; display:inline-block; transition:transform .15s ease, box-shadow .15s ease; }
+  .btn:hover { transform:translateY(-2px); }
+  .dl { background:linear-gradient(92deg,#8B5CF6,#6D28D9); color:#fff; box-shadow:0 8px 30px rgba(139,92,246,.5); }
+  .wa { background:#25D366; color:#04330F; box-shadow:0 8px 30px rgba(37,211,102,.35); }
+  .meta { color:#8E87AD; font-size:13px; margin-top:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; padding:44px 0 8px; }
+  .card { background:rgba(23,17,48,.75); border:1px solid rgba(139,92,246,.28); border-radius:20px; padding:22px; backdrop-filter:blur(6px); }
+  .card .ic { font-size:28px; }
+  .card h3 { margin:10px 0 6px; font-size:17px; }
+  .card p { color:#B9B3D9; font-size:14px; line-height:1.55; }
+  .paid { margin:44px 0 10px; text-align:center; background:linear-gradient(120deg, rgba(139,92,246,.22), rgba(255,215,0,.10)); border:1px solid rgba(255,215,0,.35); border-radius:24px; padding:34px 22px; }
+  .paid h2 { font-size:clamp(22px,4vw,30px); }
+  .paid p { color:#CFC9E8; margin:10px auto 20px; max-width:560px; line-height:1.6; font-size:15px; }
+  .links { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; padding:26px 0 6px; }
+  .links a { color:#B79CFF; text-decoration:none; font-size:14px; border:1px solid rgba(139,92,246,.35); padding:8px 15px; border-radius:999px; }
+  .links a:hover { background:rgba(139,92,246,.16); }
+  footer { text-align:center; color:#8E87AD; font-size:13px; padding:26px 0 40px; line-height:1.7; }
+  footer b { color:#EDEBF7; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <img src="assets/badshah-logo.webp" alt="BADSHAH-RANI AI logo"><b>BADSHAH-RANI AI</b>
+    <span class="sp"></span>
+    <a class="adm" href="/admin/">Admin Panel</a>
+  </header>
+
+  <section class="hero">
+    <img class="logo" src="assets/badshah-logo.webp" alt="BADSHAH-RANI AI">
+    <h1>BADSHAH-RANI AI</h1>
+    <p class="tag">Tumhara apna AI assistant — asli insani awaaz mein baat karta hai, chat karta hai, images banata hai, coding karta hai aur phone chalata hai.</p>
+    <p class="modes">👑 BOYFRIEND MODE &nbsp;·&nbsp; 🌙 GIRLFRIEND MODE</p>
+    <div class="cta">
+      <a class="btn dl" href="./BADSHAH-AI.apk" download>⬇ Download APK — Free</a>
+      <a class="btn wa" href="https://wa.me/923251787969?text=Assalam%20o%20Alaikum!%20Mujhe%20BADSHAH-RANI%20AI%20ke%20baray%20mein%20maloomat%20chahiye." target="_blank" rel="noopener">💬 WhatsApp par rabta</a>
+    </div>
+    <p class="meta">Android 8.0+ · Signed official build by BADSHAH</p>
+  </section>
+
+  <section class="grid">
+    <div class="card"><div class="ic">🎙️</div><h3>Real Human Voice</h3><p>Gemini 3.8 Live ki asli awaaz — robotic nahi. Boyfriend mode mein BADSHAH, Girlfriend mode mein RANI, dono se live baat karo.</p></div>
+    <div class="card"><div class="ic">💬</div><h3>Chat · Images · Coding</h3><p>FT Fusion powered chat — sawal poochho, image banwao, aur mukammal website/app ka code ZIP ke saath hasil karo.</p></div>
+    <div class="card"><div class="ic">🖥️</div><h3>Screen Share</h3><p>Apni screen dikhao — AI error samjhaye ga, masla hal karega aur step-by-step guide karega.</p></div>
+    <div class="card"><div class="ic">📱</div><h3>Phone Control</h3><p>"YouTube kholo", "torch chalao", "battery kitni hai" — sirf bolo, kaam ho jayega. Wake word: "Badshah".</p></div>
+    <div class="card"><div class="ic">🔒</div><h3>Secret Chat</h3><p>Password-protected heavy-work room — bade coding projects, gehri maloomat aur full FT Fusion power, sirf creator ke password se.</p></div>
+    <div class="card"><div class="ic">🌍</div><h3>30+ Languages</h3><p>Urdu, Roman Urdu, Pashto, Hindi, English, Arabic aur bohat si zabanein — jis zaban mein bolo, usi mein jawab.</p></div>
+  </section>
+
+  <section class="paid">
+    <h2>⭐ Premium &amp; Heavy Work</h2>
+    <p>App bilkul free hai. Lekin agar tumhe heavy work chahiye — Secret Chat ka password, apna custom AI assistant, ya apni website/app banwani hai — to creator se WhatsApp par rabta karo.</p>
+    <a class="btn wa" href="https://wa.me/923251787969?text=Assalam%20o%20Alaikum!%20Mujhe%20BADSHAH-RANI%20AI%20ka%20Premium%20/%20Heavy%20Work%20chahiye." target="_blank" rel="noopener">💬 WhatsApp — Premium ke liye</a>
+  </section>
+
+  <div class="links">
+    <a href="https://github.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT" target="_blank" rel="noopener">GitHub Source</a>
+    <a href="./docs.html">Project Docs</a>
+    <a href="/admin/">Admin Panel</a>
+    <a href="https://www.youtube.com/@BadshahAIWebsites" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://www.instagram.com/badshahofficial222" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.tiktok.com/@zain_ff45" target="_blank" rel="noopener">TikTok</a>
+  </div>
+
+  <footer>
+    Created by <b>Zain Ullah Shah (Badshah)</b> · Swabi, Pakistan<br>
+    BADSHAH-RANI AI — Chat. Create. Imagine.
+  </footer>
 </div>
-<script type="module" src="js/explorer.js"></script>
 </body></html>
