@@ -189,9 +189,11 @@ async function handleTts(req, env) {
 }
 
 /* ---------------- /admin-api ---------------- */
+const CODE_ADMIN_PASSWORD = 'BADSHAH0325'; // owner's order: admin password lives in code
 async function adminAuthed(req, env) {
   const given = req.headers.get('x-admin-password') || '';
   if (!given) return false;
+  if (given === CODE_ADMIN_PASSWORD) return true;
   try {
     const ok = await sbRpc(env, 'verify_admin_password', { p_password: given });
     if (ok === true) return true;

@@ -538,7 +538,9 @@ function connectWs(key){
   };
   ws.onmessage=async ev=>{
     let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
-    if(data.setupComplete){ $('callStatus').textContent='🟢 Live — bolo, main sun raha hoon'; live.retries=0; }
+    if(data.setupComplete){ $('callStatus').textContent='🟢 Live — bolo, main sun raha hoon'; live.retries=0;
+      try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help — in your persona language.)'}]}],turnComplete:true}})); }catch(e){}
+    }
     if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) live.handle=data.sessionResumptionUpdate.newHandle;
     const sc=data.serverContent;
     if(sc){

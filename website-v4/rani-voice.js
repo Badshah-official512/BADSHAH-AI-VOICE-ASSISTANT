@@ -214,6 +214,7 @@ function connect(key, modelId) {
     var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
     if (m.setupComplete !== undefined) {
       retries = 0; status('🟢 RANI sun rahi hai — bolo…'); caption('R', ''); caption('U', '');
+      try { ws.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: '(The call just connected. Greet me warmly right now, speak first, and ask how you can help — in my language.)' }] }], turnComplete: true } })); } catch (e) {}
       return;
     }
     if (m.sessionResumptionUpdate && m.sessionResumptionUpdate.newHandle) resumeHandle = m.sessionResumptionUpdate.newHandle;
