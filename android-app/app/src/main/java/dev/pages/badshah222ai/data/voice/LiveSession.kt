@@ -139,13 +139,13 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 if (!running) return
                 if (!setupDone) { nextOrFail(key, "Live connection fail ho gaya (model: ${att.model}): ${t.message?.take(90) ?: "network error"}"); return }
-                if (reconnects < 1) { reconnects++; Thread.sleep(1200); if (running) connect(key, att) }
+                if (reconnects < 8) { reconnects++; Thread.sleep(minOf(600L * reconnects, 3000L)); if (running) connect(key, att) }
                 else fail("Live voice connection failed. Check your internet and try again.")
             }
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 if (!running) return
                 if (!setupDone && code != 1000) { nextOrFail(key, "Live band ho gaya (model: ${att.model}, code $code ${reason.take(60)})"); return }
-                if (setupDone && reconnects < 1 && code != 1008) { reconnects++; if (running) connect(key, att) }
+                if (setupDone && reconnects < 8 && code != 1008) { reconnects++; if (running) connect(key, att) }
                 else if (code == 1008 || code == 1007) fail("The live voice was refused for this key or model. Open Settings → Live Voice and press Test to pick a working model.")
             }
         })
@@ -220,7 +220,7 @@ class LiveSession(private val context: Context, private val store: SecureStore) 
         }
         if (root.has("goAway")) {
             // Server is about to close this session — reconnect at once with the handle.
-            if (running && setupDone && reconnects < 3) {
+            if (running && setupDone && reconnects < 8) {
                 reconnects++
                 val att = attempts.getOrNull(attempt) ?: return
                 setupDone = false
