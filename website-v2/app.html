@@ -173,9 +173,8 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
     <button class="side-btn" id="btnHelp">🛟 Help Center</button>
     <div class="chat-list" id="chatList"></div>
     <div class="plan-badge">
-      <b id="planTitle">Free Plan</b>
-      <p id="planInfo">Flex + Max unlimited • Uni images</p>
-      <button class="btn btn-p btn-s" id="btnUpgrade" style="margin-top:10px;width:100%">👑 Upgrade — Paid Models</button>
+      <b>👑 Sab Kuch FREE</b>
+      <p>Saare chat models • Images • Live calls — bilkul free. Koi paid plan, koi key nahi.</p>
     </div>
     <div class="user-row">
       <div class="av" id="userAv">B</div>
@@ -204,28 +203,7 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
           <button class="icobtn" id="btnMic" title="Voice input">🎙️</button>
           <button class="icobtn send" id="btnSend">➤</button>
         </div>
-        <p class="comp-hint" id="compHint">Free models: Flex • Max • Uni images — unlimited. Paid models 🔒 Upgrade se khulenge.</p>
-      </div>
-    </div>
-
-    <!-- upgrade panel -->
-    <div id="upgradePanel" class="panel-view hidden">
-      <div class="panel-in">
-        <h2>👑 Paid Plan — saare models unlock</h2>
-        <p class="sub">Payment is number par bhejo: <b style="color:#fff">03251787969</b> (mobile account). Phir neeche paid request bhejo — admin approve karega aur tumhara plan active ho jayega. Status yahin nazar aayega.</p>
-        <div class="plans" id="planGrid"></div>
-        <div class="card">
-          <h3>Paid request bhejo</h3>
-          <input class="field" id="payName" placeholder="Tumhara naam (jis number se paisay bheje)">
-          <input class="field" id="paySender" placeholder="Sender mobile number">
-          <input class="field" id="payMonths" type="number" min="1" max="36" value="1" placeholder="Months (custom ke liye apni marzi)">
-          <p style="margin-top:10px">Total: <b id="payTotal" style="color:var(--gold)">Rs 100</b></p>
-          <div class="err" id="payErr"></div>
-          <button class="btn btn-p" id="btnPayReq">📩 Paid Request Bhejo</button>
-          <a class="btn btn-w" id="btnPayWa" target="_blank" rel="noopener">WhatsApp par confirm karo</a>
-          <p id="payStatus" style="margin-top:12px"></p>
-        </div>
-        <button class="btn btn-g btn-s" data-back>← Back to chat</button>
+        <p class="comp-hint" id="compHint">Sab kuch FREE hai 👑 — saare models, images aur calls. Koi key, koi payment nahi.</p>
       </div>
     </div>
 
@@ -266,8 +244,8 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
 <!-- ================= CALL ================= -->
 <div id="callView" class="hidden">
   <div id="keyBox" class="key-box hidden">
-    <h3>🔑 Pehle apni Gemini key lagao</h3>
-    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Call ke liye tumhari <b style="color:#fff">apni free Gemini API key</b> chahiye. Key sirf tumhare browser mein rehti hai — hamare server par kabhi nahi jati.</p>
+    <h3>🔑 Backup option: apni Gemini key</h3>
+    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Hamari <b style="color:#fff">free key</b> abhi available nahi ho saki (limit ya setup). Agar tum chaho to apni free Gemini key laga kar bhi call kar sakte ho — key sirf tumhare browser mein rehti hai, hamare server par kabhi nahi jati.</p>
     <ol>
       <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> kholo aur sign in karo</li>
       <li>“Create API key” par click karo — key free hai</li>
@@ -327,14 +305,7 @@ function saveChats(){ localStorage.setItem('ba_chats', JSON.stringify(state.chat
 function showApp(){ $('authView').classList.add('hidden'); $('appView').classList.remove('hidden'); renderAll(); }
 function showAuth(){ $('authView').classList.remove('hidden'); $('appView').classList.add('hidden'); }
 function authErr(m){ $('authErr').textContent=m||''; }
-async function loadProfile(){
-  if(!state.user) return;
-  try{ // profiles table is keyed by firebase uid in our backend design; best-effort
-    const rows = await sb('profiles?select=plan,plan_expires_at,display_name&firebase_uid=eq.'+encodeURIComponent(state.user.uid));
-    if(rows && rows[0]){ state.plan = rows[0].plan||'free'; state.planExpiry = rows[0].plan_expires_at||null; }
-  }catch(e){ /* profile row may be created by backend trigger later; free default stays */ }
-  renderPlan();
-}
+async function loadProfile(){ /* v3: sab kuch free hai — koi plan check nahi. */ }
 if(auth){
   auth.onAuthStateChanged(async u=>{
     state.user=u;
@@ -352,20 +323,14 @@ $('btnGoogle').onclick=async()=>{ authErr(''); if(!auth) return authErr('Firebas
 $('btnLogout').onclick=()=>{ if(auth) auth.signOut(); showAuth(); };
 
 /* ---------- mode / plan / models ---------- */
-function renderPlan(){
-  const paid = state.plan && state.plan!=='free';
-  $('planTitle').textContent = paid ? '👑 Paid Plan' : 'Free Plan';
-  $('planInfo').textContent = paid ? ('Saare models unlock' + (state.planExpiry? ' • Expiry: '+new Date(state.planExpiry).toLocaleDateString() : '')) : 'Flex + Max unlimited • Uni images';
-  buildModels();
-}
-function isPaidModel(m){ return CFG.paidChatModels.includes(m) || m===CFG.paidImageModel; }
 function buildModels(){
   const sel=$('modelSel'); sel.innerHTML='';
-  const paid = state.plan && state.plan!=='free';
-  const mk=(m,img)=>{ const o=document.createElement('option'); o.value=m; const lock=isPaidModel(m)&&!paid; o.textContent=(img?'🎨 ':'💬 ')+m.replace('fusion-','Fusion-')+(lock?' 🔒 Paid':''); if(lock) o.dataset.locked='1'; sel.appendChild(o); };
-  CFG.freeChatModels.forEach(m=>mk(m)); CFG.paidChatModels.forEach(m=>mk(m)); mk(CFG.freeImageModel,true); mk(CFG.paidImageModel,true);
+  const mk=(v,t)=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; sel.appendChild(o); };
+  CFG.chatModels.forEach(m=>mk(m,'💬 '+m.replace('fusion-','Fusion-')));
+  CFG.groqModels.forEach(g=>mk('groq:'+g.id,'⚡ '+g.label));
+  CFG.imageModels.forEach(m=>mk(m,'🎨 '+m.replace('fusion-','Fusion-')+' (image)'));
 }
-$('modelSel').onchange=e=>{ const o=e.target.selectedOptions[0]; if(o.dataset.locked){ openPanel('upgrade'); e.target.selectedIndex=0; } state.imgMode = e.target.value===CFG.freeImageModel||e.target.value===CFG.paidImageModel; };
+$('modelSel').onchange=e=>{ state.imgMode = CFG.imageModels.includes(e.target.value); };
 function setMode(m){
   state.mode=m; localStorage.setItem('ba_mode',m);
   $('modeBadshah').classList.toggle('on',m==='badshah'); $('modeRani').classList.toggle('on',m==='rani');
@@ -376,14 +341,13 @@ $('modeBadshah').onclick=()=>setMode('badshah'); $('modeRani').onclick=()=>setMo
 
 /* ---------- panels ---------- */
 function openPanel(which){
-  ['chatPanel','upgradePanel','helpPanel','pcPanel'].forEach(p=>$(p).classList.add('hidden'));
+  ['chatPanel','helpPanel','pcPanel'].forEach(p=>$(p).classList.add('hidden'));
   $('chatPanel').style.display='none';
   if(which==='chat'){ $('chatPanel').classList.remove('hidden'); $('chatPanel').style.display='flex'; }
   else $(which+'Panel').classList.remove('hidden');
   $('sidebar').classList.remove('open');
 }
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>openPanel('chat'));
-$('btnUpgrade').onclick=()=>openPanel('upgrade');
 $('btnHelp').onclick=()=>openPanel('help');
 $('btnPc').onclick=()=>openPanel('pc');
 $('menuBtn').onclick=()=>$('sidebar').classList.toggle('open');
@@ -409,12 +373,17 @@ function addMsgEl(role, content, img){
   w.appendChild(d); $('msgs').scrollTop=$('msgs').scrollHeight;
   return d;
 }
-function speak(text){
-  try{ const u=new SpeechSynthesisUtterance(text.replace(/[*#`]/g,'').slice(0,600)); const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/ur|hi/i.test(v.lang))||vs[0]; if(v)u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u);}catch(e){}
+async function speak(text){
+  const clean=text.replace(/[*#`]/g,'').slice(0,600); if(!clean) return;
+  try{
+    const r=await fetch(CFG.ttsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:clean,voice:state.mode})});
+    if(r.ok){ const b=await r.blob(); const a=new Audio(URL.createObjectURL(b)); a.play(); return; }
+  }catch(e){}
+  try{ const u=new SpeechSynthesisUtterance(clean); const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/ur|hi/i.test(v.lang))||vs[0]; if(v)u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u);}catch(e){}
 }
 async function send(){
   const inp=$('input'); const text=inp.value.trim(); if(!text||state.busy) return;
-  const model=$('modelSel').value; const imgMode = state.imgMode || model===CFG.freeImageModel || model===CFG.paidImageModel;
+  const model=$('modelSel').value; const imgMode = state.imgMode || CFG.imageModels.includes(model);
   inp.value=''; inp.style.height='auto';
   chat().msgs.push({role:'user',content:text}); if(chat().msgs.length===1) chat().title=text.slice(0,34);
   addMsgEl('user',text); renderChats(); saveChats();
@@ -422,7 +391,8 @@ async function send(){
   const wait=addMsgEl('ai',''); wait.querySelector('.txt').innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
   try{
     const t=await idToken();
-    const r=await fetch(CFG.apiUrl+'?model='+encodeURIComponent(model)+'&q='+encodeURIComponent(text), { headers: t?{'Authorization':'Bearer '+t}:{} });
+    const url = model.startsWith('groq:') ? (CFG.apiUrl+'?provider=groq&model='+encodeURIComponent(model.slice(5))+'&q='+encodeURIComponent(text)) : (CFG.apiUrl+'?model='+encodeURIComponent(model)+'&q='+encodeURIComponent(text));
+    const r=await fetch(url, { headers: t?{'Authorization':'Bearer '+t}:{} });
     const data=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(data.error||('Server '+r.status));
     let reply = data.text||data.reply||data.response||data.answer||'';
@@ -440,28 +410,10 @@ async function send(){
 $('btnSend').onclick=send;
 $('input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(); }});
 $('input').addEventListener('input',e=>{ e.target.style.height='auto'; e.target.style.height=Math.min(130,e.target.scrollHeight)+'px'; });
-$('btnImgMode').onclick=()=>{ state.imgMode=!state.imgMode; $('btnImgMode').classList.toggle('on',state.imgMode); if(state.imgMode){ $('modelSel').value=CFG.freeImageModel; } $('compHint').textContent = state.imgMode?'🎨 Image mode ON — jo likhoge uski image banegi (Uni free, Astra paid).':'Free models: Flex • Max • Uni images — unlimited. Paid models 🔒 Upgrade se khulenge.'; };
+$('btnImgMode').onclick=()=>{ state.imgMode=!state.imgMode; $('btnImgMode').classList.toggle('on',state.imgMode); if(state.imgMode){ $('modelSel').value=CFG.imageModels[0]; } $('compHint').textContent = state.imgMode?'🎨 Image mode ON — jo likhoge uski image banegi (Uni + Astra, dono free).':'Sab kuch FREE hai 👑 — saare models, images aur calls. Koi key, koi payment nahi.'; };
 $('btnNewChat').onclick=()=>{ state.chats.unshift({title:'New chat',msgs:[]}); state.current=0; saveChats(); renderChats(); renderMsgs(); openPanel('chat'); };
 /* mic input */
 $('btnMic').onclick=()=>{ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR) return alert('Is browser mein voice input nahi hai — Chrome use karo.'); const r=new SR(); r.lang='ur-PK'; r.onresult=e=>{ $('input').value+=e.results[0][0].transcript; }; r.start(); };
-
-/* ---------- upgrade / payments ---------- */
-let selMonths=1;
-function priceFor(m){ const p=CFG.plans.find(p=>p.months===m); return p?p.price:m*100; }
-function renderPlans(){
-  const g=$('planGrid'); g.innerHTML='';
-  CFG.plans.forEach(p=>{ const d=document.createElement('div'); d.className='plan'+(p.months===selMonths?' on':''); d.innerHTML=`<b>Rs ${p.price}</b><span>${p.months} month${p.months>1?'s':''}</span>`; d.onclick=()=>{ selMonths=p.months; $('payMonths').value=p.months; renderPlans(); updTotal(); }; g.appendChild(d); });
-}
-function updTotal(){ const m=Math.max(1,parseInt($('payMonths').value||'1')); $('payTotal').textContent='Rs '+priceFor(m); $('btnPayWa').href=CFG.whatsapp+'?text='+encodeURIComponent(`Assalam o Alaikum! Main ne BADSHAH AI Paid plan (${m} month, Rs ${priceFor(m)}) ke liye ${CFG.paymentNumber} par payment bheji hai. Mera naam: `); }
-$('payMonths').addEventListener('input',updTotal);
-$('btnPayReq').onclick=async()=>{
-  $('payErr').textContent='';
-  const m=Math.max(1,parseInt($('payMonths').value||'1')); const amt=priceFor(m);
-  const payload={ months:m, amount:amt, sender_name:$('payName').value.trim(), sender_number:$('paySender').value.trim(), status:'pending', firebase_uid: state.user?state.user.uid:null, user_email: state.user?state.user.email:null, created_at:new Date().toISOString() };
-  if(!payload.sender_name||!payload.sender_number){ $('payErr').textContent='Naam aur sender number lazmi likho.'; return; }
-  try{ await sb('payment_requests',{method:'POST',body:JSON.stringify(payload)}); $('payStatus').innerHTML='✅ <b>Request bhej di gayi!</b> Admin approve karega to plan active ho jayega. WhatsApp par bhi confirm kar do to jaldi ho jayega.'; }
-  catch(e){ $('payStatus').innerHTML='⚠️ Request server par save nahi ho saki — WhatsApp button se direct confirm kar do, admin wahan se approve kar dega.'; }
-};
 
 /* ---------- help ---------- */
 $('btnHelpSend').onclick=async()=>{
@@ -482,11 +434,18 @@ $('btnPair').onclick=async()=>{
 
 /* ---------- CALL (Gemini Live, user key, 3.8 only) ---------- */
 const live={ ws:null, ac:null, mic:null, stream:null, muted:false, handle:null, retries:0, on:false, playT:0 };
-function openCall(){
-  $('callView').classList.remove('hidden');
-  const key=localStorage.getItem('ba_gemini_key');
-  if(!key){ $('keyBox').classList.remove('hidden'); $('callMain').classList.add('hidden'); }
-  else { $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startLive(key); }
+async function openCall(){
+  $('callView').classList.remove('hidden'); callUI();
+  $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden');
+  $('callStatus').textContent='🔑 Free key la raha hoon…';
+  try{
+    const t=await idToken();
+    const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}});
+    if(r.ok){ const d=await r.json(); if(d.key){ startLive(d.key); return; } }
+  }catch(e){}
+  const own=localStorage.getItem('ba_gemini_key');
+  if(own){ startLive(own); return; }
+  $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden');
 }
 function closeCall(){ stopLive(); $('callView').classList.add('hidden'); }
 $('btnCall').onclick=openCall; $('btnCallSide').onclick=openCall;
@@ -578,7 +537,7 @@ function stopLive(){
 }
 
 /* ---------- init ---------- */
-function renderAll(){ setMode(state.mode); renderPlans(); updTotal(); renderChats(); renderMsgs(); renderPlan(); }
+function renderAll(){ setMode(state.mode); buildModels(); renderChats(); renderMsgs(); }
 renderAll();
 </script>
 </body>

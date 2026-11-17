@@ -27,6 +27,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"BADSHAH AI — Ai BADSHAH Voice Assistant","alternateName":["Ai BADSHAH","BADSHAH assistant","BADSHAH voice assistant ai","Ai BADSHAH live","BADSHAH live voice assistant"],"applicationCategory":"BusinessApplication","operatingSystem":"Web, Android","url":"https://badshah222-ai.pages.dev/","image":"https://badshah222-ai.pages.dev/og-image.png","author":{"@type":"Person","name":"Zain Shah"},"offers":[{"@type":"Offer","name":"Free","price":"0","priceCurrency":"PKR"},{"@type":"Offer","name":"Paid 1 Month","price":"100","priceCurrency":"PKR"},{"@type":"Offer","name":"Paid 3 Months","price":"250","priceCurrency":"PKR"},{"@type":"Offer","name":"Paid 5 Months","price":"400","priceCurrency":"PKR"},{"@type":"Offer","name":"Paid 1 Year","price":"700","priceCurrency":"PKR"}],"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"1200"}}
+const dq=document.getElementById('demoQ'), db=document.getElementById('demoBtn'), dout=document.getElementById('demoOut');
+async function demoSend(){ const q=dq.value.trim(); if(!q) return; dout.textContent='⏳ BADSHAH soch raha hai…'; db.disabled=true;
+  try{ const r=await fetch('/api/chat?model=fusion-flex&q='+encodeURIComponent(q)); const d=await r.json().catch(()=>({}));
+    dout.textContent = d.text||d.reply||d.response||('⚠️ '+(d.error||'Server busy hai — app khol kar try karo.')); }
+  catch(e){ dout.textContent='⚠️ Demo abhi sirf live site par chalta hai — App kholo, wahan sab chalega.'; }
+  db.disabled=false; }
+if(db){ db.onclick=demoSend; dq.addEventListener('keydown',e=>{ if(e.key==='Enter') demoSend(); }); }
 </script>
 <style>
 :root{
@@ -162,6 +169,19 @@ section{padding:92px 0;position:relative}
 @media(max-width:760px){.socials{justify-content:center}}
 .socials a{padding:9px 16px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;font-weight:600;background:rgba(139,92,246,.07)}
 .socials a:hover{border-color:var(--violet)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:980px;margin:40px auto 0}
+.gallery figure{border:1px solid var(--line);border-radius:20px;overflow:hidden;background:rgba(23,17,48,.55);transition:.3s}
+.gallery figure:hover{transform:translateY(-5px) rotate(-.5deg);box-shadow:0 24px 50px rgba(109,40,217,.3)}
+.gallery img{width:100%;height:230px;object-fit:cover;object-position:top;display:block}
+.gallery figcaption{padding:12px 16px;font-size:13.5px;color:var(--mut)}
+.gallery figcaption b{color:#fff;display:block;font-size:14.5px}
+@media(max-width:820px){.gallery{grid-template-columns:1fr}.gallery img{height:210px}}
+.demo{max-width:760px;margin:44px auto 0;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(33,25,71,.85),rgba(12,9,24,.9));padding:26px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.demo h3{font-family:"Space Grotesk";font-size:20px}
+.demo p{color:var(--mut);font-size:14px;margin-top:6px;line-height:1.6}
+.demo-row{display:flex;gap:10px;margin-top:16px}
+.demo-row input{flex:1;padding:13px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(7,4,15,.6);color:#fff;font-size:15px;outline:none}
+.demo-out{margin-top:16px;border:1px dashed var(--line);border-radius:14px;padding:14px 16px;font-size:14.5px;line-height:1.65;color:var(--txt);min-height:52px;white-space:pre-wrap}
 .faq{max-width:760px;margin:48px auto 0;display:grid;gap:12px}
 .faq details{border:1px solid var(--line);border-radius:16px;padding:18px 22px;background:rgba(23,17,48,.55)}
 .faq summary{cursor:pointer;font-weight:600;font-size:16px}
@@ -258,41 +278,50 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
   <div class="cta-row reveal"><a class="btn btn-p" href="app.html">📞 Start a Call</a></div>
 </div></section>
 
+<section id="gallery" style="padding-top:10px"><div class="wrap">
+  <p class="kicker reveal">The Man Behind It</p>
+  <h2 class="sec-t reveal">Ye AI nahi — <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">Badshah khud</span> tumse baat karta hai</h2>
+  <div class="gallery">
+    <figure class="reveal"><img src="assets/image3.png" alt="Badshah character — the face of BADSHAH AI"><figcaption><b>Har jawab, Badshah ke andaz mein</b>Replying, browsing, apps kholna — sab kuch live.</figcaption></figure>
+    <figure class="reveal"><img src="assets/image4.png" alt="Zain Shah — creator portrait"><figcaption><b>Creator mode</b>Swabi se duniya ke liye — ek hi mission: free AI sab ke liye.</figcaption></figure>
+    <figure class="reveal"><img src="assets/image1.png" alt="Badshah — BADSHAH AI hero"><figcaption><b>Call par bhi yahi chehra</b>Live call screen par Badshah tumhare saamne hota hai.</figcaption></figure>
+  </div>
+  <div class="demo reveal">
+    <h3>💬 Yahi se try karo — live demo</h3>
+    <p>Kuch bhi likho, BADSHAH abhi jawab dega. Ye wahi asli AI hai jo app mein chalta hai — koi nakli demo nahi.</p>
+    <div class="demo-row"><input id="demoQ" placeholder="Misal: Meri website ke liye ek acha sa naam batao…"><button class="btn btn-p" id="demoBtn" style="width:auto;margin-top:0">Poochho ➤</button></div>
+    <div class="demo-out" id="demoOut">👑 Jawab yahan aayega…</div>
+  </div>
+</div></section>
+
 <section id="pricing" style="padding-top:20px"><div class="wrap">
-  <p class="kicker reveal">Simple Pricing</p>
-  <h2 class="sec-t reveal">Free forever. Paid when you want <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">everything</span></h2>
+  <p class="kicker reveal">Zero Pricing</p>
+  <h2 class="sec-t reveal">Sab kuch FREE hai — <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">hamesha ke liye</span></h2>
   <div class="price-grid">
     <div class="price reveal">
       <h3>Free</h3>
       <div class="amt">Rs 0<small> / forever</small></div>
       <ul>
-        <li>Fusion-Flex + Fusion-Max chat — unlimited</li>
-        <li>Fusion-Uni image generation</li>
-        <li>Live calls with your own Gemini key</li>
+        <li>Saare 12 chat models — Flex, Max, Pulse, Synth, Void… sab</li>
+        <li>Groq fast models (Llama 3.3) bhi free</li>
+        <li>Images — Fusion-Uni + Fusion-Astra, dono free</li>
+        <li>Live calls — bina apni key ke, feelings ke saath</li>
         <li>Both modes — BADSHAH &amp; RANI</li>
-        <li class="no">Paid AI models (Pulse, Synth, Void…)</li>
-        <li class="no">Fusion-Astra premium images</li>
+        <li>Awaaz sunna (ElevenLabs premium voices) — free</li>
       </ul>
       <a class="btn btn-g" href="app.html" style="width:100%;justify-content:center">Start Free</a>
     </div>
     <div class="price hot reveal">
-      <span class="tag">MOST LOVED</span>
-      <h3>Paid — All Models Unlocked</h3>
-      <div class="plans-row">
-        <div class="plan-b"><b>Rs 100</b><span>1 month</span></div>
-        <div class="plan-b"><b>Rs 250</b><span>3 months</span></div>
-        <div class="plan-b"><b>Rs 400</b><span>5 months</span></div>
-        <div class="plan-b"><b>Rs 700</b><span>1 year</span></div>
-      </div>
+      <span class="tag">NO PAYMENT • NO KEY</span>
+      <h3>Free kaise hai? Sach ye hai 👇</h3>
       <ul>
-        <li>Everything in Free</li>
-        <li>All 10 paid chat models + heavy work</li>
-        <li>Fusion-Astra premium images</li>
-        <li>Priority — no waiting</li>
-        <li>Custom duration: months × Rs 100</li>
+        <li>Ye service creator ki apni API keys se chalti hai — FT Fusion, Gemini, Groq aur ElevenLabs</li>
+        <li>Tumhe na payment karna hai, na apni API key lagani hai</li>
+        <li>Bas account banao, login karo aur enjoy karo</li>
+        <li>Kisi key ki limit khatam ho to admin nayi key laga deta hai — tumhe rukna nahi padta</li>
+        <li>User khush, hum khush 👑</li>
       </ul>
-      <p style="color:var(--mut);font-size:14px;margin-bottom:16px">Pay on <b style="color:#fff">03251787969</b> (mobile account), then send a paid request inside the app — approval is quick.</p>
-      <a class="btn btn-p" href="app.html" style="width:100%;justify-content:center">Upgrade in the App</a>
+      <a class="btn btn-p" href="app.html" style="width:100%;justify-content:center">Abhi Free Mein Shuru Karo</a>
     </div>
   </div>
 </div></section>
@@ -315,10 +344,10 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
     </div>
   </div>
   <div class="faq reveal">
-    <details><summary>Is BADSHAH AI really free?</summary><p>Yes. Chat with Fusion-Flex and Fusion-Max is unlimited and free, and Fusion-Uni images are free too. Paid plans (from Rs 100/month) only unlock the extra heavy models and premium Astra images.</p></details>
-    <details><summary>How do live calls work?</summary><p>Calls use Gemini 3.8 Live with your own free Gemini API key (from Google AI Studio). Your key stays in your browser only — we never see it. BADSHAH (Charon) and RANI (Aoede) talk with real feelings.</p></details>
+    <details><summary>Is BADSHAH AI really free?</summary><p>Yes. Bilkul — sab kuch. Saare chat models, Uni + Astra images, Groq models, live calls aur premium awaazein, sab free hain. Koi paid plan hai hi nahi.</p></details>
+    <details><summary>How do live calls work?</summary><p>Calls Gemini 3.8 Live par chalti hain aur key hamari taraf se free milti hai — tumhe apni key lagane ki zarurat nahi. Login karke Call dabao, bas. BADSHAH (Charon) aur RANI (Aoede) real feelings ke saath baat karte hain, sunte pehle hain, jawab baad mein dete hain.</p></details>
     <details><summary>Can BADSHAH control my phone and computer?</summary><p>On Android, the BADSHAH AI app can open apps, message, call and browse for you, and can be your default digital assistant. On the web you can pair a computer with a code and control it through BADSHAH.</p></details>
-    <details><summary>How do I buy a paid plan?</summary><p>Send the amount to 03251787969, then submit a paid request in the app with your details. The admin approves it and your plan activates — you can watch the status inside the app.</p></details>
+    <details><summary>Do I need my own API key?</summary><p>No. Saari API keys (Gemini, Groq, ElevenLabs, FT Fusion) hamari taraf se lagi hui hain aur admin panel se rotate hoti rehti hain. Tumhe sirf login karna hai — baqi sab free aur automatic hai.</p></details>
   </div>
 </div></section>
 

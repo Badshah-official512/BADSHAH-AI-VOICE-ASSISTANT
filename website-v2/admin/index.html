@@ -96,7 +96,7 @@ textarea.field{resize:vertical}
 
   <div class="tabs">
     <button class="tab on" data-tab="dash">📊 Dashboard</button>
-    <button class="tab" data-tab="payments">💰 Paid Requests <span id="payCount"></span></button>
+    <button class="tab" data-tab="keys">🔑 API Keys</button>
     <button class="tab" data-tab="users">👥 Users</button>
     <button class="tab" data-tab="tickets">🛟 Help Inbox <span id="tickCount"></span></button>
     <button class="tab" data-tab="announce">📣 Announce</button>
@@ -105,18 +105,27 @@ textarea.field{resize:vertical}
   <section id="tab-dash">
     <div class="stats">
       <div class="stat"><b id="stUsers">–</b><span>Total users joined</span><div class="up" id="stNew"></div></div>
-      <div class="stat"><b id="stPaid">–</b><span>Paid users (active)</span><div class="up" id="stFree"></div></div>
-      <div class="stat"><b id="stRevenue">–</b><span>Revenue collected (Rs)</span><div class="up">approved payments</div></div>
-      <div class="stat"><b id="stPending">–</b><span>Pending paid requests</span><div class="up" id="stTickets"></div></div>
+      <div class="stat"><b id="stKeys">–</b><span>API keys active</span><div class="up" id="stKeyDetail"></div></div>
+      <div class="stat"><b id="stTicketsN">–</b><span>Open help tickets</span><div class="up">help center inbox</div></div>
+      <div class="stat"><b id="stPair">–</b><span>Computer pairings</span><div class="up">connect computer</div></div>
     </div>
-    <div class="card" style="margin-top:16px"><h3>Quick nazar</h3><p style="color:var(--mut);line-height:1.7;font-size:14.5px">Paid requests approve karne se user ka plan foran active ho jata hai. Help inbox ke jawab user ko app mein nazar aate hain. Koi user ghalat istemal kare to Users tab se block kar sakte ho.</p></div>
+    <div class="card" style="margin-top:16px"><h3>Quick nazar</h3><p style="color:var(--mut);line-height:1.7;font-size:14.5px">Sab kuch users ke liye FREE hai. API Keys tab se apni Gemini / Groq / ElevenLabs keys manage karo — kisi key ki limit khatam ho to nayi key add kar do, users ko kuch nahi karna padega. Help inbox ke jawab user ko app mein nazar aate hain. Koi user ghalat istemal kare to Users tab se block kar sakte ho.</p></div>
   </section>
 
-  <section id="tab-payments" class="hidden">
-    <div class="card"><h3>💰 Paid Requests</h3><div id="payTable"></div></div>
+    <section id="tab-keys" class="hidden">
+    <div class="card"><h3>🔑 API Key Pool — users ke liye sab free</h3>
+      <p style="color:var(--mut);font-size:14px;line-height:1.65;margin-bottom:14px">Ye keys tumhari hain aur sirf server (Worker) inhe use karta hai — users ko kabhi nazar nahi aati. Worker sab se kam used key pehle uthata hai; key par 401/429 (limit) aaye to agli key try karta hai. Limit khatam ho to nayi key bana kar yahan add kar do — purani ko OFF ya Delete kar sakte ho.</p>
+      <div style="display:grid;grid-template-columns:150px 1fr 1fr auto;gap:10px;align-items:start">
+        <select class="field" id="keyProvider" style="margin-top:0"><option value="gemini">Gemini</option><option value="groq">Groq</option><option value="elevenlabs">ElevenLabs</option></select>
+        <input class="field" id="keyLabel" placeholder="Label (misal: key 2)" style="margin-top:0">
+        <input class="field" id="keyValue" placeholder="Puri API key paste karo" style="margin-top:0">
+        <button class="btn" id="btnKeyAdd" style="width:auto;margin-top:0;padding:12px 22px">➕ Add Key</button>
+      </div>
+      <div id="keyTable" style="margin-top:16px"></div>
+    </div>
   </section>
 
-  <section id="tab-users" class="hidden">
+<section id="tab-users" class="hidden">
     <div class="card"><h3>👥 Users</h3>
       <div class="search"><input id="userQ" placeholder="Naam ya email se search…"><button class="btn s" id="btnUserSearch" style="width:auto;margin-top:0">Search</button></div>
       <div id="userTable"></div>
@@ -154,27 +163,27 @@ function dt(s){ return s? new Date(s).toLocaleString('en-PK',{dateStyle:'medium'
 async function loadDash(){
   const s=await api('stats');
   $('stUsers').textContent=s.totalUsers; $('stNew').textContent='Aaj '+s.newToday+' • 7 din mein '+s.new7d+' naye';
-  $('stPaid').textContent=s.paidUsers; $('stFree').textContent=s.freeUsers+' free users';
-  $('stRevenue').textContent='Rs '+Number(s.revenue).toLocaleString();
-  $('stPending').textContent=s.pendingPayments; $('stTickets').textContent=s.openTickets+' open help tickets';
-  $('payCount').textContent=s.pendingPayments? '('+s.pendingPayments+')':'';
+  const ks=s.keyStats||{}; let act=0, det=[];
+  for(const p of ['gemini','groq','elevenlabs']){ if(ks[p]){ act+=ks[p].active; det.push(p+' '+ks[p].active+'/'+ks[p].total); } }
+  $('stKeys').textContent=act; $('stKeyDetail').textContent=det.join(' • ')||'koi key nahi';
+  $('stTicketsN').textContent=s.openTickets; $('stPair').textContent=s.pairings||0;
   $('tickCount').textContent=s.openTickets? '('+s.openTickets+')':'';
 }
-async function loadPayments(){
-  const d=await api('payments');
-  if(!d.rows.length){ $('payTable').innerHTML='<div class="empty">Abhi koi paid request nahi.</div>'; return; }
-  $('payTable').innerHTML='<table><tr><th>Date</th><th>User</th><th>Plan</th><th>Amount</th><th>Sender</th><th>Status</th><th>Action</th></tr>'+
-    d.rows.map(r=>`<tr><td>${dt(r.created_at)}</td><td>${esc(r.user_email||'—')}<br><small style="color:var(--mut)">${esc(r.firebase_uid||'')}</small></td><td>${r.months} month</td><td><b>Rs ${r.amount}</b></td><td>${esc(r.sender_name||'')}<br><small style="color:var(--mut)">${esc(r.sender_number||'')}</small></td><td><span class="pill ${r.status}">${r.status}</span></td><td>${r.status==='pending'?`<div class="row-btns"><button class="btn ok s" onclick="approve('${r.id}')">✓ Approve</button><button class="btn bad s" onclick="reject('${r.id}')">✕ Reject</button></div>`:'—'}</td></tr>`).join('')+'</table>';
+async function loadKeys(){
+  const d=await api('keys-list');
+  if(!d.rows.length){ $('keyTable').innerHTML='<div class="empty">Pool khaali hai — upar se pehli key add karo.</div>'; return; }
+  $('keyTable').innerHTML='<table><tr><th>Provider</th><th>Key</th><th>Label</th><th>Uses</th><th>Last used</th><th>Status</th><th>Actions</th></tr>'+
+    d.rows.map(r=>`<tr><td><b>${r.provider}</b></td><td style="font-family:monospace;font-size:12.5px">${esc(r.key_value)}</td><td>${esc(r.label||'')}</td><td>${r.use_count||0}</td><td>${dt(r.last_used_at)}</td><td>${r.active?'<span class="pill answered">ACTIVE</span>':'<span class="pill blocked">OFF</span>'}</td><td><div class="row-btns"><button class="btn s" onclick="toggleKey('${r.id}',${!r.active})">${r.active?'OFF karo':'ON karo'}</button><button class="btn bad s" onclick="delKey('${r.id}')">Delete</button></div></td></tr>`).join('')+'</table>';
 }
-window.approve=async id=>{ try{ const d=await api('payment-approve',{id}); toast('✅ Plan active — expiry '+new Date(d.expiry).toLocaleDateString()); loadPayments(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
-window.reject=async id=>{ try{ await api('payment-reject',{id}); toast('Request reject ho gayi'); loadPayments(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+window.toggleKey=async (id,active)=>{ try{ await api('keys-toggle',{id,active}); toast(active?'Key ON ho gayi':'Key OFF ho gayi'); loadKeys(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+window.delKey=async id=>{ if(!confirm('Ye key delete kar dun?')) return; try{ await api('keys-delete',{id}); toast('Key delete ho gayi'); loadKeys(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
+$('btnKeyAdd').onclick=async()=>{ const provider=$('keyProvider').value, label=$('keyLabel').value.trim(), key_value=$('keyValue').value.trim(); if(key_value.length<10) return toast('Key mukammal paste karo'); try{ await api('keys-add',{provider,label,key_value}); toast('✅ Key pool mein add ho gayi'); $('keyValue').value=''; $('keyLabel').value=''; loadKeys(); loadDash(); }catch(e){ toast('⚠️ '+e.message); } };
 async function loadUsers(){
   const d=await api('users',{q:$('userQ').value.trim()});
   if(!d.rows.length){ $('userTable').innerHTML='<div class="empty">Koi user nahi mila.</div>'; return; }
-  $('userTable').innerHTML='<table><tr><th>Joined</th><th>User</th><th>Plan</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>'+
-    d.rows.map(u=>{ const paid=u.plan&&u.plan!=='free'; return `<tr><td>${dt(u.created_at)}</td><td>${esc(u.display_name||'—')}<br><small style="color:var(--mut)">${esc(u.email||'')}</small></td><td><span class="pill ${paid?'paid':'free'}">${paid?'PAID':'FREE'}</span></td><td>${u.plan_expires_at?dt(u.plan_expires_at):'—'}</td><td>${u.blocked?'<span class="pill blocked">BLOCKED</span>':'<span class="pill answered">active</span>'}</td><td><div class="row-btns"><button class="btn s" onclick="extendPlan('${u.firebase_uid}')">+1 Month</button><button class="btn ${u.blocked?'ok':'bad'} s" onclick="blockUser('${u.firebase_uid}',${!u.blocked})">${u.blocked?'Unblock':'Block'}</button></div></td></tr>`; }).join('')+'</table>';
+  $('userTable').innerHTML='<table><tr><th>Joined</th><th>User</th><th>Status</th><th>Actions</th></tr>'+
+    d.rows.map(u=>`<tr><td>${dt(u.created_at)}</td><td>${esc(u.display_name||'—')}<br><small style="color:var(--mut)">${esc(u.email||'')}</small></td><td>${u.blocked?'<span class="pill blocked">BLOCKED</span>':'<span class="pill answered">active</span>'}</td><td><div class="row-btns"><button class="btn ${u.blocked?'ok':'bad'} s" onclick="blockUser('${u.firebase_uid}',${!u.blocked})">${u.blocked?'Unblock':'Block'}</button></div></td></tr>`).join('')+'</table>';
 }
-window.extendPlan=async uid=>{ if(!uid) return toast('Is user ka uid nahi'); try{ const d=await api('user-plan',{firebase_uid:uid,months:1}); toast('✅ Plan extend — expiry '+new Date(d.expiry).toLocaleDateString()); loadUsers(); }catch(e){ toast('⚠️ '+e.message); } };
 window.blockUser=async (uid,blocked)=>{ if(!uid) return toast('Is user ka uid nahi'); try{ await api('user-block',{firebase_uid:uid,blocked}); toast(blocked?'User block ho gaya':'User unblock ho gaya'); loadUsers(); }catch(e){ toast('⚠️ '+e.message); } };
 async function loadTickets(){
   const d=await api('tickets');
@@ -187,8 +196,8 @@ $('btnAnnounce').onclick=async()=>{ try{ await api('announce',{title:$('annTitle
 
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
-  ['dash','payments','users','tickets','announce'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab));
-  if(t.dataset.tab==='payments') loadPayments();
+  ['dash','keys','users','tickets','announce'].forEach(k=>$('tab-'+k).classList.toggle('hidden',k!==t.dataset.tab));
+  if(t.dataset.tab==='keys') loadKeys();
   if(t.dataset.tab==='users') loadUsers();
   if(t.dataset.tab==='tickets') loadTickets();
 });

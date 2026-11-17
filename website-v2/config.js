@@ -1,9 +1,12 @@
 // BADSHAH AI — frontend settings (NO secrets in this file).
-// The FT Fusion key lives ONLY in the Cloudflare Worker secret BADSHAH_API_KEY.
-// The admin password lives ONLY in the Cloudflare Worker secret ADMIN_PASSWORD.
+// v3: EVERYTHING IS FREE for users. The FT Fusion key lives ONLY in the
+// Cloudflare Worker secret. Owner API keys (Gemini/Groq/ElevenLabs) live in
+// Supabase (api_keys pool) and are served/rotated by the Worker — users never
+// need a key of their own. Admin password is verified against Supabase.
 window.BADSHAH_CONFIG = {
-  // AI chat/image endpoint (our own secure Worker proxy)
   apiUrl: "/api/chat",
+  liveKeyUrl: "/api/live-key",
+  ttsUrl: "/api/tts",
 
   // Supabase (same backend as the Android app) — publishable key is a public client key
   supabaseUrl: "https://aghlacmqlagmigoznxlm.supabase.co",
@@ -20,27 +23,19 @@ window.BADSHAH_CONFIG = {
     appId: "PASTE_FROM_FIREBASE_CONSOLE"
   },
 
-  // Business
-  paymentNumber: "03251787969",
   whatsapp: "https://wa.me/923251787969",
   supportEmail: "zainff043@gmail.com",
   apkPath: "./BADSHAH-AI.apk",
 
-  // Plans (PKR). Custom duration = months × 100.
-  plans: [
-    { months: 1, price: 100 },
-    { months: 3, price: 250 },
-    { months: 5, price: 400 },
-    { months: 12, price: 700 }
+  // ALL models are FREE (owner's decision, v3)
+  chatModels: ["fusion-flex", "fusion-max", "fusion-pulse", "fusion-spark", "fusion-lexus", "fusion-synth", "fusion-void", "fusion-reaper", "fusion-dread", "fusion-shadow", "fusion-abyss", "fusion-vortex"],
+  imageModels: ["fusion-uni", "fusion-astra"],
+  groqModels: [
+    { id: "llama-3.3-70b-versatile", label: "Groq Llama 3.3 (fast)" },
+    { id: "llama-3.1-8b-instant", label: "Groq Llama 3.1 (fastest)" }
   ],
 
-  // Models
-  freeChatModels: ["fusion-flex", "fusion-max"],
-  freeImageModel: "fusion-uni",
-  paidChatModels: ["fusion-pulse", "fusion-spark", "fusion-lexus", "fusion-synth", "fusion-void", "fusion-reaper", "fusion-dread", "fusion-shadow", "fusion-abyss", "fusion-vortex"],
-  paidImageModel: "fusion-astra",
-
-  // Gemini Live (call) — user's OWN key, browser-only storage
+  // Gemini Live (call) — key comes from the owner's pool via /api/live-key
   liveModel: "gemini-3.8-live",
   voicesMale: ["Charon", "Fenrir", "Puck", "Orus", "Algieba", "Achird"],
   voicesFemale: ["Aoede", "Kore", "Zephyr", "Leda", "Sulafat", "Callirrhoe"]
