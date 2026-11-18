@@ -323,8 +323,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
       <h3>Free</h3>
       <div class="amt">Rs 0<small> / forever</small></div>
       <ul>
-        <li>Saare 12 chat models — Flex, Max, Pulse, Synth, Void… sab</li>
-        <li>Groq fast models (Llama 3.3) bhi free</li>
+        <li>Gemini chat models — 3.8 Flash, 3.5 Flash Lite, 3.1 Pro… sab</li>
+        <li>Groq fast models (GPT-OSS 120B / 20B) bhi free</li>
         <li>Images — Gemini 3.1 Flash Image + Gemini 3 Pro Image, dono free</li>
         <li>Live calls — bina apni key ke, feelings ke saath</li>
         <li>Both modes — BADSHAH &amp; RANI</li>
@@ -416,7 +416,14 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
   ['Meri website ke liye naam batao','Ek chhoti kahani sunao','Udaas hoon, baat karo 💜','Python code likho'].forEach(t=>{ const b=document.createElement('button'); b.textContent=t; b.onclick=()=>{ q.value=t; ask(); }; document.getElementById('askChips').appendChild(b); });
   // old gallery demo block drives the same logo
   const dq=document.getElementById('demoQ'), db=document.getElementById('demoBtn'), dout=document.getElementById('demoOut');
-  if(db){ db.onclick=()=>{ if(!dq.value.trim()) return; q.value=dq.value; window.scrollTo({top:0,behavior:'smooth'}); setTimeout(ask,350); }; dq.addEventListener('keydown',e=>{ if(e.key==='Enter') db.onclick(); }); dout.textContent='👑 Jawab upar logo ke saath aayega — Poochho dabao.'; }
+  if(db){ let dBusy=false;
+    const dAsk=async()=>{ const v=dq.value.trim(); if(!v||dBusy) return; dBusy=true; db.disabled=true; dout.textContent='⏳ BADSHAH soch raha hai…';
+      try{ const r=await fetch('/api/chat?provider=groq&q='+encodeURIComponent(v)); const d=await r.json().catch(()=>({}));
+        dout.innerHTML=md(d.text||d.reply||('⚠️ '+(d.error||'Server busy hai — thodi dair baad try karo.'))); }
+      catch(e){ dout.textContent='⚠️ Demo sirf live site par chalta hai.'; }
+      dBusy=false; db.disabled=false; };
+    db.onclick=dAsk; dq.addEventListener('keydown',e=>{ if(e.key==='Enter') dAsk(); });
+    dout.textContent='👑 Jawab yahi milega — kuch bhi poochho, BADSHAH yahi jawab dega.'; }
   // 3D tilt cards
   document.querySelectorAll('[data-tilt]').forEach(el=>{
     el.addEventListener('pointermove',e=>{ if(e.pointerType==='touch') return; const r=el.getBoundingClientRect(); const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;

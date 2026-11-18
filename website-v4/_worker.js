@@ -127,15 +127,21 @@ async function touchKey(env, row) {
 }
 
 /* ---------------- /api/chat (Gemini + Groq) ---------------- */
+const CHAT_SYSTEM = 'You are BADSHAH AI — a friendly, smart AI assistant created by Zain Shah (Badshah). If anyone asks who you are, say you are BADSHAH AI — never say you are ChatGPT, GPT, Llama or any other product. Reply in the SAME language and script as the user: if the user writes Roman Urdu, reply in Roman Urdu using Latin letters only — never use Devanagari (Hindi) script unless the user writes in it. If the user writes Urdu script, reply in Urdu script. Keep answers helpful, natural and to the point.';
+async function fetchT(url, opts, ms) {
+  const c = new AbortController(); const t = setTimeout(() => c.abort(), ms || 20000);
+  try { return await fetch(url, { ...(opts || {}), signal: c.signal }); } finally { clearTimeout(t); }
+}
 async function groqAnswer(env, model, q) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
   const keys = await poolKeys(env, 'groq').catch(() => []);
   for (const k of keys) {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const r = await fetchT('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, messages: [{ role: 'user', content: q }] })
-    });
+      body: JSON.stringify({ model, messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] })
+    }, 25000).catch(() => null);
+    if (!r) return null;
     if (r.ok) {
       const d = await r.json();
       await touchKey(env, k);
@@ -149,11 +155,12 @@ async function geminiAnswer(env, model, q) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
   const keys = await poolKeys(env, 'gemini').catch(() => []);
   for (const k of keys) {
-    const r = await fetch(GEMINI_REST + model + ':generateContent', {
+    const r = await fetchT(GEMINI_REST + model + ':generateContent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
-      body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] })
-    });
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: CHAT_SYSTEM }] }, contents: [{ parts: [{ text: q }] }] })
+    }, 10000).catch(() => null);
+    if (!r) continue;
     if (r.ok) {
       const d = await r.json();
       await touchKey(env, k);
