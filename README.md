@@ -1,128 +1,89 @@
-# 👑 BADSHAH AI — Your Personal AI Voice Assistant
+<div align="center">
 
-![BADSHAH AI hero](docs/images/hero-banner.jpg)
+<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/og-image.png" alt="BADSHAH AI" width="100%">
 
-**BADSHAH AI** is a complete personal AI voice-assistant ecosystem: an Android app that talks with you in a **real human voice**, a violet-neon admin panel, a Supabase backend, Firebase sign-in, and a Cloudflare-hosted website — designed, built and owned by **Zain Ullah Shah (Badshah)**.
+# 👑 BADSHAH AI — Voice Assistant
 
-Talk to it like a person. It listens, understands your mood, answers in your own style, controls your phone, and remembers your conversations.
+**Your live AI dost — chats, calls, creates images & controls your phone.**
+**Free. Unlimited. Forever.**
 
----
+[![Version](https://img.shields.io/badge/version-6.1.0-2EE6A6?style=for-the-badge)](#-download)
+[![Live Site](https://img.shields.io/badge/website-live-0E9F6E?style=for-the-badge)](https://badshah222-ai.pages.dev)
+[![Android](https://img.shields.io/badge/Android-APK%20%2B%20AAB-38BDF8?style=for-the-badge)](#-download)
+[![License](https://img.shields.io/badge/license-MIT-FFC94D?style=for-the-badge)](LICENSE)
 
-## 📸 Gallery
+[🌐 **Live Website**](https://badshah222-ai.pages.dev) · [📲 **Download APK**](https://badshah222-ai.pages.dev/BADSHAH-AI.apk) · [💬 **WhatsApp**](https://wa.me/923251787969)
 
-| App icon | The creator | Portrait | AI assistant (AISHA) |
-|---|---|---|---|
-| ![App icon](docs/images/app-icon.jpg) | ![Creator card](docs/images/creator-card.jpg) | ![Portrait](docs/images/portrait.jpg) | ![AISHA](docs/images/assistant-aisha.webp) |
-
----
-
-## ✨ Features
-
-### 🎙️ Real human voices — Gemini Live
-- Voice Call runs on **Google Gemini Live**: real-time, natural human voices — the same technology used by LIA AI and MYRA AI. No robotic phone text-to-speech.
-- **30 built-in voices** — 14 male (Charon, Orus, Fenrir, Puck, Algieba…) and 16 female (Aoede, Kore, Zephyr, Leda, Sulafat…), each with its own style.
-- **Barge-in**: start speaking and the assistant stops and listens, like a real call.
-- Live transcripts of both sides, saved into chat history.
-- The Live model is **auto-detected from your own Gemini API key** — nothing is hard-coded or invented.
-- Classic listen → think → speak mode remains as an automatic fallback, and **ElevenLabs** can be connected (optional) for premium chat-reply voices.
-
-### ❤️ Emotions that you can hear
-- A fresh set of **30 emotions** (Warm, Joy, Calm, Love, Energy, Deep) — each one changes how the voice actually sounds.
-- **Auto mode** reads your mood from your words: comfort when you are sad, calm when you are angry, celebration when you succeed — and mirrors your own style of talking.
-
-### 🧠 Personalities & Brains
-- **7 personalities**: Assistant, Teacher, Boyfriend, Girlfriend, Father, Brother, Husband.
-- **13 expert brains**: Doctor, Engineer, Lawyer, Teacher, Scientist, Poet, Chef, Businessman, Programmer, Motivator, Historian, Best Friend, and the all-round Badshah Brain.
-- Personality + Brain + Emotion combine in every reply.
-
-### 📱 Phone control (voice commands, English + Roman Urdu)
-- Open any app, YouTube, WhatsApp, Chrome, camera, **gallery, gallery videos, files/downloads**
-- Prepare calls, SMS and WhatsApp messages (always with your confirmation — nothing is sent silently)
-- Alarms, timers, flashlight, web search, contact picker
-
-### 🌍 Languages & customization
-- **30 international languages**: English, Urdu, Hindi, Pashto, Punjabi, Sindhi, Arabic, Persian, Bengali, Turkish, Spanish, French, German and more.
-- Rename your assistant, choose a **response style** (Balanced / Short / Detailed).
-- Choose the face of the app: **your photo, the crown logo, or AISHA** — shown on Home and inside the Voice Call orb.
-- **Wake word**: say **"BADSHAH"** (or your own custom phrase) and the assistant appears over other apps, ready to talk.
-- RGB ambient lighting, levitating voice orb, tap light-bursts, low-power mode.
-
-### 🛡️ Admin panel & backend
-- Violet-neon admin panel (login, dashboard, users, analytics, support) served by a **Cloudflare Worker** gateway — the only component allowed to talk to the backend.
-- **Supabase**: accounts, conversations, preferences, voice profiles, admin analytics (RLS-protected).
-- **Firebase**: Email/Password + Google Sign-In, Analytics, FCM.
-- Every user brings **their own API keys** (Gemini / Groq) — stored AES-256 encrypted on the phone only. No shared developer key exists anywhere.
+</div>
 
 ---
 
-## 🧑‍💻 About the Creator
+## ✨ BADSHAH AI kya hai?
 
-![Creator](docs/images/creator-card.jpg)
+**BADSHAH AI** ek complete AI voice assistant hai — website + Android app — jo **Zain Shah (Badshah)** ne Swabi, Pakistan se banaya hai. Ye sirf chatbot nahi: ye **sunta hai, bolta hai, live call par baat karta hai, images banata hai aur phone ko voice se control karta hai** — bilkul ek asli dost ki tarah.
 
-**Zain Ullah Shah — "Badshah" (Badshah222)**
-Founder of **BADSHAH AI** · Web Developer & AI Content Creator · **Swabi, Pakistan**
+> *"Ek hi mission: free AI — sab ke liye."*
 
-- 🌐 Website: https://badshah222.pages.dev
-- ▶️ YouTube: https://www.youtube.com/@Badshahofficial-222 · AI Websites channel: **Badshah AI Websites** (@BadshahAIWebsites)
-- 📸 Instagram: https://www.instagram.com/badshahofficial222
-- 📘 Facebook: https://www.facebook.com/share/1Jgyv3r7vG/
-- 🎵 TikTok: https://www.tiktok.com/@zain_ff45
-- 💬 WhatsApp: https://wa.me/923251787969
+<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-badshah.jpg" alt="BADSHAH AI Assistant" width="420">
 
----
+## 🚀 Features
 
-## 🏗️ Project structure
+| Feature | Detail |
+|---|---|
+| 💬 **AI Chat** | Google Gemini models (3.8 Flash · 3.5 Flash Lite · 3.1 Pro) + Groq fast models — Urdu, Roman Urdu, English |
+| 📞 **Live Voice Call** | Gemini 3.8 Live par asli do-tarfa call — pehle sunta hai, phir jawab deta hai, beech mein tok bhi sakte ho |
+| 🎨 **Image Studio** | Gemini image models + free fallbacks — likho aur image tayyar |
+| 🎙️ **Voice Messages** | Natural Gemini awaaz mein jawab suno |
+| 📱 **Phone Control** *(APK)* | Voice/chat command se apps kholo, YouTube chalao, web search karo, message tayyar karo |
+| 🎨 **Themes** | 5 rang-birange themes — Emerald, Royal Violet, Sunset, Ocean, Neon |
+| 👤 **Guest Mode** | Bina account chat + images — call ke liye free account |
+| 🛡️ **Admin Control Room** | Users, API key pool, announcements, analytics — sab ek panel se |
+| 🤖 **Agent Platform** | Workspaces, tasks, approvals aur connectors ka database-driven system |
 
-```
-android-app/     Kotlin + Jetpack Compose app (the assistant itself)
-admin-panel/     Admin panel (login + dashboard) — violet-neon UI
-website/         Public website bundle (docs explorer + /admin)
-cloudflare/      Cloudflare Worker gateway (serves the site, protects /admin, calls the backend)
-backend/
-  supabase/      SQL migrations + the admin-api Edge Function
-  firebase/      Cloud Functions source (custom claims + Supabase JWT bridge)
-documentation/   Installation, hosting, testing and admin guides
-docs/images/     Brand images used in this README
-```
+<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-call.jpg" alt="BADSHAH AI Live Call" width="420"> <img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-creator.jpg" alt="Built with AI" width="420">
 
-## ⚙️ Build & release
+## 📲 Download
 
-- Android builds run on **GitHub Actions** (`.github/workflows/android-build.yml`): every push to `main` under `android-app/**` produces a debug APK, a release APK and an AAB.
-- Release signing uses a private keystore supplied through GitHub **secrets** (`BADSHAH_KEYSTORE_BASE64`, `BADSHAH_KEYSTORE_PASSWORD`, `BADSHAH_KEY_ALIAS`, `BADSHAH_KEY_PASSWORD`). The keystore itself is **never** committed to this repo.
-- The release certificate fingerprints are registered in Firebase, so **Google Sign-In works in the signed build**.
+- **Android APK (direct install):** [badshah222-ai.pages.dev/BADSHAH-AI.apk](https://badshah222-ai.pages.dev/BADSHAH-AI.apk)
+- **Web App:** [badshah222-ai.pages.dev/app](https://badshah222-ai.pages.dev/app)
+- Har nayi build ke saath website wala APK khud update ho jata hai.
 
-## 🔐 Security rules kept
+## 🔗 Mere Links
 
-- No API keys, passwords, service-role keys or keystores in code or in this repo — ever.
-- Admin access is password-only with bcrypt, rate limiting and expiring sessions, behind the Worker gateway.
-- Phone actions use official Android intents only; calls and messages always need the user's final tap.
+| Platform | Link |
+|---|---|
+| 🌐 **Website (BADSHAH AI)** | https://badshah222-ai.pages.dev |
+| 🌐 **Portfolio** | https://badshah222.pages.dev |
+| 📺 **YouTube — Badshah AI Websites** | https://www.youtube.com/@BadshahAIWebsites |
+| 📺 **YouTube — Badshah Official** | https://www.youtube.com/@Badshahofficial-222 |
+| 📸 **Instagram** | https://www.instagram.com/badshahofficial222 |
+| 🎵 **TikTok** | https://www.tiktok.com/@zain_ff45 |
+| 👍 **Facebook** | https://www.facebook.com/share/1Jgyv3r7vG/ |
+| 💬 **WhatsApp** | [+92 325 1787969](https://wa.me/923251787969) |
 
----
+## 🛠️ Tech Stack
 
-*Built with ❤️ in Swabi, Pakistan — BADSHAH AI, Chat. Create. Imagine.*
+- **Frontend:** Cloudflare Pages — HTML/CSS/JS, living orb UI, PWA
+- **Backend:** Cloudflare Workers (API gateway) + Supabase (database, key pool, analytics)
+- **AI:** Google Gemini (chat · image · TTS · Live voice) · Groq · ElevenLabs · Pollinations
+- **Android:** Kotlin WebView shell + native device bridge, GitHub Actions CI (signed APK + AAB)
+- **Auth:** Firebase Authentication (email + Google)
 
+## 👑 Creator
 
-## Open source
+**Zain Shah — "Badshah"** · Swabi, Pakistan
+Full-stack developer & AI builder. Mission: world-class AI, har zubaan mein, har jeb ke liye free.
 
-BADSHAH-RANI AI is **fully open source** (MIT — see `LICENSE`). One app, two
-assistants: **BADSHAH** (boyfriend) and **RANI** (girlfriend) — switch in
-Settings → Assistant. The complete package — Android source, Supabase backend
-(`backend/`, including the unified `ai-api` gateway), admin panel, website and
-Cloudflare Worker — lives in this repository / zip.
+📩 Support / business: WhatsApp [+92 325 1787969](https://wa.me/923251787969)
 
-Highlights: Gemini Live real voices (male Charon by default for BADSHAH,
-female Aoede for RANI) connected the MYRA way (see `THIRD-PARTY-NOTICES.md`),
-FT Fusion built in, free fallbacks (Pollinations, Hugging Face, OpenRouter
-free models), screen sharing with Gemini Vision, an in-app assistant browser,
-a floating orb, and full phone control by voice.
+## 📄 License
 
-## Hisab kitab (accounts & records)
+MIT © Zain Ullah Shah — see [LICENSE](LICENSE). Third-party notices: [THIRD-PARTY-NOTICES](website-v4/documentation/) in the repo docs.
 
-- Backend: Supabase project "Badshah ai voice assistant" — migrations 001–003
-  in `backend/supabase/migrations/` (003 adds long-term memories).
-- Unified AI gateway: `backend/supabase/functions/ai-api/` with the provider
-  registry in `backend/ai-providers.json` and the integration guide in
-  `documentation/AI-API-INTEGRATION.md`. All provider keys live ONLY as
-  backend secrets — never in this source.
-- Admin panel + website: `admin-panel/` and `website/`, hosted by the
-  Cloudflare Worker in `cloudflare/` (name: badshah-ai-site).
+<div align="center">
+
+**⭐ Agar BADSHAH AI pasand aaye to repo ko star zaroor karo!**
+
+Made with ❤️ in Pakistan 🇵🇰
+
+</div>
