@@ -32,7 +32,18 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dev.pages.badshah222ai.core.AgentService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 import dev.pages.badshah222ai.core.WakeWordService
 
 /**
@@ -46,12 +57,14 @@ class MainActivity : ComponentActivity() {
     private var triedFallback = false
     private var pendingPermReq: PermissionRequest? = null
     private var pendingWake = false
+    private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_MIC = 41
         private const val REQ_WAKE = 43
+        private const val REQ_MIC_PRE = 44
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -113,6 +126,8 @@ class MainActivity : ComponentActivity() {
                 allowFileAccess = false
                 allowContentAccess = true
                 cacheMode = WebSettings.LOAD_DEFAULT
+                useWideViewPort = true
+                loadWithOverviewMode = true
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) safeBrowsingEnabled = true
             }
             addJavascriptInterface(BadshahBridge(), "BadshahBridge")
@@ -126,6 +141,7 @@ class MainActivity : ComponentActivity() {
                     // v6.3: sirf AUDIO — camera permission manifest mein hai hi nahi.
                     val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
                     if (!wantsAudio) { request.deny(); return }
+                    if (pendingPermReq != null) { runCatching { pendingPermReq?.deny() }; pendingPermReq = null }
                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                         pendingPermReq = request
                         ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
@@ -261,6 +277,56 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
+        fun ensureMic() {
+            // v6.4: Call dabane par pehle hi Android mic permission pakki kar lo —
+            // phir getUserMedia ko sirf grant karna rehta hai, race khatam.
+            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC_PRE) }
+            }
+        }
+
+        @JavascriptInterface
+        fun callStarted() {
+            // Wake-word recognizer mic pakad kar baitha hota hai — call ke dauran use roko,
+            // warna getUserMedia "audio source busy" par fail hota hai (TECNO par dekha gaya).
+            if (wakeEnabled()) WakeWordService.stop(this@MainActivity)
+        }
+
+        @JavascriptInterface
+        fun callEnded() {
+            if (wakeEnabled() && ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                WakeWordService.start(this@MainActivity)
+            }
+        }
+
+        @JavascriptInterface
+        fun googleSignIn() {
+            // v6.4: ASLI Google sign-in — phone ke Gmail accounts ka native picker
+            // (Credential Manager). WebView ke andar popup OAuth Google band karta hai,
+            // is liye token yahan se la kar web Firebase ko dete hain.
+            uiScope.launch {
+                try {
+                    val option = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(getString(R.string.default_web_client_id))
+                        .build()
+                    val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+                    val result = CredentialManager.create(this@MainActivity).getCredential(this@MainActivity, request)
+                    val cred = result.credential
+                    if (cred is CustomCredential && cred.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                        val token = GoogleIdTokenCredential.createFrom(cred.data).idToken
+                        runOnUiThread { web.evaluateJavascript("window.__bhGoogleToken&&window.__bhGoogleToken(" + JSONObject.quote(token) + ")", null) }
+                    } else {
+                        runOnUiThread { web.evaluateJavascript("window.__bhGoogleError&&window.__bhGoogleError('Google account nahi mila')", null) }
+                    }
+                } catch (e: Exception) {
+                    val msg = if (e is androidx.credentials.exceptions.NoCredentialException) "Is phone par koi Google account nahi mila — pehle phone ki Settings mein Gmail add karo" else "Google sign-in cancel ya fail ho gaya"
+                    runOnUiThread { web.evaluateJavascript("window.__bhGoogleError&&window.__bhGoogleError(" + JSONObject.quote(msg) + ")", null) }
+                }
+            }
+        }
+
+        @JavascriptInterface
         fun setWakeWord(on: Boolean) {
             getSharedPreferences("bh_shell", Context.MODE_PRIVATE).edit().putBoolean("wake_on", on).apply()
             runOnUiThread {
@@ -300,6 +366,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        uiScope.cancel()
         if (this::web.isInitialized) web.destroy()
         super.onDestroy()
     }
