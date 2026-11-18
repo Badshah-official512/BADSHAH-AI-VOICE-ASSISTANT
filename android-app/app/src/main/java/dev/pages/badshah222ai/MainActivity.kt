@@ -6,6 +6,14 @@ import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.app.Activity
+import android.graphics.Bitmap
+import android.media.projection.MediaProjectionManager
+import android.util.Base64
+import androidx.activity.result.contract.ActivityResultContracts
+import dev.pages.badshah222ai.core.ScreenShareService
+import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.delay
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -60,6 +68,39 @@ class MainActivity : ComponentActivity() {
     private var pendingPermReq: PermissionRequest? = null
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var audioFocusReq: AudioFocusRequest? = null
+    @Volatile private var screenPumpOn = false
+
+    private val projectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == Activity.RESULT_OK && res.data != null) {
+            ScreenShareService.start(this, res.resultCode, res.data!!)
+            startFramePump()
+        } else {
+            runOnUiThread { if (this::web.isInitialized) web.evaluateJavascript("window.__bhScreenOff&&window.__bhScreenOff()", null) }
+        }
+    }
+
+    private fun startFramePump() {
+        screenPumpOn = true
+        uiScope.launch {
+            var lastSent = 0L
+            while (screenPumpOn) {
+                val bmp = ScreenShareService.frame.value
+                val now = System.currentTimeMillis()
+                if (bmp != null && ScreenShareService.running.value && now - lastSent >= 1000) {
+                    lastSent = now
+                    try {
+                        val scaled = if (bmp.width > 640) Bitmap.createScaledBitmap(bmp, 640, (bmp.height * 640f / bmp.width).toInt().coerceAtLeast(2), true) else bmp
+                        val baos = ByteArrayOutputStream()
+                        scaled.compress(Bitmap.CompressFormat.JPEG, 55, baos)
+                        if (scaled !== bmp) scaled.recycle()
+                        val b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+                        runOnUiThread { if (this@MainActivity::web.isInitialized) web.evaluateJavascript("window.__bhScreenFrame&&window.__bhScreenFrame('" + b64 + "')", null) }
+                    } catch (e: Exception) { }
+                }
+                delay(250)
+            }
+        }
+    }
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
@@ -284,6 +325,43 @@ class MainActivity : ComponentActivity() {
                     am.mode = AudioManager.MODE_NORMAL
                 } catch (e: Exception) { }
             }
+        }
+
+        @JavascriptInterface
+        fun openWhatsApp(number: String, text: String) {
+            // v6.7: WhatsApp chat kholo, message type karke tayyar — send user khud dabayega
+            // (WhatsApp kisi app ko auto-send ki ijazat nahi deta).
+            runOnUiThread {
+                val num = number.replace(Regex("[^0-9]"), "")
+                val url = "https://wa.me/" + num + if (text.isNotEmpty()) "?text=" + Uri.encode(text) else ""
+                try {
+                    val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    i.setPackage("com.whatsapp")
+                    startActivity(i)
+                } catch (e: Exception) {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+                    catch (e2: Exception) { Toast.makeText(this@MainActivity, "WhatsApp nahi khul saka", Toast.LENGTH_SHORT).show() }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun startScreenShare() {
+            // v6.7: Android ka apna consent dialog aayega — user Allow kare to hi screen Gemini ko jayegi.
+            runOnUiThread {
+                try {
+                    val mpm = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                    projectionLauncher.launch(mpm.createScreenCaptureIntent())
+                } catch (e: Exception) {
+                    if (this@MainActivity::web.isInitialized) web.evaluateJavascript("window.__bhScreenOff&&window.__bhScreenOff()", null)
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun stopScreenShare() {
+            screenPumpOn = false
+            ScreenShareService.stop(this@MainActivity)
         }
 
         @JavascriptInterface
