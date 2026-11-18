@@ -33,6 +33,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dev.pages.badshah222ai.core.AgentService
+import dev.pages.badshah222ai.core.WakeWordService
 
 /**
  * BADSHAH AI v4 — the app IS the living web assistant (same experience as the
@@ -44,23 +45,47 @@ class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var triedFallback = false
     private var pendingPermReq: PermissionRequest? = null
+    private var pendingWake = false
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_MIC = 41
+        private const val REQ_WAKE = 43
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_WAKE) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            if (granted && wakeEnabled()) WakeWordService.start(this)
+            return
+        }
         if (requestCode == REQ_MIC) {
             val req = pendingPermReq ?: return
             pendingPermReq = null
             val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            if (allGranted) req.grant(req.resources) else {
+            if (allGranted) req.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) else {
                 req.deny()
                 Toast.makeText(this, "Mic permission ke baghair call nahi ho sakti 🎙️", Toast.LENGTH_LONG).show()
             }
+        }
+    }
+
+    private fun wakeEnabled(): Boolean =
+        getSharedPreferences("bh_shell", Context.MODE_PRIVATE).getBoolean("wake_on", false)
+
+    private fun handleWakeIntent(intent: Intent?) {
+        if (intent?.getStringExtra(WakeWordService.EXTRA_WAKE) == "1") pendingWake = true
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleWakeIntent(intent)
+        if (pendingWake && this::web.isInitialized) {
+            pendingWake = false
+            web.evaluateJavascript("window.__bhWake&&window.__bhWake()", null)
         }
     }
 
@@ -70,12 +95,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         AgentService.start(this)
+        handleWakeIntent(intent)
+        if (wakeEnabled() && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            WakeWordService.start(this)
+        }
 
         web = WebView(this).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor("#06130F"))
+            setBackgroundColor(Color.parseColor("#F3E8FF"))
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
@@ -94,19 +123,15 @@ class MainActivity : ComponentActivity() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     // v6.2: NEVER deny outright — hold the web request, ask Android,
                     // then grant/deny in onRequestPermissionsResult so the SAME call connects.
-                    val missing = mutableListOf<String>()
-                    if (request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE) &&
-                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
-                    ) missing.add(Manifest.permission.RECORD_AUDIO)
-                    if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE) &&
-                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-                    ) missing.add(Manifest.permission.CAMERA)
-                    if (missing.isNotEmpty()) {
+                    // v6.3: sirf AUDIO — camera permission manifest mein hai hi nahi.
+                    val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                    if (!wantsAudio) { request.deny(); return }
+                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                         pendingPermReq = request
-                        ActivityCompat.requestPermissions(this@MainActivity, missing.toTypedArray(), REQ_MIC)
+                        ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
                         return
                     }
-                    request.grant(request.resources)
+                    request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
                 }
             }
             webViewClient = object : WebViewClient() {
@@ -117,6 +142,13 @@ class MainActivity : ComponentActivity() {
                     if (internal) return false
                     startActivity(Intent(Intent.ACTION_VIEW, req.url))
                     return true
+                }
+
+                override fun onPageFinished(view: WebView, url: String) {
+                    if (pendingWake) {
+                        pendingWake = false
+                        view.evaluateJavascript("window.__bhWake&&window.__bhWake()", null)
+                    }
                 }
 
                 override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
@@ -142,12 +174,24 @@ class MainActivity : ComponentActivity() {
             }
             loadUrl(PRIMARY_URL)
         }
-        setContentView(web)
-        web.setOnApplyWindowInsetsListener { v, insets ->
-            val bars = insets.getInsets(WindowInsets.Type.systemBars())
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+        // v6.3 top-bar fix: WebView ko ek container mein rakh kar MARGIN se neeche kiya —
+        // status bar + camera cutout ke neeche, upar aur ~30dp extra. Padding WebView par
+        // kuch phones (TECNO waghera) par kaam nahi karti thi, margin hamesha kaam karta hai.
+        val root = FrameLayout(this).apply {
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            setBackgroundColor(Color.parseColor("#F3E8FF"))
+            addView(web)
+        }
+        setContentView(root)
+        val extraTop = (30 * resources.displayMetrics.density).toInt()
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            val lp = web.layoutParams as FrameLayout.LayoutParams
+            lp.setMargins(bars.left, bars.top + extraTop, bars.right, bars.bottom)
+            web.layoutParams = lp
             insets
         }
+        root.post { root.requestApplyInsets() }
     }
 
     /** v6.1 device bridge: the web assistant (window.BadshahBridge) can open apps,
@@ -214,6 +258,35 @@ class MainActivity : ComponentActivity() {
             runOnUiThread {
                 startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")))
             }
+        }
+
+        @JavascriptInterface
+        fun setWakeWord(on: Boolean) {
+            getSharedPreferences("bh_shell", Context.MODE_PRIVATE).edit().putBoolean("wake_on", on).apply()
+            runOnUiThread {
+                if (on) {
+                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        WakeWordService.start(this@MainActivity)
+                        Toast.makeText(this@MainActivity, "Wake word ON — 'BADSHAH' bolo, main aa jaunga 🎙️", Toast.LENGTH_LONG).show()
+                    } else {
+                        ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_WAKE)
+                    }
+                } else {
+                    WakeWordService.stop(this@MainActivity)
+                    Toast.makeText(this@MainActivity, "Wake word band ho gaya", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun isWakeWord(): Boolean = wakeEnabled()
+
+        @JavascriptInterface
+        fun appVersionCode(): Int {
+            return try {
+                val pi = packageManager.getPackageInfo(packageName, 0)
+                if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode.toInt() else @Suppress("DEPRECATION") pi.versionCode
+            } catch (e: Exception) { 0 }
         }
 
         @JavascriptInterface
