@@ -11,13 +11,13 @@
 <meta property="og:title" content="BADSHAH App — BADSHAH Voice Assistant AI">
 <meta property="og:description" content="Chat, call and create with Ai BADSHAH live. Free unlimited chat + live voice assistant.">
 <meta property="og:image" content="https://badshah222-ai.pages.dev/og-image.png">
-<meta name="theme-color" content="#08201a">
+<meta name="theme-color" content="#F3E8FF">
 <link rel="icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="orb.css">
 <link rel="stylesheet" href="app-ui.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 </head>
 <body>
@@ -70,11 +70,11 @@
       <button id="modeRani" class="hidden" style="display:none"><img src="assets/rani.png" alt="">RANI</button>
     </div>
     <div class="theme-row" id="themeRow"><span>🎨 Theme</span><div class="theme-dots">
-      <button class="tdot on" data-theme="emerald" style="background:linear-gradient(135deg,#0E9F6E,#2EE6A6)" title="Emerald"></button>
-      <button class="tdot" data-theme="royal" style="background:linear-gradient(135deg,#7C3AED,#38BDF8)" title="Royal Violet"></button>
-      <button class="tdot" data-theme="sunset" style="background:linear-gradient(135deg,#F97316,#EC4899)" title="Sunset"></button>
-      <button class="tdot" data-theme="ocean" style="background:linear-gradient(135deg,#0369A1,#22D3EE)" title="Ocean"></button>
-      <button class="tdot" data-theme="neon" style="background:linear-gradient(135deg,#D946EF,#22D3EE)" title="Neon 3D"></button>
+      <button class="tdot on" data-theme="emerald" style="background:linear-gradient(135deg,#FF5F9E,#A855F7)" title="Candy"></button>
+      <button class="tdot" data-theme="royal" style="background:linear-gradient(135deg,#8B5CF6,#38BDF8)" title="Grape"></button>
+      <button class="tdot" data-theme="sunset" style="background:linear-gradient(135deg,#FB7185,#FBBF24)" title="Peach"></button>
+      <button class="tdot" data-theme="ocean" style="background:linear-gradient(135deg,#38BDF8,#34D399)" title="Sky"></button>
+      <button class="tdot" data-theme="neon" style="background:linear-gradient(135deg,#E879F9,#F472B6)" title="Bubblegum"></button>
     </div></div>
     <div class="user-row">
       <div class="av" id="userAv">B</div>
@@ -244,12 +244,12 @@
 </div>
 
 <style>
-#callView{background:radial-gradient(120% 90% at 50% 0%,#0d2f24 0%,#06130f 55%,#030a08 100%);align-items:center;justify-content:flex-start;padding-top:calc(26px + env(safe-area-inset-top,0px))}
+#callView{background:linear-gradient(170deg,#FFE3F1,#EFE7FF 55%,#DDF3FF);align-items:center;justify-content:flex-start;padding-top:calc(26px + env(safe-area-inset-top,0px))}
 #callPhoto{width:172px;height:172px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(var(--mc),.75);box-shadow:0 0 0 10px rgba(var(--mc),.12),0 0 64px rgba(var(--mc),.35);animation:callPulse 2.6s ease-in-out infinite;margin-top:3vh}
 @keyframes callPulse{0%,100%{box-shadow:0 0 0 8px rgba(var(--mc),.12),0 0 48px rgba(var(--mc),.3)}50%{box-shadow:0 0 0 16px rgba(var(--mc),.05),0 0 84px rgba(var(--mc),.5)}}
 #callName{font-size:27px;letter-spacing:2.5px;margin-top:20px}
 #callStatus{color:var(--vsoft);font-size:15px;margin-top:5px;text-align:center;padding:0 22px}
-#callCaption{max-width:520px;text-align:center;color:#d9fbeecf;font-size:15.5px;line-height:1.55;min-height:44px;padding:0 24px;margin-top:8px}
+#callCaption{max-width:520px;text-align:center;color:#6B5595;font-size:15.5px;line-height:1.55;min-height:44px;padding:0 24px;margin-top:8px}
 #callView .call-btns{margin-top:auto;padding-bottom:calc(30px + env(safe-area-inset-bottom,0px));gap:26px}
 #callView .cbtn{width:62px;height:62px;font-size:24px}
 #callView .cbtn.end{width:74px;height:74px;font-size:28px}
@@ -257,10 +257,10 @@
 .theme-dots{display:flex;gap:8px}
 .tdot{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
 .tdot.on{border-color:#fff;transform:scale(1.12)}
-body[data-theme="royal"]{--mc:139,92,246;--violet:#8B5CF6;--vdeep:#7C3AED;--vsoft:#C4B5FD;--ok:#A78BFA}
-body[data-theme="sunset"]{--mc:249,115,22;--violet:#F97316;--vdeep:#EA580C;--vsoft:#FDBA74;--ok:#FB923C}
-body[data-theme="ocean"]{--mc:34,211,238;--violet:#22D3EE;--vdeep:#0891B2;--vsoft:#A5F3FC;--ok:#22D3EE}
-body[data-theme="neon"]{--mc:217,70,239;--violet:#D946EF;--vdeep:#A21CAF;--vsoft:#F0ABFC;--ok:#E879F9}
+body[data-theme="royal"]{--mc:139,92,246;--violet:#8B5CF6;--vdeep:#6366F1;--vsoft:#7C3AED;--ok:#22B573}
+body[data-theme="sunset"]{--mc:251,113,133;--violet:#FB7185;--vdeep:#F97316;--vsoft:#E11D48;--ok:#22B573}
+body[data-theme="ocean"]{--mc:56,189,248;--violet:#38BDF8;--vdeep:#06B6D4;--vsoft:#0284C7;--ok:#22B573}
+body[data-theme="neon"]{--mc:232,121,249;--violet:#E879F9;--vdeep:#C026D3;--vsoft:#A21CAF;--ok:#22B573}
 </style>
 <script src="bh-core.js"></script>
 <script src="config.js"></script>

@@ -272,3 +272,88 @@ select.model{display:none}
 .topbar{flex-wrap:nowrap;overflow:hidden}
 .topbar select,.topbar .model-pick{max-width:46vw;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
 @media (max-width:420px){ .topbar{gap:6px;padding-left:10px;padding-right:10px} .topbar .who small{display:none} }
+
+/* ================= CANDY GLASS SKIN v7 — pastel glass (owner design) ================= */
+:root{color-scheme:light}
+body{
+  --bg1:#FFE3F1;--bg2:#EFE7FF;--bg3:#DDF3FF;
+  --txt:#463366;--mut:#8A76A8;--line:rgba(168,140,220,.30);
+  --glass:rgba(255,255,255,.58);--glass2:rgba(255,255,255,.42);
+  --gbrd:rgba(255,255,255,.92);
+  --gsh:0 18px 40px rgba(167,110,220,.16),inset 0 1px 0 rgba(255,255,255,.9);
+  --cta:linear-gradient(90deg,#FF5F9E,#A855F7);
+  --ctash:0 12px 26px rgba(216,80,180,.35);
+  background:linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 46%,var(--bg3) 100%);
+  background-attachment:fixed;color:var(--txt);
+}
+body[data-theme="emerald"]{--mc:255,95,158;--violet:#FF5F9E;--vdeep:#A855F7;--vsoft:#D946EF;--ok:#22B573;--bg1:#FFE3F1;--bg2:#EFE7FF;--bg3:#DDF3FF}
+body[data-theme="royal"]{--bg1:#E6E2FF;--bg2:#E0F2FE;--bg3:#FCE7F3}
+body[data-theme="sunset"]{--bg1:#FFE9D6;--bg2:#FFE3EE;--bg3:#FFF3D6}
+body[data-theme="ocean"]{--bg1:#DFF6FF;--bg2:#E3FDF5;--bg3:#EFE7FF}
+body[data-theme="neon"]{--bg1:#FDE3FF;--bg2:#FFE3F1;--bg3:#E0F2FE}
+.glow{opacity:.55;filter:blur(100px)}
+.g-blue{background:#FFAFD6}.g-red{background:#FFD9A0}
+::-webkit-scrollbar-thumb{background:rgba(168,85,247,.30)}
+h1,h2,h3,.auth-hero h1,.auth-card h2,.stage h2,.panel-in h2,.sheet h4,#callName{font-family:"Baloo 2","Space Grotesk",Inter,sans-serif}
+/* glass surfaces */
+aside,.auth-card,.card,.sheet,.comp-in,.topbar,.model-chip,.key-box,.toast,.stop-btn,
+.stage-cards button,.auth-feats li,.mode-switch,.seg,.quick-row button,.sheet-grid button,
+.model-list button,.more-list button,.cmd-chips button,.dev-list div,.set textarea,.set select{
+  background:var(--glass);border:1.5px solid var(--gbrd);box-shadow:var(--gsh);
+  backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);color:var(--txt)}
+aside{border-radius:0 26px 26px 0;border-left:0}
+.topbar{background:rgba(255,255,255,.45)}
+main{background:transparent}
+#chatPanel.has-msgs .stage{background:rgba(255,255,255,.45);border-bottom:1.5px solid var(--gbrd)}
+.sheet-wrap{background:rgba(96,52,150,.22)}
+.grab{background:rgba(168,85,247,.35)}
+/* text + inputs */
+.field,.side-search input{background:rgba(255,255,255,.65);border:1.5px solid var(--gbrd);color:var(--txt);box-shadow:inset 0 2px 8px rgba(167,110,220,.08)}
+.field::placeholder,.side-search input::placeholder,.comp-in textarea::placeholder{color:#B4A3CC}
+.comp-in textarea{color:var(--txt)}
+.chat-item{color:var(--mut)}
+.chat-row.on .chat-item,.chat-row:hover .chat-item{color:var(--txt)}
+.side-btn{color:var(--txt)}
+.err{color:#E11D48}
+.note{border-color:rgba(168,140,220,.4)}
+.auth-hero h1 span{background:linear-gradient(92deg,#FF5F9E,#A855F7 50%,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stage h2 .grad{background:linear-gradient(92deg,#FF5F9E,#A855F7 45%,#38BDF8);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* gradient CTA pills */
+.btn-p,.call-fab,.icobtn.send,.new-chat,.mode-switch button.on,.seg button.on{
+  background:var(--cta);color:#fff;box-shadow:var(--ctash);border:0}
+.btn-p:hover{box-shadow:0 16px 34px rgba(216,80,180,.45)}
+.new-chat{border-radius:999px}
+.btn-g{background:var(--glass);border:1.5px solid var(--gbrd);color:var(--txt);box-shadow:var(--gsh)}
+.btn-g:hover{border-color:rgba(var(--mc),.7)}
+.icobtn{background:rgba(255,255,255,.6);border:1px solid var(--gbrd);color:#7C3AED;box-shadow:0 6px 16px rgba(167,110,220,.14)}
+.icobtn:hover{background:rgba(255,255,255,.85)}
+.icobtn.plus{background:rgba(255,95,158,.14);color:#E84393}
+.icobtn.round{background:rgba(255,255,255,.6)}
+.icobtn.mic-on{background:#FF5C6C;color:#fff}
+/* messages */
+.msg:not(.user) .body{background:var(--glass);border:1.5px solid var(--gbrd);box-shadow:var(--gsh);backdrop-filter:blur(14px) saturate(1.4);border-radius:8px 22px 22px 22px;color:var(--txt)}
+.msg.user .body{background:var(--cta);border:0;color:#fff;box-shadow:var(--ctash);border-radius:22px 8px 22px 22px}
+.msg .txt a{color:#9333EA}
+.msg code{background:rgba(168,85,247,.13);color:#7C3AED}
+.codebox{background:#2A1B45;border-color:rgba(168,140,220,.4)}
+.codehead{background:rgba(255,255,255,.06);color:#CBB8F5}
+.codehead button{color:#EDE9FE;border-color:rgba(255,255,255,.25)}
+.msg .txt blockquote{color:var(--mut)}
+.msg .txt th{background:rgba(var(--mc),.12)}
+.acts button:hover{color:var(--txt)}
+.typing i{background:#D946EF}
+.topbar .who small{color:#1D9E63}
+.user-row .av{background:var(--cta);color:#fff}
+.set input[type=checkbox]{background:rgba(168,140,220,.3)}
+.set input[type=checkbox]:checked{background:var(--violet)}
+.big-num{color:#D97706;border-color:rgba(245,158,11,.55)}
+/* call + blocked views */
+body #callView{background:linear-gradient(170deg,var(--bg1),var(--bg2) 55%,var(--bg3))}
+#callName{color:var(--txt)}
+body #callCaption{color:#6B5595}
+.cbtn{background:rgba(255,255,255,.6);border:1.5px solid var(--gbrd);color:#7C3AED;box-shadow:var(--gsh)}
+.cbtn.end{background:linear-gradient(135deg,#FF5C6C,#E11D48);border:0;color:#fff;box-shadow:0 12px 30px rgba(255,92,108,.4)}
+.cbtn.muted{background:#FFC94D;color:#5b4300}
+body #blockedView{background:linear-gradient(170deg,#FFE3F1,#EFE7FF 55%,#DDF3FF);color:var(--txt)}
+#blockedView p{color:var(--mut)}
+.tdot.on{border-color:#fff;box-shadow:0 0 0 2px rgba(168,85,247,.45)}
