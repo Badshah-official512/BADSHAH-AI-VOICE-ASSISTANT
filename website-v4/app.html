@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BADSHAH App — BADSHAH Voice Assistant AI Chat, Call & Create</title>
 <meta name="description" content="Open the BADSHAH assistant app: free unlimited AI chat, Ai BADSHAH live voice calls, image generation and more. The BADSHAH live voice assistant in your browser.">
 <meta name="robots" content="index, follow">
@@ -15,201 +15,57 @@
 <link rel="icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="orb.css">
+<link rel="stylesheet" href="app-ui.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root{--ink:#06130f;--ink2:#08201a;--panel:#0d2a22;--panel2:#12382d;--violet:#2EE6A6;--vdeep:#0E9F6E;--vsoft:#8FF5CF;--blue:#22D3EE;--red:#FF5C6C;--txt:#EAFBF4;--mut:#8FB5A7;--line:rgba(143,245,207,.16);--ok:#34D399;--gold:#FFC94D}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--ink);color:var(--txt);font-family:Inter,system-ui,sans-serif;height:100dvh;overflow:hidden}
-button{font-family:inherit;cursor:pointer}
-input,select,textarea{font-family:inherit}
-.lights{position:fixed;inset:0;z-index:0;pointer-events:none}
-.glow{position:absolute;border-radius:50%;filter:blur(100px);opacity:.4}
-.g-blue{width:480px;height:480px;background:#0a5c47;top:-160px;left:-120px}
-.g-red{width:440px;height:440px;background:#6b5a12;bottom:-160px;right:-100px}
-.hidden{display:none!important}
-/* ---------- auth ---------- */
-#authView{position:relative;z-index:2;height:100dvh;display:grid;place-items:center;padding:20px}
-.auth-card{width:min(420px,100%);background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:28px;padding:36px 32px;text-align:center;box-shadow:0 40px 90px rgba(0,0,0,.55)}
-.auth-card img.logo{width:84px;height:84px;border-radius:22px;box-shadow:0 0 30px rgba(46,230,166,.5)}
-.auth-card h1{font-family:"Space Grotesk";font-size:26px;margin-top:16px}
-.auth-card h1 span{background:linear-gradient(92deg,#8FF5CF,#2EE6A6,#22D3EE);-webkit-background-clip:text;background-clip:text;color:transparent}
-.auth-card p{color:var(--mut);font-size:14px;margin-top:7px;line-height:1.55}
-.field{width:100%;padding:13px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(6,19,15,.6);color:#fff;font-size:15px;margin-top:12px;outline:none}
-.field:focus{border-color:var(--violet)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;border-radius:999px;font-weight:600;font-size:15px;border:1px solid transparent;transition:.22s;width:100%;margin-top:14px}
-.btn-p{background:linear-gradient(135deg,var(--violet),var(--vdeep));color:#03130d;box-shadow:0 10px 28px rgba(14,159,110,.4)}
-.btn-p:hover{transform:translateY(-1px)}
-.btn-g{background:rgba(143,245,207,.07);border-color:var(--line);color:var(--txt)}
-.btn-w{background:#1FA855;color:#fff}
-.btn-s{width:auto;padding:9px 16px;font-size:13.5px;margin-top:0}
-.auth-alt{margin-top:16px;font-size:13.5px;color:var(--mut)}
-.auth-alt a{color:var(--vsoft);font-weight:600;cursor:pointer}
-.err{color:#FF8A94;font-size:13.5px;margin-top:12px;min-height:18px;line-height:1.5}
-.note{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.6;border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
-/* ---------- app shell ---------- */
-#appView{position:relative;z-index:2;display:grid;grid-template-columns:296px 1fr;height:100dvh}
-aside{background:rgba(8,32,26,.82);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 14px;gap:10px;backdrop-filter:blur(10px)}
-.brand{display:flex;align-items:center;gap:10px;padding:2px 4px 8px}
-.brand img{width:36px;height:36px;border-radius:10px}
-.brand b{font-family:"Space Grotesk";font-size:17px}
-.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(6,19,15,.55);border:1px solid var(--line);border-radius:16px;padding:6px}
-.mode-switch button{border:0;background:transparent;color:var(--mut);border-radius:11px;padding:8px 4px;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px}
-.mode-switch button img{width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:top}
-.mode-switch button.on{background:linear-gradient(135deg,var(--violet),var(--vdeep));color:#03130d}
-.side-btn{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;border:1px solid transparent;background:transparent;color:var(--txt);font-size:14.5px;font-weight:500;text-align:left;width:100%}
-.side-btn:hover{background:rgba(46,230,166,.1)}
-.side-btn.hot{border-color:rgba(255,201,77,.4);background:rgba(255,201,77,.07)}
-.plan-badge{margin-top:auto;border:1px solid var(--line);border-radius:16px;padding:13px 14px;background:linear-gradient(120deg,rgba(46,230,166,.14),rgba(34,211,238,.06))}
-.plan-badge b{font-size:14px}
-.plan-badge p{color:var(--mut);font-size:12.5px;margin-top:3px;line-height:1.5}
-.chat-list{overflow-y:auto;display:grid;gap:4px;max-height:30vh}
-.chat-item{padding:9px 12px;border-radius:11px;color:var(--mut);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border:0;background:transparent;text-align:left;width:100%}
-.chat-item:hover,.chat-item.on{background:rgba(46,230,166,.12);color:#fff}
-.user-row{display:flex;gap:10px;align-items:center;padding:8px 4px 0}
-.user-row .av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--blue));display:grid;place-items:center;font-weight:700}
-.user-row small{color:var(--mut);display:block;font-size:11.5px}
-.user-row button{margin-left:auto;background:none;border:0;color:var(--mut);font-size:13px}
-main{display:flex;flex-direction:column;min-width:0;background:rgba(6,19,15,.35)}
-.topbar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
-.topbar .who{display:flex;align-items:center;gap:11px}
-.topbar .who img{width:40px;height:40px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(46,230,166,.6)}
-.topbar .who b{font-size:16px;display:block}
-.topbar .who small{color:var(--ok);font-size:12px}
-.model-pick{margin-left:auto;display:flex;gap:8px;align-items:center}
-select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 13px;font-size:13.5px;font-weight:600;outline:none;max-width:210px}
-.call-fab{background:linear-gradient(135deg,#1FA855,#128C4A);color:#fff;border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;box-shadow:0 8px 22px rgba(31,168,85,.35)}
-#msgs{flex:1;overflow-y:auto;padding:26px 18px 12px}
-.msg-wrap{max-width:800px;margin:0 auto;display:grid;gap:18px}
-.msg{display:flex;gap:12px;line-height:1.65;font-size:15.5px}
-.msg .av{width:34px;height:34px;border-radius:50%;flex:none;object-fit:cover;object-position:top;border:1px solid var(--line)}
-.msg .body{flex:1;min-width:0;padding-top:5px;white-space:pre-wrap;word-break:break-word}
-.msg.user{flex-direction:row-reverse}
-.msg.user .body{background:rgba(46,230,166,.14);border:1px solid var(--line);border-radius:18px;padding:11px 16px;white-space:pre-wrap}
-.msg .acts{display:flex;gap:6px;margin-top:7px}
-.msg .acts button{background:none;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:4px 10px;font-size:12px}
-.msg img.gen{max-width:min(440px,100%);border-radius:16px;border:1px solid var(--line);margin-top:6px}
-.msg code{background:rgba(143,245,207,.14);padding:1px 6px;border-radius:6px;font-size:13.5px}
-.msg pre{background:#05100c;border:1px solid var(--line);border-radius:13px;padding:14px;overflow-x:auto;margin-top:8px}
-.msg pre code{background:none;padding:0}
-.typing{display:inline-flex;gap:5px;padding-top:10px}
-.typing i{width:7px;height:7px;border-radius:50%;background:var(--vsoft);animation:tp 1s infinite}
-.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
-@keyframes tp{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
-.composer{padding:12px 18px 18px}
-.comp-in{max-width:800px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:8px 8px 8px 18px;display:flex;align-items:flex-end;gap:8px;box-shadow:0 18px 44px rgba(0,0,0,.4)}
-.comp-in textarea{flex:1;background:none;border:0;outline:none;color:#fff;font-size:15.5px;resize:none;max-height:130px;padding:9px 0}
-.icobtn{width:42px;height:42px;border-radius:50%;border:0;background:rgba(143,245,207,.09);color:#fff;font-size:18px;flex:none}
-.icobtn.send{background:linear-gradient(135deg,var(--violet),var(--vdeep));color:#03130d;font-weight:800}
-.icobtn.on{background:var(--red)}
-.comp-hint{max-width:800px;margin:9px auto 0;text-align:center;color:var(--mut);font-size:12px}
-/* ---------- panels (upgrade/help/pc) ---------- */
-.panel-view{flex:1;overflow-y:auto;padding:30px 18px}
-.panel-in{max-width:680px;margin:0 auto}
-.panel-in h2{font-family:"Space Grotesk";font-size:28px;margin-bottom:8px}
-.panel-in .sub{color:var(--mut);line-height:1.65;margin-bottom:22px}
-.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
-@media(max-width:640px){.plans{grid-template-columns:1fr 1fr}}
-.plan{border:1px solid var(--line);border-radius:16px;padding:16px 10px;text-align:center;background:rgba(13,42,34,.6);cursor:pointer}
-.plan.on{border-color:var(--violet);background:rgba(46,230,166,.15)}
-.plan b{font-family:"Space Grotesk";font-size:21px;display:block}
-.plan span{color:var(--mut);font-size:12.5px}
-.card{border:1px solid var(--line);border-radius:20px;padding:24px;background:linear-gradient(180deg,var(--panel),var(--ink2));margin-bottom:18px}
-.card h3{font-size:18px;margin-bottom:10px}
-.card p{color:var(--mut);font-size:14.5px;line-height:1.65}
-.big-num{font-family:"Space Grotesk";font-size:30px;letter-spacing:2px;color:var(--gold);text-align:center;padding:14px;border:1px dashed rgba(255,201,77,.5);border-radius:16px;margin:14px 0}
-/* ---------- call overlay ---------- */
-#callView{position:fixed;inset:0;z-index:80;background:radial-gradient(120% 90% at 50% 0%,#0f3a2e 0%,#06130f 62%);display:flex;flex-direction:column;align-items:center;padding:34px 20px;text-align:center}
-#callView .lights{position:absolute}
-.call-photo{width:172px;height:172px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(143,245,207,.55);animation:lev 5s ease-in-out infinite;box-shadow:0 30px 70px rgba(0,0,0,.6);margin-top:4vh}
-@keyframes lev{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
-#callName{font-family:"Space Grotesk";font-size:27px;margin-top:22px}
-#callStatus{color:var(--ok);margin-top:6px;font-size:14.5px;min-height:20px}
-#callCaption{color:var(--mut);max-width:560px;line-height:1.65;margin-top:16px;min-height:52px;font-size:15.5px}
-.eq{display:flex;gap:4px;justify-content:center;height:28px;align-items:flex-end;margin-top:10px}
-.eq i{width:5px;border-radius:3px;background:var(--blue);height:7px;transition:height .12s}
-.call-btns{display:flex;gap:18px;margin-top:auto;padding-bottom:12px}
-.cbtn{width:62px;height:62px;border-radius:50%;border:1px solid var(--line);background:rgba(143,245,207,.1);color:#fff;font-size:23px}
-.cbtn.end{background:var(--red);border-color:var(--red);box-shadow:0 12px 30px rgba(255,77,94,.4)}
-.cbtn.muted{background:var(--gold);color:#000}
-.key-box{width:min(480px,100%);background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:24px;padding:28px;text-align:left;margin-top:4vh}
-.key-box h3{font-size:20px;margin-bottom:10px}
-.key-box ol{color:var(--mut);line-height:1.8;font-size:14.5px;padding-left:20px}
-.key-box a{color:var(--blue);font-weight:600}
-@media(max-width:860px){#appView{grid-template-columns:1fr}aside{position:fixed;z-index:60;left:0;top:0;bottom:0;width:290px;transform:translateX(-105%);transition:.3s}aside.open{transform:none}#menuBtn{display:grid!important}}
-#menuBtn{display:none}
 
-/* ---------- living logo stage (v4) ---------- */
-#chatPanel{--mc:46,230,166}
-.stage{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px 18px 14px;flex:1;min-height:0;overflow-y:auto;transition:padding .5s}
-.orb-host{width:min(300px,32vh);height:min(300px,32vh);flex:none;transition:width .6s cubic-bezier(.2,.7,.2,1),height .6s cubic-bezier(.2,.7,.2,1)}
-.stage-info{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
-.stage h2{font-family:"Space Grotesk";font-size:clamp(22px,3.6vw,34px);line-height:1.15;letter-spacing:-.5px}
-.stage h2 .grad{background:linear-gradient(92deg,#8FF5CF,#2EE6A6 40%,#38BDF8 75%,#FFC94D);-webkit-background-clip:text;background-clip:text;color:transparent}
-.stage-sub{color:var(--mut);max-width:540px;line-height:1.6;font-size:15px}
-.stage-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:760px;margin-top:4px}
-.stage-chips button{background:rgba(13,42,34,.75);color:var(--txt);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:13.5px;font-weight:600;backdrop-filter:blur(8px);transition:.25s}
-.stage-chips button:hover{transform:translateY(-2px);border-color:rgba(var(--mc),.7);box-shadow:0 10px 26px rgba(var(--mc),.22)}
-#chatPanel.has-msgs .stage{flex:none;flex-direction:row;justify-content:flex-start;padding:4px 14px;gap:10px;border-bottom:1px solid var(--line);background:rgba(6,19,15,.6);backdrop-filter:blur(12px);overflow:visible}
-#chatPanel.has-msgs .orb-host{width:54px;height:54px}
-#chatPanel.has-msgs .stage-info{align-items:flex-start;gap:0;text-align:left}
-#chatPanel.has-msgs .orb-status{display:none}
-#chatPanel.has-msgs .stage-live{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54vw}
-#chatPanel.has-msgs .stage h2,#chatPanel.has-msgs .stage-sub,#chatPanel.has-msgs .stage-chips{display:none}
-#chatPanel:not(.has-msgs) #msgs{display:none}
-.stage-live{display:none;color:var(--mut);font-size:12.5px}
-#chatPanel.has-msgs .stage-live{display:block}
-.comp-in{transition:box-shadow .4s,border-color .4s}
-.comp-in:focus-within{border-color:rgba(var(--mc),.6);box-shadow:0 0 0 1px rgba(var(--mc),.35),0 0 46px rgba(var(--mc),.22),0 18px 44px rgba(0,0,0,.4)}
-.icobtn.vm{background:rgba(var(--mc),.18)}
-.icobtn.vm.on{background:rgb(var(--mc));color:#03130d;box-shadow:0 0 22px rgba(var(--mc),.6)}
-.msg{animation:msgIn .45s cubic-bezier(.2,.7,.2,1)}
-@keyframes msgIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
-.msg:not(.user) .body{background:rgba(13,42,34,.55);border:1px solid var(--line);border-radius:18px;padding:12px 16px;backdrop-filter:blur(6px)}
-@media (max-height:680px){.orb-host{width:min(185px,26vh);height:min(185px,26vh)}.stage h2{font-size:21px}.stage-sub{display:none}.stage{gap:6px}.stage-info{gap:8px}}
-@media (max-width:560px){.stage-chips button{padding:8px 13px;font-size:12.5px}.stage{padding:6px 12px 10px}}
-.caret{display:inline-block;width:8px;height:1em;background:rgb(var(--mc));vertical-align:-2px;margin-left:2px;animation:blink .8s steps(2) infinite}
-@keyframes blink{50%{opacity:0}}
-.auth-orb{width:150px;height:150px;margin:-8px auto 0}
-@media(max-width:860px){.orb-host{width:min(250px,30vh);height:min(250px,30vh)}}
-</style>
 </head>
 <body>
 <div class="lights"><div class="glow g-blue"></div><div class="glow g-red"></div></div>
 
 <!-- ================= AUTH ================= -->
 <div id="authView">
-  <div class="auth-card">
-    <div class="orb-host auth-orb" id="authOrb"></div>
-    <h1>Welcome to <span>BADSHAH AI</span></h1>
-    <p>Login karke apni chats, plan aur live calls continue rakho. Ek hi account — web aur Android app dono par.</p>
-    <input class="field" id="authName" type="text" placeholder="Your name (sign up ke liye)" autocomplete="name">
-    <input class="field" id="authEmail" type="email" placeholder="Email" autocomplete="email">
-    <input class="field" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
-    <div class="err" id="authErr"></div>
-    <button class="btn btn-p" id="btnLogin">Login</button>
-    <button class="btn btn-g" id="btnSignup">Create free account</button>
-    <button class="btn btn-g" id="btnGoogle">🔵 Continue with Google</button>
-    <p class="auth-alt">By continuing you agree to fair use. Free plan: Flex + Max chat unlimited, Uni images free.</p>
-    <div class="note hidden" id="fbNote">⚙️ Owner setup pending: Firebase web config (apiKey / appId) abhi config.js mein paste hona baqi hai — DEPLOY.md dekho. Tab tak chat demo mode mein chalegi.</div>
+  <div class="auth-wrap">
+    <div class="auth-hero">
+      <div class="orb-host auth-orb" id="authOrb"></div>
+      <h1>BADSHAH <span>AI</span> Assistant</h1>
+      <p>Aisa AI jo sunta hai, sochta hai aur tumhare saath bolta hai. Chat, images, video aur live call — sab free.</p>
+      <ul class="auth-feats"><li>💬 Free unlimited chat</li><li>🎨 Free AI images</li><li>📞 Live voice call</li><li>📱 Phone &amp; PC control</li></ul>
+    </div>
+    <div class="auth-card">
+      <h2>Shuru karo 👑</h2>
+      <p>Ek account — web aur Android app dono par.</p>
+      <input class="field" id="authName" type="text" placeholder="Aapka naam (sign up ke liye)" autocomplete="name">
+      <input class="field" id="authEmail" type="email" placeholder="Email" autocomplete="email">
+      <input class="field" id="authPass" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="err" id="authErr"></div>
+      <button class="btn btn-p" id="btnLogin">Login</button>
+      <button class="btn btn-g" id="btnSignup">Free account banao</button>
+      <div class="or"><span>ya</span></div>
+      <button class="btn btn-g" id="btnGoogle"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.3-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.3-.4-4z"/></svg> Google se continue karo</button>
+      <p class="auth-alt">Continue karke aap fair use maante hain. Sab kuch free hai.</p>
+      <div class="note hidden" id="fbNote">⚙️ Owner setup pending: Firebase web config (apiKey / appId) abhi config.js mein paste hona baqi hai — chat demo mode mein chalegi.</div>
+    </div>
   </div>
 </div>
 
 <!-- ================= APP ================= -->
 <div id="appView" class="hidden">
+  <div class="scrim" id="scrim"></div>
   <aside id="sidebar">
-    <div class="brand"><img src="assets/image2.png" alt=""><b>BADSHAH <span style="color:var(--vsoft)">AI</span></b></div>
-    <div class="mode-switch">
-      <button id="modeBadshah" class="on"><img src="assets/image1.png" alt="">BADSHAH</button>
-      <button id="modeRani"><img src="assets/rani.png" alt="">RANI</button>
-    </div>
-    <button class="side-btn" id="btnNewChat">➕ New chat</button>
-    <button class="side-btn" id="btnCallSide">📞 Live Call</button>
-    <button class="side-btn" id="btnPc">💻 Connect Computer</button>
-    <button class="side-btn" id="btnHelp">🛟 Help Center</button>
+    <div class="brand"><img src="assets/logo-poster.jpg" alt="BADSHAH AI"><div><b data-brand>BADSHAH AI</b><small>Assistant • 100% free</small></div></div>
+    <button class="new-chat" id="btnNewChat"><span>＋</span> New chat</button>
+    <div class="side-search"><input id="chatSearch" placeholder="🔎  Chats mein dhundo…" autocomplete="off"></div>
     <div class="chat-list" id="chatList"></div>
-    <div class="plan-badge">
-      <b>👑 Sab Kuch FREE</b>
-      <p>Saare chat models • Images • Live calls — bilkul free. Koi paid plan, koi key nahi.</p>
+    <nav class="side-nav">
+      <button class="side-btn" id="btnCallSide">📞 <span>Live Call</span></button>
+      <button class="side-btn" id="btnPc">📱 <span>Device Control</span></button>
+      <button class="side-btn" id="btnHelp">🛟 <span>Help Center</span></button>
+      <button class="side-btn" id="btnSettings">⚙️ <span>Settings</span></button>
+    </nav>
+    <div class="mode-switch">
+      <button id="modeBadshah" class="on"><img src="assets/avatar.jpg" alt="">BADSHAH</button>
+      <button id="modeRani"><img src="assets/rani.png" alt="">RANI</button>
     </div>
     <div class="user-row">
       <div class="av" id="userAv">B</div>
@@ -220,12 +76,14 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
 
   <main>
     <div class="topbar">
-      <button class="icobtn" id="menuBtn">☰</button>
-      <div class="who"><img id="whoImg" src="assets/image1.png" alt=""><div><b id="whoName">BADSHAH</b><small>● online — Ai BADSHAH live</small></div></div>
-      <div class="model-pick">
-        <select class="model" id="modelSel"></select>
-        <button class="call-fab" id="btnCall">📞 Call</button>
+      <button class="icobtn round" id="menuBtn" aria-label="Menu">☰</button>
+      <div class="who"><img id="whoImg" src="assets/avatar.jpg" alt=""><div><b id="whoName">BADSHAH</b><small>● online</small></div></div>
+      <button class="model-chip" id="btnModel" aria-label="Model chuno"><span id="modelChipTxt">Model</span><i>▾</i></button>
+      <div class="top-actions">
+        <button class="call-fab" id="btnCall" aria-label="Live call" data-cfg-feature="call">📞<span>Call</span></button>
+        <button class="icobtn round" id="btnMore" aria-label="More">⋯</button>
       </div>
+      <select class="model" id="modelSel" hidden></select>
     </div>
 
     <!-- chat panel -->
@@ -233,23 +91,27 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
       <div class="stage" id="stage">
         <div class="orb-host" id="orbHost"></div>
         <div class="stage-info">
+          <div class="name-pill" id="namePill"><b id="stageName">BADSHAH</b><em>✓</em></div>
           <div class="orb-status" id="orbStatus"><i></i><span id="orbStatusTxt">Online — sun raha hoon</span></div>
-          <div class="stage-live" id="stageLive">Type karo ya 🗣️ dabao — logo sunta bhi hai, bolta bhi.</div>
+          <div class="stage-live" id="stageLive">Type karo ya 🗣️ dabao — main sunta bhi hoon, bolta bhi.</div>
           <h2 id="stageTitle">Assalam o Alaikum! <span class="grad">BADSHAH</span> yahan hai 👑</h2>
-          <p class="stage-sub" id="stageSub">Kuch bhi likho ya bolo. Jab tum type karoge to logo sunega, phir sochega, aur jawab dete waqt tumhare saath bolega.</p>
-          <div class="stage-chips" id="stageChips"></div>
+          <p class="stage-sub" id="stageSub">Kuch bhi poochho — chat, image, video, coding, ya seedha call. Main sab free mein karta hoon.</p>
+          <div class="stage-cards" id="stageChips"></div>
         </div>
       </div>
       <div id="msgs"><div class="msg-wrap" id="msgWrap"></div></div>
+      <button class="stop-btn hidden" id="btnStop">■ Rok do</button>
       <div class="composer">
+        <div class="quick-row" id="quickRow"></div>
         <div class="comp-in">
-          <button class="icobtn" id="btnImgMode" title="Image mode">🎨</button>
-          <textarea id="input" rows="1" placeholder="BADSHAH se kuch bhi poochho…"></textarea>
-          <button class="icobtn vm" id="btnVoice" title="Voice mode — bolo, BADSHAH jawab dega">🗣️</button>
-          <button class="icobtn" id="btnMic" title="Voice input">🎙️</button>
-          <button class="icobtn send" id="btnSend">➤</button>
+          <button class="icobtn plus" id="btnPlus" aria-label="Aur options">＋</button>
+          <textarea id="input" rows="1" placeholder="BADSHAH se kuch bhi poochho…" enterkeyhint="send"></textarea>
+          <button class="icobtn" id="btnMic" aria-label="Voice input">🎙️</button>
+          <button class="icobtn send" id="btnSend" aria-label="Send">➤</button>
+          <button class="icobtn hidden" id="btnImgMode" aria-hidden="true"></button>
+          <button class="icobtn hidden" id="btnVoice" aria-hidden="true"></button>
         </div>
-        <p class="comp-hint" id="compHint">Sab kuch FREE hai 👑 — saare models, images aur calls. Koi key, koi payment nahi.</p>
+        <p class="comp-hint" id="compHint">Sab kuch FREE hai 👑 — chat, images, voice aur calls. Koi key, koi payment nahi.</p>
       </div>
     </div>
 
@@ -269,23 +131,80 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
       </div>
     </div>
 
-    <!-- pc panel -->
+    <!-- device control panel -->
     <div id="pcPanel" class="panel-view hidden">
       <div class="panel-in">
-        <h2>💻 Connect Computer</h2>
-        <p class="sub">Apne computer ko BADSHAH se joro. Pairing code banao, desktop agent mein ye code dalo — phir BADSHAH tumhare computer par apps kholega, type karega, files aur media sambhalega.</p>
+        <h2>📱 Device Control</h2>
+        <p class="sub">Apna phone ya computer BADSHAH se joro. Pairing code banao, phir yahin se command bhejo — jaise "WhatsApp kholo" ya "volume kam karo". Android app / desktop agent command uthakar chalata hai.</p>
+        <div class="seg" id="devSeg"><button class="on" data-t="phone">📱 Phone</button><button data-t="computer">💻 Computer</button></div>
         <div class="card">
-          <h3>Tumhara pairing code</h3>
+          <h3>Pairing code</h3>
           <div class="big-num" id="pairCode">— — — — — —</div>
           <button class="btn btn-p" id="btnPair">🔗 Naya Pairing Code Banao</button>
-          <p style="margin-top:14px">Code 10 minute valid hai. Desktop agent jald aa raha hai — protocol ki mukammal tafseel documentation mein hai. Android app se phone control pehle se live hai.</p>
+          <p style="margin-top:14px">Code 10 minute valid hai. App mein <b>Settings → Connect</b> khol kar ye code dalo.</p>
           <p id="pairStatus"></p>
+          <a class="btn btn-g" id="apkBtn" href="./BADSHAH-AI.apk" download style="text-decoration:none">⬇ Android App (APK) download</a>
+        </div>
+        <div class="card">
+          <h3>Command bhejo</h3>
+          <div class="cmd-row"><input class="field" id="devCmd" placeholder='Misal: "YouTube kholo" ya "Ammi ko call karo"' style="margin-top:0"><button class="btn btn-p btn-s" id="devSend">Bhejo ➤</button></div>
+          <div class="cmd-chips" id="devChips"></div>
+          <div id="devList" class="dev-list"></div>
+          <p class="note" style="margin-top:12px">Command queue mein jati hai; phone/computer par app jab online ho to turant chalata hai. Phone ki screen par action ke liye Android app ki Accessibility permission lagti hai.</p>
         </div>
         <button class="btn btn-g btn-s" data-back>← Back to chat</button>
       </div>
     </div>
   </main>
 </div>
+
+<!-- ============ sheets / menus ============ -->
+<div class="sheet-wrap hidden" id="sheetWrap">
+  <div class="sheet" id="plusSheet" role="dialog" aria-label="Options">
+    <div class="grab"></div>
+    <h4>Kya karna hai?</h4>
+    <div class="sheet-grid">
+      <button data-act="image"><i>🎨</i><b>Image banao</b><small>Gemini image, free</small></button>
+      <button data-act="video" data-cfg-feature="video"><i>🎬</i><b>Video banao</b><small>Beta</small></button>
+      <button data-act="voice"><i>🗣️</i><b>Voice mode</b><small>Bolo, jawab suno</small></button>
+      <button data-act="call" data-cfg-feature="call"><i>📞</i><b>Live call</b><small>Seedha baat</small></button>
+      <button data-act="code"><i>💻</i><b>Code likho</b><small>Debug + build</small></button>
+      <button data-act="translate"><i>🌐</i><b>Translate</b><small>Urdu · English</small></button>
+      <button data-act="temp"><i>🕶️</i><b>Temporary chat</b><small>Save nahi hogi</small></button>
+      <button data-act="export"><i>💾</i><b>Chat export</b><small>.md file</small></button>
+    </div>
+  </div>
+  <div class="sheet" id="modelSheet" role="dialog" aria-label="Models"><div class="grab"></div><h4>AI model chuno</h4><div id="modelList" class="model-list"></div></div>
+  <div class="sheet" id="moreSheet" role="dialog" aria-label="Menu">
+    <div class="grab"></div>
+    <div class="more-list">
+      <button data-more="new">＋ Nayi chat</button>
+      <button data-more="mode">🔁 <span id="modeFlipTxt">RANI se baat karo</span></button>
+      <button data-more="device">📱 Device Control</button>
+      <button data-more="settings">⚙️ Settings</button>
+      <button data-more="help">🛟 Help Center</button>
+      <button data-more="logout">↪ Logout</button>
+    </div>
+  </div>
+  <div class="sheet modal" id="settingsModal" role="dialog" aria-label="Settings">
+    <div class="grab"></div>
+    <div class="modal-head"><h4>⚙️ Settings</h4><button class="icobtn round" data-close>✕</button></div>
+    <div class="set-body">
+      <label class="set"><span>Meri hidayat (custom instructions)</span><textarea id="setInstr" rows="3" placeholder="Misal: Mujhe Roman Urdu mein, chhote aur seedhe jawab do. Main web developer hoon."></textarea></label>
+      <label class="set"><span>Jawab ki zubaan</span><select id="setLang"><option value="auto">Auto (jo main likhun)</option><option value="roman">Roman Urdu</option><option value="en">English</option><option value="ur">اردو</option></select></label>
+      <label class="set row"><span>Jawab khud bol kar sunao</span><input type="checkbox" id="setSpeak"></label>
+      <label class="set"><span>Awaaz sunne ki zubaan (mic)</span><select id="setVlang"><option value="ur-PK">Urdu (Pakistan)</option><option value="en-US">English</option><option value="hi-IN">Hindi</option><option value="ps-AF">Pashto</option></select></label>
+      <label class="set"><span>Likhai ka size</span><input type="range" id="setFs" min="14" max="20" step="0.5"></label>
+      <div class="set-actions">
+        <button class="btn btn-g btn-s" id="setExport">💾 Saari chats export</button>
+        <button class="btn btn-g btn-s danger" id="setClear">🗑 Saari chats delete</button>
+      </div>
+      <button class="btn btn-p" id="setSave">Save</button>
+    </div>
+  </div>
+</div>
+<div class="toast hidden" id="toast"></div>
+<div id="blockedView" class="hidden"><div><img src="assets/logo-poster.jpg" alt=""><h2>Account block hai</h2><p>Admin ne aapka account block kiya hai. Madad ke liye WhatsApp ya email karo.</p><a class="btn btn-p" href="https://wa.me/923251787969" target="_blank" rel="noopener">WhatsApp</a></div></div>
 
 <!-- ================= CALL ================= -->
 <div id="callView" class="hidden">
@@ -303,7 +222,7 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
     <button class="btn btn-g" id="btnKeyCancel">Cancel</button>
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
-    <img class="call-photo" id="callPhoto" src="assets/image1.png" alt="">
+    <div class="call-orb" id="callOrbHost"></div><img id="callPhoto" class="hidden" src="assets/avatar.jpg" alt="">
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -316,6 +235,7 @@ select.model{background:var(--panel2);color:#fff;border:1px solid var(--line);bo
   </div>
 </div>
 
+<script src="bh-core.js"></script>
 <script src="config.js"></script>
 <script src="orb.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -512,7 +432,7 @@ $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ live.muted=!live.muted; $('btnMute').classList.toggle('muted',live.muted); if(live.stream) live.stream.getAudioTracks().forEach(t=>t.enabled=!live.muted); };
 $('btnSpk').onclick=()=>{ /* web: output goes to default device; toggle caption emphasis */ $('callCaption').scrollIntoView(); };
-function callUI(){ $('callPhoto').src = state.mode==='badshah'?'assets/image1.png':'assets/rani.png'; $('callName').textContent = state.mode==='badshah'?'BADSHAH':'RANI'; }
+function callUI(){ if(window.BH&&BH.callOpen) BH.callOpen(); $('callPhoto').src = state.mode==='badshah'?'assets/avatar.jpg':'assets/rani.png'; $('callName').textContent = state.mode==='badshah'?'BADSHAH':'RANI'; }
 function sysPrompt(){
   const who = state.mode==='badshah' ? 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah.' : 'You are RANI, a sweet, caring and expressive female best friend and digital assistant created by Zain Shah.';
   return who+' Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and not too long. You can help with anything: questions, coding, browsing topics, daily life.';
@@ -586,7 +506,7 @@ function playPcm(b64){
   const s=ac.createBufferSource(); s.buffer=buf; s.connect(ac.destination);
   const now=ac.currentTime; live.playT=Math.max(live.playT,now); s.start(live.playT); live.playT+=buf.duration; eqPulse();
 }
-function eqPulse(){ document.querySelectorAll('#callEq i').forEach(b=>{ b.style.height=(6+Math.random()*20)+'px'; setTimeout(()=>b.style.height='7px',160); }); }
+function eqPulse(){ if(window.BH&&BH.callPulse) BH.callPulse(); document.querySelectorAll('#callEq i').forEach(b=>{ b.style.height=(6+Math.random()*20)+'px'; setTimeout(()=>b.style.height='7px',160); }); }
 function stopLive(){
   live.on=false;
   try{ live.ws&&live.ws.close(); }catch(e){}

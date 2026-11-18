@@ -33,6 +33,12 @@ class BadshahOrb{
     this.img.src=opt.logo||'assets/logo-chrome.png';
     this.sheen=document.createElement('div'); this.sheen.className='orb-sheen';
     this.d3.append(this.img,this.sheen);
+    if(opt.portrait){ // talking portrait: photo in a circle, jaw + mouth move with the voice level
+      this.face=document.createElement('canvas'); this.face.className='orb-face'; this.fctx=this.face.getContext('2d');
+      this.mk=document.createElement('canvas'); this.mctx=this.mk.getContext('2d'); this.blink=0; this.nextBlink=2+Math.random()*3;
+      this.jaw=true; this.pimg=new Image(); this.pimg.onload=()=>{ this.pready=true; }; this.pimg.src=opt.portrait;
+      this.img.style.display='none'; this.d3.insertBefore(this.face,this.sheen);
+    }
     this.el.append(this.cv,this.d3); host.append(this.el);
     this.ctx=this.cv.getContext('2d');
     this.state='idle'; this.mood='calm'; this.base='calm';
@@ -42,7 +48,7 @@ class BadshahOrb{
     this.parts=Array.from({length:44},()=>({a:Math.random()*6.28,r:1.05+Math.random()*.9,s:(.15+Math.random()*.5)*(Math.random()<.5?-1:1),z:.6+Math.random()*1.6}));
     this.ripples=[]; this.px=0; this.py=0; this.tx=0; this.ty=0; this.visible=true;
     this._resize=()=>{ const r=host.getBoundingClientRect(); const dpr=Math.min(2,devicePixelRatio||1);
-      this.S=Math.max(80,Math.min(r.width,r.height)||200); this.cv.width=this.cv.height=Math.round(this.S*dpr); this.dpr=dpr; };
+      this.S=Math.max(80,Math.min(r.width,r.height)||200); this.cv.width=this.cv.height=Math.round(this.S*dpr); this.dpr=dpr; if(this.face){ this.face.width=this.face.height=Math.round(this.S*.64*dpr); this.mk.width=this.face.width; this.mk.height=Math.round(this.face.height*.2); } };
     this._resize();
     if('ResizeObserver' in window){ new ResizeObserver(this._resize).observe(host); } else addEventListener('resize',this._resize);
     this._move=e=>{ const r=host.getBoundingClientRect(); const cx=r.left+r.width/2, cy=r.top+r.height/2;
@@ -53,6 +59,7 @@ class BadshahOrb{
     this.last=performance.now(); requestAnimationFrame(t=>this.loop(t));
   }
   setState(s){ if(this.state===s) return; this.state=s; this.el.dataset.state=s; if(s==='thinking') this.ripple(); if(this.onState) this.onState(s); }
+  setPortrait(src,jaw){ if(!this.face) return; this.jaw=jaw!==false; this.pready=false; const im=new Image(); im.onload=()=>{ this.pimg=im; this.pready=true; }; im.src=src; }
   setMood(m){ this.mood=MOODS[m]?m:'calm'; this.tcol=MOODS[this.mood].slice(); }
   setBase(m){ this.base=m; if(this.mood==='calm') this.setMood(m); }
   pulse(x=.6){ this.kick=Math.min(1.4,this.kick+x); }
@@ -85,6 +92,35 @@ class BadshahOrb{
     this.el.style.setProperty('--sx',(35+this.px*25).toFixed(1)+'%'); this.el.style.setProperty('--sy',(28+this.py*25).toFixed(1)+'%');
     (this.opt.varTarget||this.host).style.setProperty('--mc',c);
     this.draw(lv,c);
+    if(this.face&&this.pready) this.drawFace(lv,t,dt);
+  }
+  drawFace(lv,t,dt){
+    const g=this.fctx,S=this.face.width,P=this.pimg;
+    // crop head+shoulders from the 720px portrait
+    const k=P.naturalWidth/800; let sx=140*k, sy=0, sw=560*k;
+    if(!this.jaw){ const w=P.naturalWidth,h=P.naturalHeight,m=Math.min(w,h); sx=(w-m)/2; sy=0; sw=m; }
+    g.clearRect(0,0,S,S);
+    const open=this.jaw?Math.max(0,Math.min(1,(lv-.1)*1.25)):0;
+    g.drawImage(P,sx,sy,sw,sw,0,0,S,S);
+    if(open>.02){
+      // lower-face slab drops with the jaw (feathered so no seam shows)
+      const x0=.29*S,x1=.71*S,y0=.585*S,y1=.715*S,w=x1-x0,h=y1-y0; const m=this.mctx;
+      this.mk.width=Math.round(w); this.mk.height=Math.round(h);
+      m.clearRect(0,0,w,h); m.drawImage(P,sx+(.29)*sw,sy+(.585)*sw,.42*sw,.13*sw,0,0,w,h);
+      m.globalCompositeOperation='destination-in';
+      const rg=m.createRadialGradient(w/2,h*.45,Math.min(w,h)*.2,w/2,h*.5,w*.52); rg.addColorStop(0,'rgba(0,0,0,1)'); rg.addColorStop(.45,'rgba(0,0,0,.9)'); rg.addColorStop(.8,'rgba(0,0,0,0)');
+      m.fillStyle=rg; m.fillRect(0,0,w,h); m.globalCompositeOperation='source-over';
+      const dy=open*S*.0075;
+      g.drawImage(this.mk,x0,y0+dy,w,h*(1+open*.02));
+      // soft dark mouth opening between the lips
+      const cx=.496*S,cy=.6*S+dy*.4,rx=S*.04*(.75+open*.25),ry=S*.0085*open;
+      g.save(); g.filter='blur('+(S*.004).toFixed(1)+'px)'; g.fillStyle='rgba(70,12,18,'+(.42*open).toFixed(2)+')';
+      g.beginPath(); g.ellipse(cx,cy,rx,ry,0,0,6.283); g.fill(); g.restore();
+    }
+    // natural idle motion: breathing sway + tiny nod on speech
+    this.blink+=dt; 
+    const sway=Math.sin(t*.8)*.9+(this.state==='speaking'?Math.sin(t*5.3)*lv*1.1:0);
+    this.face.style.transform=`translateZ(46px) rotate(${sway.toFixed(2)}deg) translateY(${(Math.sin(t*1.1)*1.2+lv*1.5).toFixed(2)}px) scale(${(1+lv*.018).toFixed(3)})`;
   }
   draw(lv,c){
     const g=this.ctx,S=this.cv.width,m=S/2,u=S/this.S, R0=S*.355, st=this.state, t=this.t;

@@ -14,3 +14,7 @@
   background:rgba(8,32,26,.72);border:1px solid rgba(var(--mc,46,230,166),.35);color:#d9fff0;backdrop-filter:blur(8px);transition:.4s}
 .orb-status i{width:8px;height:8px;border-radius:50%;background:rgb(var(--mc,46,230,166));box-shadow:0 0 12px rgb(var(--mc,46,230,166));animation:osPulse 1.6s infinite}
 @keyframes osPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.55);opacity:.5}}
+
+.orb-face{width:64%;height:64%;border-radius:50%;pointer-events:none;transform:translateZ(46px);will-change:transform;
+  box-shadow:0 0 0 3px rgba(var(--mc),.6),0 0 calc(18px + var(--lv)*46px) rgba(var(--mc),calc(.3 + var(--lv)*.5)),0 18px 40px rgba(0,0,0,.45);background:#0d2a22}
+.bhorb[data-state="thinking"] .orb-face{animation:orbThink 1.8s ease-in-out infinite}

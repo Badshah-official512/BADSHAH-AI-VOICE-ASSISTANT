@@ -24,6 +24,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="orb.css">
+<script src="bh-core.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="application/ld+json">
@@ -216,8 +217,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
 <div class="lights"><div class="glow g-blue"></div><div class="glow g-red"></div><div class="glow g-vio"></div><div class="grid-bg"></div></div>
 
 <div class="progress" id="prog"></div><div class="spot" id="spot"></div>
-<nav><div class="nav-in">
-  <a class="logo" href="./"><img src="assets/logo-chrome.png" alt="BADSHAH AI logo" style="background:none;box-shadow:none;filter:drop-shadow(0 0 10px rgba(46,230,166,.55))">BADSHAH <em>AI</em></a>
+<nav style="top:var(--bar-h,0px)"><div class="nav-in">
+  <a class="logo" href="./"><img src="assets/logo-poster.jpg" alt="BADSHAH AI logo" style="width:40px;height:40px;border-radius:11px;object-fit:cover;box-shadow:0 0 16px rgba(46,230,166,.45)"><span data-brand>BADSHAH <em>AI</em></span></a>
   <div class="nav-links">
     <a href="#modes">Modes</a><a href="#features">Features</a><a href="#call">Live Call</a><a href="#pricing">Pricing</a><a href="#creator">Creator</a>
   </div>
@@ -229,7 +230,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
   <span class="badge"><span class="dot"></span> BADSHAH is online — replying, browsing &amp; calling</span>
   <div class="hero-orb" id="heroOrb"></div>
   <div class="hero-status"><div class="orb-status" id="heroStatus"><i></i><span id="heroStatusTxt">Online — sun raha hoon</span></div></div>
-  <h1>Ai <span class="grad">BADSHAH</span> — your live<br>voice assistant, always awake.</h1>
+  <h1 data-cfg="hero.title">Ai <span class="grad">BADSHAH</span> — your live<br>voice assistant, always awake.</h1>
   <p class="sub">Meet the <strong>BADSHAH assistant</strong>: a <strong>BADSHAH voice assistant ai</strong> that chats, calls, creates images and controls your phone &amp; computer — like a real friend who never sleeps. Free unlimited chat, forever.</p>
   
   <div class="ask">
@@ -238,8 +239,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
     <div class="ask-out" id="heroOut"></div>
   </div>
   <div class="cta-row">
-    <a class="btn btn-p" href="app.html">💬 Start Chatting — Free</a>
-    <a class="btn btn-g" href="./BADSHAH-AI.apk" download>⬇ Download Android App</a>
+    <a class="btn btn-p" href="app.html" data-cfg="hero.cta">💬 Start Chatting — Free</a>
+    <a class="btn btn-g" href="./BADSHAH-AI.apk" data-cfg-href="apk.url" download>⬇ Download Android App</a>
     <a class="btn btn-w" href="https://wa.me/923251787969" target="_blank" rel="noopener">WhatsApp</a>
   </div>
   <p class="live-line">Right now BADSHAH is: <span id="liveAction">replying to messages</span> • <b>Ai BADSHAH live</b> 24/7</p>
@@ -350,7 +351,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
   <p class="kicker reveal">The Creator</p>
   <h2 class="sec-t reveal">Built by a human, for humans</h2>
   <div class="creator reveal">
-    <img src="assets/image1.png" alt="Zain Shah (Badshah) — creator of BADSHAH AI">
+    <img src="assets/creator.jpg" alt="Zain Shah (Badshah) — creator of BADSHAH AI">
     <div>
       <h3>Zain Shah — “Badshah” 👑</h3>
       <p>A young creator from Swabi, Pakistan, building the assistant he always wished for: one that replies like a friend, calls like a human and works like a team. BADSHAH AI is his promise that world-class AI should speak your language — Urdu, Roman Urdu, English — and respect your pocket.</p>
@@ -389,7 +390,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 <script src="orb.js"></script>
 <script>
 (function(){
-  const orb=new BadshahOrb(document.getElementById('heroOrb'),{varTarget:document.documentElement});
+  const orb=new BadshahOrb(document.getElementById('heroOrb'),{portrait:'assets/avatar.jpg',varTarget:document.documentElement});
   const STAT={idle:'Online — sun raha hoon',listening:'Sun raha hoon…',thinking:'Soch raha hoon…',speaking:'Bol raha hoon…'};
   orb.onState=s=>{ document.getElementById('heroStatusTxt').textContent=STAT[s]; };
   const q=document.getElementById('heroQ'), btn=document.getElementById('heroBtn'), out=document.getElementById('heroOut');
