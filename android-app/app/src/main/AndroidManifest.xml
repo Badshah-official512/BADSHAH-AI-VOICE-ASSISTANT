@@ -20,10 +20,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <!-- v6.2.1: READ_CALL_LOG / CALL_PHONE / SEND_SMS / READ_SMS / RECEIVE_SMS REMOVED —
-         Google Play Protect hard-blocks sideloaded apps that request SMS/Call-Log
-         permissions ("App blocked", no Install-anyway option). No feature used them:
-         dial = ACTION_DIAL, message = share chooser. Do NOT re-add for sideload builds. -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />   <!-- owner order 2026-11-18: wapas dala -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />      <!-- owner order 2026-11-18: wapas dala (bridge dial) -->
+    <!-- SMS trio (SEND_SMS / READ_SMS / RECEIVE_SMS) abhi bhi bahar hai — Play Protect block ki sab se bari wajah wahi hai. -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
