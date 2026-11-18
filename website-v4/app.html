@@ -235,6 +235,11 @@
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <p id="callCaption"></p>
+    <div class="call-ctl">
+      <div class="eng-row"><button id="engGem" class="eng on" type="button">⚡ Gemini Live</button><button id="engEl" class="eng" type="button">🎙️ ElevenLabs</button></div>
+      <select id="callVoice" class="voice-sel" aria-label="Voice chuno"></select>
+      <div class="mic-meter"><i id="micBar"></i></div>
+    </div>
     <div class="call-btns">
       <button class="cbtn" id="btnMute" title="Mute">🎙️</button>
       <button class="cbtn end" id="btnEnd" title="End call">📞</button>
@@ -261,6 +266,13 @@ body[data-theme="royal"]{--mc:139,92,246;--violet:#8B5CF6;--vdeep:#6366F1;--vsof
 body[data-theme="sunset"]{--mc:251,113,133;--violet:#FB7185;--vdeep:#F97316;--vsoft:#E11D48;--ok:#22B573}
 body[data-theme="ocean"]{--mc:56,189,248;--violet:#38BDF8;--vdeep:#06B6D4;--vsoft:#0284C7;--ok:#22B573}
 body[data-theme="neon"]{--mc:232,121,249;--violet:#E879F9;--vdeep:#C026D3;--vsoft:#A21CAF;--ok:#22B573}
+.call-ctl{width:min(420px,92vw);margin-top:16px;display:grid;gap:10px}
+.eng-row{display:flex;gap:8px;justify-content:center}
+.eng{flex:1;padding:10px 8px;border-radius:999px;border:1.5px solid rgba(255,255,255,.9);background:rgba(255,255,255,.55);color:#6B5595;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
+.eng.on{background:linear-gradient(90deg,#FF5F9E,#A855F7);color:#fff;border-color:transparent;box-shadow:0 10px 22px rgba(216,80,180,.35)}
+.voice-sel{width:100%;padding:11px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.9);background:rgba(255,255,255,.65);color:#463366;font-size:14px;font-weight:600;outline:none;font-family:inherit}
+.mic-meter{height:8px;border-radius:99px;background:rgba(168,140,220,.25);overflow:hidden}
+.mic-meter i{display:block;height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#FF5F9E,#A855F7);transition:width .09s}
 </style>
 <script src="bh-core.js"></script>
 <script src="config.js"></script>
@@ -431,91 +443,80 @@ $('btnPair').onclick=async()=>{
   catch(e){ $('pairStatus').textContent='Code ban gaya hai. (Server save tab hoga jab pairing table live hogi — SQL file repo mein hai.)'; }
 };
 
-/* ---------- CALL (Gemini Live, user key, 3.8 only) ---------- */
-const live={ ws:null, ac:null, mic:null, stream:null, muted:false, handle:null, retries:0, on:false, playT:0 };
+/* ---------- CALL v2 — NEW engine: Gemini Live (Supabase pool key) + ElevenLabs voice mode ---------- */
+const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', ws:null, ac:null, stream:null, proc:null, analyser:null, raf:0,
+  sources:[], playT:0, muted:false, handle:null, retries:0, key:null, chunks:0,
+  elBuf:[], elSpeech:false, elSil:0, elBusy:false, elHist:[], elAudio:null, elVoices:null };
+const GEM_VOICES=['Charon','Puck','Kore','Fenrir','Zephyr','Aoede','Orus','Autonoe'];
+const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'},{id:'21m00Tcm4TlvDq8ikWAM',name:'Rachel — female'},{id:'EXAVITQu4vr4xnSDxMaL',name:'Bella — female'}];
+function callStatus(t){ $('callStatus').textContent=t; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call.'; }
+function callUI(){ $('callPhoto').src='assets/avatar.jpg'; $('callName').textContent='BADSHAH'; }
+function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
+async function fillVoices(){
+  const s=$('callVoice'); if(!s) return; s.innerHTML='';
+  if(call.engine==='gemini'){
+    const saved=localStorage.getItem('ba_voice_gem')||'Charon';
+    GEM_VOICES.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent='🎙️ '+v+(v==='Charon'?' (default)':''); if(v===saved)o.selected=true; s.appendChild(o); });
+  } else {
+    if(!call.elVoices){
+      try{ const r=await fetch('/api/voices'); const d=await r.json(); if(d.voices&&d.voices.length) call.elVoices=d.voices; }catch(e){}
+      if(!call.elVoices) call.elVoices=EL_FALLBACK;
+    }
+    const saved=localStorage.getItem('ba_voice_el')||'pNInz6obpgDQGcFmaJgB';
+    call.elVoices.forEach(v=>{ const o=document.createElement('option'); o.value=v.id; o.textContent='🎙️ '+v.name; if(v.id===saved)o.selected=true; s.appendChild(o); });
+    if(!s.value && s.options.length) s.selectedIndex=0;
+  }
+}
+function setEngine(e, restart){
+  call.engine=e; localStorage.setItem('ba_call_engine',e);
+  $('engGem').classList.toggle('on',e==='gemini'); $('engEl').classList.toggle('on',e==='eleven');
+  fillVoices();
+  if(restart && call.on){ stopEngine(); startEngine(); }
+}
 async function openCall(){
   $('callView').classList.remove('hidden'); callUI();
   $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden');
-  $('callStatus').textContent='🔑 Free key la raha hoon…';
-  try{
-    const t=await idToken();
-    const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}});
-    if(r.ok){ const d=await r.json(); if(d.key){ startLive(d.key); return; } }
-  }catch(e){}
-  const own=localStorage.getItem('ba_gemini_key');
-  if(own){ startLive(own); return; }
-  $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden');
-}
-function closeCall(){ stopLive(); $('callView').classList.add('hidden'); }
-async function getLiveKey(){
-  try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
-  return localStorage.getItem('ba_gemini_key')||null;
+  call.on=true;
+  $('engGem').onclick=()=>setEngine('gemini',true);
+  $('engEl').onclick=()=>setEngine('eleven',true);
+  $('callVoice').onchange=()=>{ localStorage.setItem(call.engine==='gemini'?'ba_voice_gem':'ba_voice_el', selVoice()); if(call.engine==='gemini'&&call.on){ stopEngine(); startEngine(); } };
+  setEngine(call.engine,false);
+  startEngine();
 }
 function openCallSmart(){ openCall(); }
 $('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=closeCall;
-$('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startLive(k); };
+$('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); call.key=k; connectGemini(); };
 $('btnEnd').onclick=closeCall;
-$('btnMute').onclick=()=>{ live.muted=!live.muted; $('btnMute').classList.toggle('muted',live.muted); if(live.stream) live.stream.getAudioTracks().forEach(t=>t.enabled=!live.muted); };
-$('btnSpk').onclick=()=>{ /* web: output goes to default device; toggle caption emphasis */ $('callCaption').scrollIntoView(); };
-function callUI(){ $('callPhoto').src='assets/avatar.jpg'; $('callName').textContent='BADSHAH'; }
-function sysPrompt(){
-  const who = 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah.';
-  return who+' Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and not too long. You can help with anything: questions, coding, browsing topics, daily life.';
+$('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'🔇 Mute — mic band hai':'🟢 Live — bolo, main sun raha hoon'); };
+$('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
+function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); }
+async function getLiveKey(){
+  try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
+  return localStorage.getItem('ba_gemini_key')||null;
 }
-async function startLive(key){
-  callUI(); live.on=true; live.retries=0; live.sources=[];
-  $('callStatus').textContent='Connecting to Gemini 3.8 Live…';
-  try{
-    live.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-    const AC=window.AudioContext||window.webkitAudioContext;
-    live.ac=new AC();
-    if(live.ac.state==='suspended'){ try{ await live.ac.resume(); }catch(e){} }
-    live.playT=0;
-    connectWs(key);
-    startMic();
-  }catch(e){ $('callStatus').textContent='🎙️ Mic permission chahiye — browser mein Allow karo.'; }
+async function ensureAudio(){
+  if(call.ac){ if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} } return true; }
+  try{ call.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  catch(e){ callStatus('🎙️ Mic permission chahiye — Allow karo, phir dobara Call dabao.'); return false; }
+  const AC=window.AudioContext||window.webkitAudioContext;
+  call.ac=new AC();
+  if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} }
+  const src=call.ac.createMediaStreamSource(call.stream);
+  call.analyser=call.ac.createAnalyser(); call.analyser.fftSize=256; src.connect(call.analyser);
+  const proc=call.ac.createScriptProcessor(2048,1,1); call.proc=proc;
+  const g=call.ac.createGain(); g.gain.value=0; src.connect(proc); proc.connect(g); g.connect(call.ac.destination);
+  proc.onaudioprocess=onAudioChunk;
+  meterLoop();
+  return true;
 }
-function connectWs(key){
-  const ws=new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${encodeURIComponent(key)}`);
-  live.ws=ws;
-  ws.onopen=()=>{
-    const voice=(localStorage.getItem('ba_voice_m')||'Charon');
-    const lm=CFG.liveModel||'gemini-3.8-live';
-    const gen={ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } };
-    if(/extended-thinking/.test(lm)) gen.thinkingConfig={thinkingLevel:'HIGH'};
-    ws.send(JSON.stringify({ setup:{ model:'models/'+lm,
-      generationConfig:gen,
-      systemInstruction:{ parts:[{text:sysPrompt()}] },
-      inputAudioTranscription:{}, outputAudioTranscription:{},
-      contextWindowCompression:{ slidingWindow:{} },
-      sessionResumption:{ handle: live.handle||undefined } } }));
-  };
-  ws.onmessage=async ev=>{
-    let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
-    if(data.setupComplete){ $('callStatus').textContent='🟢 Live — bolo, main sun raha hoon'; live.retries=0;
-      try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help — in your persona language.)'}]}],turnComplete:true}})); }catch(e){}
-    }
-    if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) live.handle=data.sessionResumptionUpdate.newHandle;
-    const sc=data.serverContent;
-    if(sc){
-      if(sc.interrupted){ flushPlayback(); }
-      const parts=(sc.modelTurn&&sc.modelTurn.parts)||[];
-      for(const p of parts){ if(p.inlineData&&p.inlineData.data) playPcm(p.inlineData.data); }
-      if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; eqPulse(); }
-      if(sc.inputTranscription&&sc.inputTranscription.text){ $('callStatus').textContent='🎧 Tum: '+sc.inputTranscription.text; }
-      if(sc.turnComplete){ setTimeout(()=>{ if(live.on) $('callStatus').textContent='🟢 Live — bolo, main sun raha hoon'; },500); }
-    }
-    if(data.goAway){ try{ws.close()}catch(e){} scheduleReconnect(key); }
-  };
-  ws.onclose=()=>{ if(live.on) scheduleReconnect(key); };
-  ws.onerror=()=>{ $('callStatus').textContent='⚠️ Connection masla — dobara try ho raha hai…'; };
-}
-function scheduleReconnect(key){
-  if(!live.on) return;
-  if(live.retries>=8){ $('callStatus').textContent='Connection bar bar cut raha hai — thodi dair baad try karo.'; return; }
-  live.retries++; $('callStatus').textContent='↻ Dobara connect ho raha hai… ('+live.retries+')';
-  setTimeout(()=>{ if(live.on) connectWs(key); }, Math.min(600*live.retries,3000));
+function meterLoop(){
+  const data=new Uint8Array(64);
+  const tick=()=>{ if(!call.on) return;
+    if(call.analyser){ call.analyser.getByteFrequencyData(data); let sum=0; for(let i=0;i<data.length;i++) sum+=data[i]; const lvl=Math.min(1,sum/data.length/90); const bar=$('micBar'); if(bar) bar.style.width=Math.round(lvl*100)+'%'; if(lvl>0.12) eqPulse(); }
+    call.raf=requestAnimationFrame(tick); };
+  tick();
 }
 function downsampleTo16k(f, rate){
   if(!rate || rate===16000) return f;
@@ -523,44 +524,149 @@ function downsampleTo16k(f, rate){
   for(let i=0;i<len;i++){ const idx=i*ratio; const i0=Math.floor(idx); const i1=Math.min(i0+1,f.length-1); const fr=idx-i0; out[i]=f[i0]*(1-fr)+f[i1]*fr; }
   return out;
 }
-function startMic(){
-  const ac=live.ac; if(!ac||!live.stream) return;
-  const src=ac.createMediaStreamSource(live.stream);
-  const proc=ac.createScriptProcessor(2048,1,1);
-  live.proc=proc;
-  src.connect(proc); proc.connect(ac.destination);
-  proc.onaudioprocess=e=>{
-    if(!live.ws||live.ws.readyState!==1||live.muted) return;
-    const f=downsampleTo16k(e.inputBuffer.getChannelData(0), ac.sampleRate);
+function onAudioChunk(e){
+  if(!call.on || call.muted || !call.ac) return;
+  const f=downsampleTo16k(e.inputBuffer.getChannelData(0), call.ac.sampleRate);
+  if(call.engine==='gemini'){
+    if(!call.ws || call.ws.readyState!==1) return;
     const pcm=new Int16Array(f.length);
     for(let i=0;i<f.length;i++) pcm[i]=Math.max(-1,Math.min(1,f[i]))*32767;
     let bin=''; const bytes=new Uint8Array(pcm.buffer); for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
-    try{ live.ws.send(JSON.stringify({ realtimeInput:{ mediaChunks:[{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) }] } })); }catch(err){}
+    try{ call.ws.send(JSON.stringify({ realtimeInput:{ audio:{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) } } })); call.chunks++; }catch(err){}
+  } else {
+    if(call.elBusy) return;
+    let sum=0; for(let i=0;i<f.length;i++) sum+=f[i]*f[i];
+    const rms=Math.sqrt(sum/f.length);
+    if(rms>0.014){ call.elSpeech=true; call.elSil=0; for(let i=0;i<f.length;i++) call.elBuf.push(f[i]);
+      if(call.elBuf.length>16000*30){ const buf=call.elBuf; call.elBuf=[]; call.elSpeech=false; call.elSil=0; elTurn(buf); } }
+    else if(call.elSpeech){ call.elSil++; for(let i=0;i<f.length;i++) call.elBuf.push(f[i]);
+      if(call.elSil>=26){ const buf=call.elBuf; call.elBuf=[]; call.elSpeech=false; call.elSil=0; elTurn(buf); } }
+  }
+}
+async function startEngine(){
+  if(call.engine==='gemini'){
+    callStatus('🔑 Supabase pool se Gemini key la raha hoon…');
+    call.key=await getLiveKey();
+    if(!call.key){ $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden'); return; }
+    if(!await ensureAudio()) return;
+    call.retries=0; connectGemini();
+  } else {
+    if(!await ensureAudio()) return;
+    call.elHist=[]; call.elBuf=[]; call.elSpeech=false; call.elBusy=true;
+    callStatus('🎙️ ElevenLabs mode — greeting bhej raha hoon…');
+    try{ await elSpeak('Assalam o Alaikum! Main BADSHAH hoon. Bolo dost, kya kar sakta hoon tumhare liye?'); }catch(e){}
+    call.elBusy=false; if(call.on) callStatus('🟢 ElevenLabs Live — bolo, main sun raha hoon');
+  }
+}
+function connectGemini(){
+  const key=call.key; if(!key) return;
+  const ws=new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key='+encodeURIComponent(key));
+  call.ws=ws;
+  ws.onopen=()=>{
+    const voice=selVoice()||'Charon';
+    const lm=CFG.liveModel||'gemini-3.8-live';
+    const gen={ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } };
+    if(/extended-thinking/.test(lm)) gen.thinkingConfig={thinkingLevel:'HIGH'};
+    ws.send(JSON.stringify({ setup:{ model:'models/'+lm, generationConfig:gen,
+      systemInstruction:{ parts:[{text:sysPrompt()}] },
+      inputAudioTranscription:{}, outputAudioTranscription:{},
+      contextWindowCompression:{ slidingWindow:{} },
+      sessionResumption:{ handle: call.handle||undefined } } }));
   };
+  ws.onmessage=async ev=>{
+    let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
+    if(data.setupComplete){ callStatus('🟢 Gemini Live — bolo, main sun raha hoon'); call.retries=0;
+      try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help.)'}]}],turnComplete:true}})); }catch(e){}
+    }
+    if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) call.handle=data.sessionResumptionUpdate.newHandle;
+    const sc=data.serverContent;
+    if(sc){
+      if(sc.interrupted) flushPlayback();
+      const parts=(sc.modelTurn&&sc.modelTurn.parts)||[];
+      for(const p of parts){ if(p.inlineData&&p.inlineData.data) playPcm(p.inlineData.data); }
+      if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; }
+      if(sc.inputTranscription&&sc.inputTranscription.text){ callStatus('🎧 Tum: '+sc.inputTranscription.text); }
+      if(sc.turnComplete){ setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('🟢 Gemini Live — bolo, main sun raha hoon'); },600); }
+    }
+    if(data.goAway){ try{ws.close()}catch(e){} scheduleReconnect(); }
+  };
+  ws.onclose=()=>{ if(call.on&&call.engine==='gemini') scheduleReconnect(); };
+  ws.onerror=()=>{ callStatus('⚠️ Connection masla — dobara try ho raha hai…'); };
+}
+function scheduleReconnect(){
+  if(!call.on) return;
+  if(call.retries>=8){ callStatus('Connection bar bar cut raha hai — thodi dair baad try karo.'); return; }
+  call.retries++; callStatus('↻ Dobara connect ho raha hai… ('+call.retries+')');
+  setTimeout(()=>{ if(call.on&&call.engine==='gemini') connectGemini(); }, Math.min(600*call.retries,3000));
 }
 function playPcm(b64){
-  const ac=live.ac; if(!ac) return;
+  const ac=call.ac; if(!ac) return;
   if(ac.state==='suspended'){ ac.resume().catch(()=>{}); }
   const bin=atob(b64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
   const pcm=new Int16Array(bytes.buffer); const buf=ac.createBuffer(1,pcm.length,24000); const ch=buf.getChannelData(0);
   for(let i=0;i<pcm.length;i++) ch[i]=pcm[i]/32768;
   const s=ac.createBufferSource(); s.buffer=buf; s.connect(ac.destination);
-  if(!live.sources) live.sources=[];
-  live.sources.push(s); s.onended=()=>{ const i=live.sources.indexOf(s); if(i>=0) live.sources.splice(i,1); };
-  const now=ac.currentTime; live.playT=Math.max(live.playT||0,now+0.02); s.start(live.playT); live.playT+=buf.duration; eqPulse();
+  call.sources.push(s); s.onended=()=>{ const i=call.sources.indexOf(s); if(i>=0) call.sources.splice(i,1); };
+  const now=ac.currentTime; call.playT=Math.max(call.playT||0,now+0.02); s.start(call.playT); call.playT+=buf.duration; eqPulse();
 }
-function flushPlayback(){
-  (live.sources||[]).forEach(s=>{ try{s.stop()}catch(e){} });
-  live.sources=[]; live.playT=0;
-}
+function flushPlayback(){ call.sources.forEach(s=>{ try{s.stop()}catch(e){} }); call.sources=[]; call.playT=0; }
 function eqPulse(){ if(window.BH&&BH.callPulse) BH.callPulse(); document.querySelectorAll('#callEq i').forEach(b=>{ b.style.height=(6+Math.random()*20)+'px'; setTimeout(()=>b.style.height='7px',160); }); }
-function stopLive(){
-  live.on=false;
-  try{ live.ws&&live.ws.close(); }catch(e){}
-  try{ live.proc&&live.proc.disconnect(); }catch(e){}
-  try{ live.stream&&live.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
-  try{ live.ac&&live.ac.close(); }catch(e){}
-  live.ws=live.stream=live.mic=live.ac=live.proc=null; live.playT=0; live.sources=[];
+/* ----- ElevenLabs mode: mic -> Whisper STT -> Groq chat -> ElevenLabs TTS ----- */
+function wavFromSamples(f, rate){
+  const n=f.length; const buf=new ArrayBuffer(44+n*2); const v=new DataView(buf);
+  const wstr=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  wstr(0,'RIFF'); v.setUint32(4,36+n*2,true); wstr(8,'WAVEfmt '); v.setUint32(16,16,true);
+  v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true); wstr(36,'data'); v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){ const x=Math.max(-1,Math.min(1,f[i])); v.setInt16(44+i*2, x*32767, true); }
+  return new Blob([buf],{type:'audio/wav'});
+}
+async function elTurn(samples){
+  if(!call.on) return;
+  call.elBusy=true;
+  try{
+    callStatus('🎧 Awaaz text ban rahi hai…');
+    const wav=wavFromSamples(samples,16000);
+    const sr=await fetch('/api/stt',{method:'POST',headers:{'Content-Type':'audio/wav'},body:wav});
+    const sd=await sr.json().catch(()=>({}));
+    const text=(sd.text||'').trim();
+    if(!text){ call.elBusy=false; if(call.on) callStatus('🟢 ElevenLabs Live — bolo, main sun raha hoon'); return; }
+    $('callCaption').textContent='Tum: '+text;
+    callStatus('🤔 Soch raha hoon…');
+    call.elHist.push('User: '+text); if(call.elHist.length>8) call.elHist=call.elHist.slice(-8);
+    const q='Voice call par ho. Pichli baatein:\n'+call.elHist.join('\n')+'\nAb User ki is baat ka jawab do — chhota, natural, boli hui zubaan mein (1-3 jumle), usi language aur script mein jo User ne use ki:\n'+text;
+    const cr=await fetch(CFG.apiUrl+'?provider=groq&q='+encodeURIComponent(q));
+    const cd=await cr.json().catch(()=>({}));
+    const reply=(cd.text||'').trim()||'Sorry dost, samajh nahi aaya — dobara bolo?';
+    call.elHist.push('BADSHAH: '+reply);
+    $('callCaption').textContent=reply;
+    await elSpeak(reply);
+  }catch(e){ callStatus('⚠️ Masla aaya — dobara bolo'); }
+  call.elBusy=false;
+  if(call.on&&call.engine==='eleven') callStatus('🟢 ElevenLabs Live — bolo, main sun raha hoon');
+}
+async function elSpeak(text){
+  const r=await fetch(CFG.ttsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:'elevenlabs',voice:selVoice(),text:String(text).slice(0,600)})});
+  if(!r.ok) throw new Error('tts '+r.status);
+  const blob=await r.blob();
+  const url=URL.createObjectURL(blob);
+  if(call.elAudio){ try{call.elAudio.pause()}catch(e){} }
+  const a=new Audio(url); call.elAudio=a;
+  await new Promise(res=>{ a.onended=res; a.onerror=res; a.play().catch(res); });
+  URL.revokeObjectURL(url);
+}
+function stopEngine(){
+  try{ call.ws&&call.ws.close(); }catch(e){}
+  call.ws=null; call.elBuf=[]; call.elSpeech=false; call.elBusy=false;
+  if(call.elAudio){ try{call.elAudio.pause()}catch(e){} call.elAudio=null; }
+  flushPlayback();
+}
+function stopAudio(){
+  cancelAnimationFrame(call.raf);
+  try{ call.proc&&call.proc.disconnect(); }catch(e){}
+  try{ call.stream&&call.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ call.ac&&call.ac.close(); }catch(e){}
+  call.ac=call.stream=call.proc=call.analyser=null; call.playT=0; call.sources=[]; call.handle=null;
 }
 
 /* ---------- init ---------- */

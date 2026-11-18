@@ -326,8 +326,8 @@ async function handleTts(req, env) {
   const text = String(body.text || '').slice(0, 800);
   if (!text) return json(400, { error: 'text is empty' });
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'TTS setup pending hai.' });
-  // 1) Gemini TTS (owner's model map) — works when a full Gemini key is in the pool
-  {
+  // 1) Gemini TTS (owner's model map) — skipped when the caller forces ElevenLabs
+  if (body.provider !== 'elevenlabs') {
     const gvoice = body.voice === 'badshah' ? 'Charon' : 'Achernar';
     const gkeys = await poolKeys(env, 'gemini').catch(() => []);
     for (const k of gkeys) {
@@ -348,7 +348,7 @@ async function handleTts(req, env) {
   // 2) ElevenLabs pool (working voice today)
   const keys = await poolKeys(env, 'elevenlabs').catch(() => []);
   if (!keys.length) return json(404, { error: 'ElevenLabs key pool khaali hai.' });
-  const voice = EL_VOICES[body.voice] || body.voice || EL_VOICES.rani;
+  const voice = EL_VOICES[body.voice] || body.voice || EL_VOICES.badshah;
   for (const k of keys) {
     const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice, {
       method: 'POST',
@@ -359,6 +359,45 @@ async function handleTts(req, env) {
     if (r.status !== 401 && r.status !== 429) return json(502, { error: 'ElevenLabs error ' + r.status });
   }
   return json(502, { error: 'Saari ElevenLabs keys ki limit khatam — admin se nayi key add karwao.' });
+}
+
+/* ---------------- /api/voices (ElevenLabs voice list for the call voice picker) ---------------- */
+async function handleVoices(req, env) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Key pool setup pending hai.' });
+  const keys = await poolKeys(env, 'elevenlabs').catch(() => []);
+  if (!keys.length) return json(404, { error: 'ElevenLabs key pool khaali hai.' });
+  for (const k of keys) {
+    const r = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': k.key_value } });
+    if (r.ok) {
+      const d = await r.json();
+      const voices = (d.voices || []).slice(0, 40).map(v => ({ id: v.voice_id, name: v.name, cat: v.category || '' }));
+      return json(200, { voices });
+    }
+    if (r.status !== 401 && r.status !== 429) return json(502, { error: 'ElevenLabs error ' + r.status });
+  }
+  return json(502, { error: 'ElevenLabs voices nahi mil sakin.' });
+}
+
+/* ---------------- /api/stt (Groq Whisper via pool — for ElevenLabs call mode) ---------------- */
+async function handleStt(req, env) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Key pool setup pending hai.' });
+  const buf = await req.arrayBuffer().catch(() => null);
+  if (!buf || buf.byteLength < 1200) return json(400, { error: 'audio missing/too short' });
+  if (buf.byteLength > 8 * 1024 * 1024) return json(413, { error: 'audio too large' });
+  const keys = await poolKeys(env, 'groq').catch(() => []);
+  if (!keys.length) return json(404, { error: 'Groq key pool khaali hai.' });
+  const ct = req.headers.get('content-type') || 'audio/wav';
+  const ext = ct.includes('webm') ? 'webm' : ct.includes('mp4') ? 'm4a' : ct.includes('mpeg') ? 'mp3' : 'wav';
+  for (const k of keys) {
+    const fd = new FormData();
+    fd.append('file', new Blob([buf], { type: ct }), 'audio.' + ext);
+    fd.append('model', 'whisper-large-v3-turbo');
+    fd.append('response_format', 'json');
+    const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { 'Authorization': 'Bearer ' + k.key_value }, body: fd });
+    if (r.ok) { const d = await r.json(); await touchKey(env, k); return json(200, { text: (d.text || '').trim() }); }
+    if (r.status !== 401 && r.status !== 429) { const t = await r.text().catch(() => ''); return json(502, { error: 'STT error ' + r.status + ' ' + t.slice(0, 120) }); }
+  }
+  return json(502, { error: 'Saari Groq keys busy hain — dobara bolo.' });
 }
 
 /* ---------------- /admin-api ---------------- */
@@ -646,6 +685,8 @@ export default {
     if (url.pathname === '/api/video') return handleVideo(req, env, url);
     if (url.pathname === '/api/live-key') return handleLiveKey(req, env);
     if (url.pathname === '/api/tts' && req.method === 'POST') return handleTts(req, env);
+    if (url.pathname === '/api/voices') return handleVoices(req, env);
+    if (url.pathname === '/api/stt' && req.method === 'POST') return handleStt(req, env);
     if (url.pathname.startsWith('/admin-api/')) return handleAdmin(req, env, url);
     const res = await env.ASSETS.fetch(req);
     const headers = new Headers(res.headers);
