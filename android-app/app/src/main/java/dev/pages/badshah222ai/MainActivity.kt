@@ -6,6 +6,9 @@ import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -56,6 +59,7 @@ class MainActivity : ComponentActivity() {
     private var triedFallback = false
     private var pendingPermReq: PermissionRequest? = null
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var audioFocusReq: AudioFocusRequest? = null
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
@@ -242,6 +246,43 @@ class MainActivity : ComponentActivity() {
         fun dial(number: String) {
             runOnUiThread {
                 startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")))
+            }
+        }
+
+        @JavascriptInterface
+        fun micTakeover() {
+            // v6.6: MIC CHHEEN-LO system — asal call apps ki tarah. Audio focus +
+            // MODE_IN_COMMUNICATION se system dusri apps ka mic khali kar deta hai,
+            // phir WebView ka getUserMedia araam se mic le leta hai. Speaker ON.
+            runOnUiThread {
+                try {
+                    val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    am.mode = AudioManager.MODE_IN_COMMUNICATION
+                    val attrs = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setAudioAttributes(attrs)
+                        .setOnAudioFocusChangeListener { }
+                        .build()
+                    audioFocusReq = req
+                    am.requestAudioFocus(req)
+                    @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
+                } catch (e: Exception) { }
+            }
+        }
+
+        @JavascriptInterface
+        fun micRelease() {
+            runOnUiThread {
+                try {
+                    val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    audioFocusReq?.let { runCatching { am.abandonAudioFocusRequest(it) } }
+                    audioFocusReq = null
+                    @Suppress("DEPRECATION") am.isSpeakerphoneOn = false
+                    am.mode = AudioManager.MODE_NORMAL
+                } catch (e: Exception) { }
             }
         }
 
