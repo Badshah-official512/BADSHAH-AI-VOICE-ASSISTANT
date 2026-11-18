@@ -357,3 +357,17 @@ body #callCaption{color:#6B5595}
 body #blockedView{background:linear-gradient(170deg,#FFE3F1,#EFE7FF 55%,#DDF3FF);color:var(--txt)}
 #blockedView p{color:var(--mut)}
 .tdot.on{border-color:#fff;box-shadow:0 0 0 2px rgba(168,85,247,.45)}
+
+/* ================= DESKTOP MODE (v6.4) — computer/laptop par asal computer layout ================= */
+@media(min-width:1024px){
+  .msg-wrap{max-width:880px;margin:0 auto;width:100%}
+  .composer{max-width:920px;margin:0 auto;width:100%}
+  .stage-cards{width:min(880px,100%)}
+  #msgs{scrollbar-gutter:stable}
+  .auth-card{padding:38px 36px}
+}
+@media(min-width:1600px){
+  #appView{grid-template-columns:340px 1fr}
+  .msg-wrap{max-width:980px}
+  .composer{max-width:1020px}
+}

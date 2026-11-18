@@ -336,7 +336,11 @@ if(auth){
 }
 $('btnLogin').onclick=async()=>{ authErr(''); if(!auth) return authErr('Firebase config pending hai — owner ko DEPLOY.md wala step karna hai.'); try{ await auth.signInWithEmailAndPassword($('authEmail').value.trim(), $('authPass').value); }catch(e){ authErr(e.message); } };
 $('btnSignup').onclick=async()=>{ authErr(''); if(!auth) return authErr('Firebase config pending hai — owner ko DEPLOY.md wala step karna hai.'); try{ const c=await auth.createUserWithEmailAndPassword($('authEmail').value.trim(), $('authPass').value); const n=$('authName').value.trim(); if(n) await c.user.updateProfile({displayName:n}); }catch(e){ authErr(e.message); } };
-$('btnGoogle').onclick=async()=>{ authErr(''); if(!auth) return authErr('Firebase config pending hai — owner ko DEPLOY.md wala step karna hai.'); try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ authErr(e.message); } };
+window.__bhGoogleToken=async t=>{ if(!auth) return; try{ await auth.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(t)); }catch(e){ authErr(e.message); } };
+window.__bhGoogleError=m=>authErr(m||'Google sign-in nahi ho saka');
+$('btnGoogle').onclick=async()=>{ authErr(''); if(!auth) return authErr('Firebase config pending hai — owner ko DEPLOY.md wala step karna hai.');
+  if(window.BadshahBridge && BadshahBridge.googleSignIn){ authErr('📱 Phone ke Google accounts aa rahe hain — apna Gmail chuno…'); try{ BadshahBridge.googleSignIn(); }catch(e){ authErr('Google sign-in start nahi ho saka'); } return; }
+  try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }catch(e){ authErr(e.message); } };
 $('btnLogout').onclick=()=>{ if(auth) auth.signOut(); showAuth(); };
 $('btnGuest').onclick=()=>{ state.user={uid:'guest',displayName:'Guest',email:''}; $('userName').textContent='Guest'; $('userEmail').textContent='Mehmaan mode'; $('userAv').textContent='G'; showApp(); };
 
@@ -486,6 +490,7 @@ function setEngine(e, restart){
   if(restart && call.on){ stopEngine(); startEngine(); }
 }
 async function openCall(){
+  if(window.BadshahBridge && BadshahBridge.ensureMic){ try{ BadshahBridge.ensureMic(); }catch(e){} }
   $('callView').classList.remove('hidden'); callUI();
   $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden');
   call.on=true;
@@ -503,7 +508,7 @@ $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'🔇 Mute — mic band hai':'🟢 Live — bolo, main sun raha hoon'); };
 $('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); }
+function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.callEnded){ try{ BadshahBridge.callEnded(); }catch(e){} } }
 async function getLiveKey(){
   try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
   return localStorage.getItem('ba_gemini_key')||null;
@@ -511,7 +516,13 @@ async function getLiveKey(){
 async function ensureAudio(){
   if(call.ac){ if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} } return true; }
   try{ call.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
-  catch(e){ callStatus('🎙️ Mic permission chahiye — Allow karo, phir dobara Call dabao.'); return false; }
+  catch(e){
+    if(e && (e.name==='NotReadableError' || e.name==='AbortError')){ // mic kisi aur ke paas busy — ek dafa phir try
+      await new Promise(r=>setTimeout(r,700));
+      try{ call.stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+      catch(e2){ callStatus('🎙️ Mic busy hai ('+(e2.name||'error')+') — wake word ya koi aur app mic use kar raha hai. Call band karke dobara try karo.'); return false; }
+    } else { callStatus('🎙️ Mic permission chahiye ('+((e&&e.name)||'error')+') — Allow karo, phir dobara Call dabao.'); return false; }
+  }
   const AC=window.AudioContext||window.webkitAudioContext;
   call.ac=new AC();
   if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} }
@@ -556,6 +567,7 @@ function onAudioChunk(e){
   }
 }
 async function startEngine(){
+  if(window.BadshahBridge && BadshahBridge.callStarted){ try{ BadshahBridge.callStarted(); }catch(e){} }
   if(call.engine==='gemini'){
     callStatus('🔑 Supabase pool se Gemini key la raha hoon…');
     call.key=await getLiveKey();
