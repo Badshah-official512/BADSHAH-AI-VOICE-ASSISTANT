@@ -24,7 +24,7 @@
 
 > *"Ek hi mission: free AI — sab ke liye."*
 
-<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-badshah.jpg" alt="BADSHAH AI Assistant" width="420">
+<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/poster-ai.png" alt="BADSHAH AI Assistant" width="420">
 
 ## 🚀 Features
 
@@ -40,7 +40,7 @@
 | 🛡️ **Admin Control Room** | Users, API key pool, announcements, analytics — sab ek panel se |
 | 🤖 **Agent Platform** | Workspaces, tasks, approvals aur connectors ka database-driven system |
 
-<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-call.jpg" alt="BADSHAH AI Live Call" width="420"> <img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/ai-creator.jpg" alt="Built with AI" width="420">
+<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/future.jpg" alt="BADSHAH AI Live Call" width="420"> <img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/poster-222.png" alt="Built with AI" width="420">
 
 ## 📲 Download
 
