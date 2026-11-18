@@ -11,6 +11,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
+import android.provider.Settings
+import android.view.WindowInsets
+import android.webkit.JavascriptInterface
 import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
@@ -68,6 +72,7 @@ class MainActivity : ComponentActivity() {
                 cacheMode = WebSettings.LOAD_DEFAULT
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) safeBrowsingEnabled = true
             }
+            addJavascriptInterface(BadshahBridge(), "BadshahBridge")
             CookieManager.getInstance().setAcceptCookie(true)
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
@@ -122,6 +127,83 @@ class MainActivity : ComponentActivity() {
             loadUrl(PRIMARY_URL)
         }
         setContentView(web)
+        web.setOnApplyWindowInsetsListener { v, insets ->
+            val bars = insets.getInsets(WindowInsets.Type.systemBars())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+    }
+
+    /** v6.1 device bridge: the web assistant (window.BadshahBridge) can open apps,
+     *  play YouTube, search the web and draft messages on the user's own command. */
+    inner class BadshahBridge {
+        @JavascriptInterface
+        fun openApp(target: String) {
+            runOnUiThread {
+                try {
+                    when (target) {
+                        "camera" -> startActivity(Intent(MediaStore.ACTION_IMAGE_CAPTURE))
+                        "settings" -> startActivity(Intent(Settings.ACTION_SETTINGS))
+                        "gallery" -> startActivity(Intent(Intent.ACTION_VIEW).setType("image/*"))
+                        else -> {
+                            val launch = packageManager.getLaunchIntentForPackage(target)
+                            if (launch != null) startActivity(launch) else {
+                                Toast.makeText(this@MainActivity, "Ye app is phone mein nahi mili", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=" + Uri.encode(target) + "&c=apps")))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@MainActivity, "App nahi khul saka", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun openYouTube(query: String) {
+            runOnUiThread {
+                val url = "https://www.youtube.com/results?search_query=" + Uri.encode(query)
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage("com.google.android.youtube"))
+                } catch (e: Exception) {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun searchWeb(query: String) {
+            runOnUiThread {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=" + Uri.encode(query))))
+            }
+        }
+
+        @JavascriptInterface
+        fun openUrl(url: String) {
+            runOnUiThread {
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) { }
+            }
+        }
+
+        @JavascriptInterface
+        fun shareText(text: String) {
+            runOnUiThread {
+                val i = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+                startActivity(Intent.createChooser(i, "Message bhejo"))
+            }
+        }
+
+        @JavascriptInterface
+        fun dial(number: String) {
+            runOnUiThread {
+                startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number")))
+            }
+        }
+
+        @JavascriptInterface
+        fun toast(msg: String) {
+            runOnUiThread { Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show() }
+        }
     }
 
     override fun onBackPressed() {
