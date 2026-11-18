@@ -8,7 +8,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- call ke liye audio focus/mode (mic takeover) -->          <!-- voice + wake word -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" /> <!-- sirf call ke doran background keep-alive; wake word nahi hai --> <!-- call ke liye audio focus/mode (mic takeover) -->          <!-- voice + wake word -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />   <!-- background kaam -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" /> <!-- background agent -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" /> <!-- screen share (Android 14+) -->
@@ -59,6 +60,7 @@
         </service>
 
 
+        <service android:name=".core.CallService" android:exported="false" android:foregroundServiceType="microphone" />
         <service
             android:name=".core.ScreenShareService"
             android:exported="false"

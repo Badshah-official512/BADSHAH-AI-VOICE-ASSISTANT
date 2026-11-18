@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import android.media.projection.MediaProjectionManager
 import android.util.Base64
 import androidx.activity.result.contract.ActivityResultContracts
+import dev.pages.badshah222ai.core.CallService
 import dev.pages.badshah222ai.core.ScreenShareService
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.delay
@@ -311,6 +312,8 @@ class MainActivity : ComponentActivity() {
                     am.requestAudioFocus(req)
                     @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
                 } catch (e: Exception) { }
+                // Call ko minimize/background mein zinda rakho (foreground service)
+                try { CallService.start(this@MainActivity) } catch (e: Exception) { }
             }
         }
 
@@ -324,6 +327,7 @@ class MainActivity : ComponentActivity() {
                     @Suppress("DEPRECATION") am.isSpeakerphoneOn = false
                     am.mode = AudioManager.MODE_NORMAL
                 } catch (e: Exception) { }
+                try { CallService.stop(this@MainActivity) } catch (e: Exception) { }
             }
         }
 
