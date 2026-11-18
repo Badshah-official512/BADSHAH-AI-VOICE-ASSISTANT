@@ -211,7 +211,6 @@
       <label class="set"><span>Meri hidayat (custom instructions)</span><textarea id="setInstr" rows="3" placeholder="Misal: Mujhe Roman Urdu mein, chhote aur seedhe jawab do. Main web developer hoon."></textarea></label>
       <label class="set"><span>Jawab ki zubaan</span><select id="setLang"><option value="auto">Auto (jo main likhun)</option><option value="roman">Roman Urdu</option><option value="en">English</option><option value="ur">اردو</option></select></label>
       <label class="set row"><span>Jawab khud bol kar sunao</span><input type="checkbox" id="setSpeak"></label>
-      <label class="set row"><span>🎙️ Wake word “BADSHAH” — app band honay par bhi sunay (sirf APK mein)</span><input type="checkbox" id="setWake"></label>
       <label class="set"><span>Awaaz sunne ki zubaan (mic)</span><select id="setVlang"><option value="ur-PK">Urdu (Pakistan)</option><option value="en-US">English</option><option value="hi-IN">Hindi</option><option value="ps-AF">Pashto</option></select></label>
       <label class="set"><span>Likhai ka size</span><input type="range" id="setFs" min="14" max="20" step="0.5"></label>
       <div class="set-actions">
@@ -501,14 +500,13 @@ async function openCall(){
   startEngine();
 }
 function openCallSmart(){ openCall(); }
-window.__bhWake=function(){ if(!state.user || state.user.uid==='guest' || state.user.uid==='demo'){ showAuth(); return; } showApp(); openCall(); };
 $('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=closeCall;
 $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); call.key=k; connectGemini(); };
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'🔇 Mute — mic band hai':'🟢 Live — bolo, main sun raha hoon'); };
 $('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.callEnded){ try{ BadshahBridge.callEnded(); }catch(e){} } }
+function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); }
 async function getLiveKey(){
   try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
   return localStorage.getItem('ba_gemini_key')||null;
@@ -567,7 +565,6 @@ function onAudioChunk(e){
   }
 }
 async function startEngine(){
-  if(window.BadshahBridge && BadshahBridge.callStarted){ try{ BadshahBridge.callStarted(); }catch(e){} }
   if(call.engine==='gemini'){
     callStatus('🔑 Supabase pool se Gemini key la raha hoon…');
     call.key=await getLiveKey();
@@ -710,12 +707,6 @@ renderAll();
 })();
 /* ---- device commands: APK bridge (window.BadshahBridge) + web fallback ---- */
 const APP_PKGS={whatsapp:'com.whatsapp',facebook:'com.facebook.katana',instagram:'com.instagram.android',tiktok:'com.zhiliaoapp.musically',youtube:'com.google.android.youtube',chrome:'com.android.chrome',telegram:'org.telegram.messenger',messenger:'com.facebook.orca',camera:'camera',gallery:'gallery',settings:'settings'};
-/* ---- wake word toggle (APK bridge) ---- */
-(function(){ const w=document.getElementById('setWake'); if(!w) return; const B=window.BadshahBridge;
-  if(!B || !B.setWakeWord){ w.disabled=true; const l=w.closest('.set'); if(l) l.style.opacity=.55; return; }
-  try{ w.checked=!!B.isWakeWord(); }catch(e){}
-  w.onchange=()=>{ try{ B.setWakeWord(w.checked); }catch(e){} };
-})();
 /* ---- in-app update check (sirf APK mein; website par kabhi nahi dikhta) ---- */
 (async function(){ const B=window.BadshahBridge; if(!B || !B.appVersionCode) return; let mine=0; try{ mine=B.appVersionCode(); }catch(e){}
   if(!mine) return;
