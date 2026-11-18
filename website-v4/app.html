@@ -506,20 +506,26 @@ $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'🔇 Mute — mic band hai':'🟢 Live — bolo, main sun raha hoon'); };
 $('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); }
+function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
 async function getLiveKey(){
   try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
   return localStorage.getItem('ba_gemini_key')||null;
 }
+async function bhMicTakeover(){ if(window.BadshahBridge && BadshahBridge.micTakeover){ try{ BadshahBridge.micTakeover(); }catch(e){} await new Promise(r=>setTimeout(r,350)); } }
 async function ensureAudio(){
   if(call.ac){ if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} } return true; }
-  try{ call.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}); }
+  const gum=()=>navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  await bhMicTakeover(); // pehle mic chheen lo (audio focus) — phir maango
+  try{ call.stream=await gum(); }
   catch(e){
-    if(e && (e.name==='NotReadableError' || e.name==='AbortError')){ // mic kisi aur ke paas busy — ek dafa phir try
-      await new Promise(r=>setTimeout(r,700));
-      try{ call.stream=await navigator.mediaDevices.getUserMedia({audio:true}); }
-      catch(e2){ callStatus('🎙️ Mic busy hai ('+(e2.name||'error')+') — wake word ya koi aur app mic use kar raha hai. Call band karke dobara try karo.'); return false; }
-    } else { callStatus('🎙️ Mic permission chahiye ('+((e&&e.name)||'error')+') — Allow karo, phir dobara Call dabao.'); return false; }
+    if(e && e.name==='NotAllowedError'){ callStatus('🎙️ Mic ki ijazat nahi mili'); return false; }
+    for(let i=0;i<3 && !call.stream;i++){ // busy hai to dobara chheen kar try
+      callStatus('🎙️ Mic liya ja raha hai…');
+      await bhMicTakeover();
+      await new Promise(r=>setTimeout(r,500+i*400));
+      try{ call.stream=await gum(); }catch(e2){}
+    }
+    if(!call.stream){ callStatus('🎙️ Mic nahi mila'); return false; }
   }
   const AC=window.AudioContext||window.webkitAudioContext;
   call.ac=new AC();
