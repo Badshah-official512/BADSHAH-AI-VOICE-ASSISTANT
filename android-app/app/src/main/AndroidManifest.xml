@@ -19,12 +19,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <!-- v6.2.1: READ_CALL_LOG / CALL_PHONE / SEND_SMS / READ_SMS / RECEIVE_SMS REMOVED —
+         Google Play Protect hard-blocks sideloaded apps that request SMS/Call-Log
+         permissions ("App blocked", no Install-anyway option). No feature used them:
+         dial = ACTION_DIAL, message = share chooser. Do NOT re-add for sideload builds. -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
