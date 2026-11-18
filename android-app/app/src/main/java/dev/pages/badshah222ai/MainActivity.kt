@@ -43,11 +43,25 @@ import dev.pages.badshah222ai.core.AgentService
 class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var triedFallback = false
+    private var pendingPermReq: PermissionRequest? = null
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_MIC = 41
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_MIC) {
+            val req = pendingPermReq ?: return
+            pendingPermReq = null
+            val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            if (allGranted) req.grant(req.resources) else {
+                req.deny()
+                Toast.makeText(this, "Mic permission ke baghair call nahi ho sakti 🎙️", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -78,16 +92,18 @@ class MainActivity : ComponentActivity() {
 
             webChromeClient = object : WebChromeClient() {
                 override fun onPermissionRequest(request: PermissionRequest) {
-                    val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
-                    if (wantsAudio && ContextCompat.checkSelfPermission(
-                            this@MainActivity, Manifest.permission.RECORD_AUDIO
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        ActivityCompat.requestPermissions(
-                            this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC
-                        )
-                        request.deny()
-                        Toast.makeText(this@MainActivity, "Mic allow karke Call dobara dabao 🎙️", Toast.LENGTH_LONG).show()
+                    // v6.2: NEVER deny outright — hold the web request, ask Android,
+                    // then grant/deny in onRequestPermissionsResult so the SAME call connects.
+                    val missing = mutableListOf<String>()
+                    if (request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE) &&
+                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                    ) missing.add(Manifest.permission.RECORD_AUDIO)
+                    if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE) &&
+                        ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                    ) missing.add(Manifest.permission.CAMERA)
+                    if (missing.isNotEmpty()) {
+                        pendingPermReq = request
+                        ActivityCompat.requestPermissions(this@MainActivity, missing.toTypedArray(), REQ_MIC)
                         return
                     }
                     request.grant(request.resources)
