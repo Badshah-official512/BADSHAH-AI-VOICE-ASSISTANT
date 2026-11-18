@@ -4,6 +4,8 @@
 // Supabase (api_keys pool) and are served/rotated by the Worker — users never
 // need a key of their own. Admin password is verified against Supabase.
 window.BADSHAH_CONFIG = {
+  imageUrl: "/api/image",
+  videoUrl: "/api/video",
   apiUrl: "/api/chat",
   liveKeyUrl: "/api/live-key",
   ttsUrl: "/api/tts",
@@ -28,8 +30,14 @@ window.BADSHAH_CONFIG = {
   apkPath: "./BADSHAH-AI.apk",
 
   // ALL models are FREE (owner's decision, v3)
-  chatModels: ["fusion-flex", "fusion-max", "fusion-pulse", "fusion-spark", "fusion-lexus", "fusion-synth", "fusion-void", "fusion-reaper", "fusion-dread", "fusion-shadow", "fusion-abyss", "fusion-vortex"],
-  imageModels: ["fusion-uni", "fusion-astra"],
+  chatModels: [
+    { id: "gemini:gemini-3.8-flash", label: "Gemini 3.8 Flash — Chat" },
+    { id: "gemini:gemini-3.5-flash-lite", label: "Gemini 3.5 Flash Lite — Fast Chat" },
+    { id: "gemini:gemini-3.1-pro-preview", label: "Gemini 3.1 Pro — Coding" }
+  ],
+  imageModels: ["gemini-3.1-flash-image", "gemini-3-pro-image"],
+  imageModelLabels: { "gemini-3.1-flash-image": "Gemini 3.1 Flash Image — Fast", "gemini-3-pro-image": "Gemini 3 Pro Image — Quality" },
+  videoModels: ["gemini-omni-1.1-flash", "veo-3.1-generate-preview"],
   groqModels: [
     { id: "openai/gpt-oss-120b", label: "Groq GPT-OSS 120B (smart)" },
     { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B (fast)" }

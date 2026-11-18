@@ -9,7 +9,7 @@
 //   env ADMIN_PASSWORD remains as a fallback if the RPC is unavailable.
 //
 // Secrets (Cloudflare):
-//   BADSHAH_API_KEY            FT Fusion key — never sent to browsers
+//   (v5: FT Fusion removed — chat/image/voice/video all run on Gemini + Groq pools)
 //   SUPABASE_SERVICE_ROLE_KEY  server-side only (key pool + admin actions)
 //   ADMIN_PASSWORD             fallback only (primary = Supabase)
 //
@@ -20,10 +20,21 @@
 //   POST /api/tts {text, voice}         ElevenLabs TTS via pooled key → audio/mpeg
 //   POST /admin-api/<action>            Admin gateway (x-admin-password header)
 
-const UPSTREAM = 'https://ft-fusion.shehryarteam8876.workers.dev/ft/api';
+/* v5 (owner order 2026-11-18): FT Fusion REMOVED completely.
+   Chat = Gemini (REST) + Groq. Images = Gemini image models. Voice = Gemini TTS.
+   Live calls = Gemini Live. Video = Gemini video models.
+   NOTE: the owner's current Gemini keys (AQ. format) are LIVE-SCOPED — REST calls
+   return 403, Live WebSocket works. So every REST feature tries Gemini first and
+   falls back to a working free engine (Groq chat / Pollinations image /
+   ElevenLabs voice) until a full Gemini API key is added to the pool. */
+const GEMINI_CHAT_MODELS = new Set(['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview']);
+const GEMINI_IMAGE_MODELS = new Set(['gemini-3.1-flash-image', 'gemini-3-pro-image']);
+const GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
+const GEMINI_VIDEO_MODELS = new Set(['gemini-omni-1.1-flash', 'veo-3.1-generate-preview']);
+const GEMINI_REST = 'https://generativelanguage.googleapis.com/v1beta/models/';
 const SUPABASE_URL = 'https://aghlacmqlagmigoznxlm.supabase.co';
 const FIREBASE_PROJECT = 'badshah-ai-badshah222';
-const ALL_MODELS = new Set(['fusion-flex', 'fusion-max', 'fusion-uni', 'fusion-pulse', 'fusion-spark', 'fusion-lexus', 'fusion-synth', 'fusion-void', 'fusion-reaper', 'fusion-dread', 'fusion-shadow', 'fusion-abyss', 'fusion-vortex', 'fusion-astra']);
+/* (FT Fusion model set removed in v5) */
 const MAX_Q_CHARS = 65000;
 const RATE_LIMIT = 40;
 const RATE_WINDOW_MS = 60 * 1000;
@@ -115,41 +126,124 @@ async function touchKey(env, row) {
   try { await sbAdmin(env, 'api_keys?id=eq.' + row.id, { method: 'PATCH', body: JSON.stringify({ use_count: (row.use_count || 0) + 1, last_used_at: new Date().toISOString() }) }); } catch (e) {}
 }
 
-/* ---------------- /api/chat (FT + Groq) ---------------- */
+/* ---------------- /api/chat (Gemini + Groq) ---------------- */
+async function groqAnswer(env, model, q) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const keys = await poolKeys(env, 'groq').catch(() => []);
+  for (const k of keys) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: q }] })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      await touchKey(env, k);
+      return ((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '');
+    }
+    if (r.status !== 401 && r.status !== 429) return null;
+  }
+  return null;
+}
+async function geminiAnswer(env, model, q) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const keys = await poolKeys(env, 'gemini').catch(() => []);
+  for (const k of keys) {
+    const r = await fetch(GEMINI_REST + model + ':generateContent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
+      body: JSON.stringify({ contents: [{ parts: [{ text: q }] }] })
+    });
+    if (r.ok) {
+      const d = await r.json();
+      await touchKey(env, k);
+      const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+      return parts.map(p => p.text || '').join('').trim();
+    }
+    if (r.status !== 401 && r.status !== 403 && r.status !== 429 && r.status !== 404) return null;
+  }
+  return null;
+}
 async function handleChat(req, env, url) {
   const ip = req.headers.get('cf-connecting-ip') || 'unknown';
   if (rateLimited(ip)) return json(429, { error: 'Too many requests — thoda ruk kar try karo.' });
   const q = url.searchParams.get('q') || '';
   if (!q) return json(400, { error: 'q is empty' });
   if (q.length > MAX_Q_CHARS) return json(413, { error: 'Message too long' });
+  const provider = url.searchParams.get('provider') || '';
 
-  if (url.searchParams.get('provider') === 'groq') {
-    if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Groq abhi setup nahi — owner ko Supabase service key lagana hai.' });
-    const keys = await poolKeys(env, 'groq').catch(() => []);
-    if (!keys.length) return json(501, { error: 'Groq key pool khaali hai — admin panel se key add karo.' });
+  if (provider === 'groq') {
     const model = url.searchParams.get('model') || 'openai/gpt-oss-120b';
+    const text = await groqAnswer(env, model, q);
+    if (text !== null) return json(200, { text, provider: 'groq', model });
+    return json(502, { error: 'Groq abhi jawab nahi de raha — thodi dair baad try karo.' });
+  }
+
+  const model = url.searchParams.get('model') || 'gemini-3.8-flash';
+  if (!GEMINI_CHAT_MODELS.has(model)) return json(400, { error: 'Unknown model: ' + model });
+  const gtext = await geminiAnswer(env, model, q);
+  if (gtext) return json(200, { text: gtext, provider: 'gemini', model });
+  const ftext = await groqAnswer(env, 'openai/gpt-oss-120b', q);
+  if (ftext !== null) return json(200, { text: ftext, provider: 'groq', model: 'openai/gpt-oss-120b', note: 'gemini_pending_full_key' });
+  return json(502, { error: 'Abhi koi chat engine jawab nahi de raha — thodi dair baad try karo.' });
+}
+
+/* ---------------- /api/image (Gemini image models) ---------------- */
+async function handleImage(req, env, url) {
+  const ip = req.headers.get('cf-connecting-ip') || 'unknown';
+  if (rateLimited(ip)) return json(429, { error: 'Too many requests — thoda ruk kar try karo.' });
+  const q = url.searchParams.get('q') || '';
+  if (!q) return json(400, { error: 'q is empty' });
+  const model = url.searchParams.get('model') || 'gemini-3.1-flash-image';
+  if (!GEMINI_IMAGE_MODELS.has(model)) return json(400, { error: 'Unknown image model: ' + model });
+  if (env.SUPABASE_SERVICE_ROLE_KEY) {
+    const keys = await poolKeys(env, 'gemini').catch(() => []);
     for (const k of keys) {
-      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const r = await fetch(GEMINI_REST + model + ':generateContent', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages: [{ role: 'user', content: q }] })
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
+        body: JSON.stringify({ contents: [{ parts: [{ text: q }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
       });
       if (r.ok) {
         const d = await r.json();
-        await touchKey(env, k);
-        return json(200, { text: (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '', provider: 'groq', model });
+        const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+        const img = parts.find(p => p.inlineData && p.inlineData.data);
+        if (img) { await touchKey(env, k); return json(200, { image: 'data:' + (img.inlineData.mimeType || 'image/png') + ';base64,' + img.inlineData.data, provider: 'gemini', model }); }
       }
-      if (r.status !== 401 && r.status !== 429) return json(502, { error: 'Groq error ' + r.status });
+      if (r.status !== 401 && r.status !== 403 && r.status !== 429 && r.status !== 404) break;
     }
-    return json(502, { error: 'Saari Groq keys ki limit khatam — admin se nayi key add karwao.' });
   }
+  const purl = 'https://gen.pollinations.ai/image/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true';
+  return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'gemini_pending_full_key' });
+}
 
-  const model = url.searchParams.get('model') || 'fusion-flex';
-  if (!ALL_MODELS.has(model)) return json(400, { error: 'Unknown model: ' + model });
-  const up = UPSTREAM + '?key=' + encodeURIComponent(env.BADSHAH_API_KEY || '') + '&model=' + encodeURIComponent(model) + '&q=' + encodeURIComponent(q);
-  const r = await fetch(up, { headers: { 'accept': 'application/json' } });
-  const text = await r.text();
-  return new Response(text, { status: r.status, headers: { 'content-type': r.headers.get('content-type') || 'application/json; charset=utf-8', 'cache-control': 'no-store', ...SECURITY_HEADERS } });
+/* ---------------- /api/video (Gemini video models, long-running) ---------------- */
+async function handleVideo(req, env, url) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Key pool setup pending hai.' });
+  const keys = await poolKeys(env, 'gemini').catch(() => []);
+  if (!keys.length) return json(404, { error: 'Gemini key available nahi hai.' });
+  const key = keys[0].key_value;
+  const opName = url.searchParams.get('name') || '';
+  if (req.method === 'GET' && opName) {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/' + opName, { headers: { 'x-goog-api-key': key } });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) return json(r.status === 403 ? 403 : 502, { error: 'Video status nahi mila (' + r.status + ').', google: d.error ? d.error.message : undefined });
+    return json(200, d);
+  }
+  const body = await req.json().catch(() => ({}));
+  const prompt = String(body.prompt || '').slice(0, 1000);
+  if (!prompt) return json(400, { error: 'prompt is empty' });
+  const model = String(body.model || 'gemini-omni-1.1-flash');
+  if (!GEMINI_VIDEO_MODELS.has(model)) return json(400, { error: 'Unknown video model: ' + model });
+  const r = await fetch(GEMINI_REST + model + ':predictLongRunning', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({ instances: [{ prompt }] })
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) return json(502, { error: 'Video abhi start nahi ho saka (' + r.status + ') — video models ke liye full Gemini API key chahiye; maujooda AQ key sirf Live calls ke liye hai.', google: d.error ? d.error.message : undefined });
+  await touchKey(env, keys[0]);
+  return json(200, { name: d.name || null, done: !!d.done, provider: 'gemini', model });
 }
 
 /* ---------------- /api/live-key (pooled Gemini key, login required) ---------------- */
@@ -168,11 +262,41 @@ async function handleLiveKey(req, env) {
 
 /* ---------------- /api/tts (ElevenLabs pool) ---------------- */
 const EL_VOICES = { rani: '21m00Tcm4TlvDq8ikWAM', badshah: 'pNInz6obpgDQGcFmaJgB' };
+function pcmToWav(b64, rate) {
+  const bin = atob(b64); const pcm = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) pcm[i] = bin.charCodeAt(i);
+  const out = new Uint8Array(44 + pcm.length); const v = new DataView(out.buffer);
+  const wstr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  wstr(0, 'RIFF'); v.setUint32(4, 36 + pcm.length, true); wstr(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); wstr(36, 'data'); v.setUint32(40, pcm.length, true);
+  out.set(pcm, 44); return out;
+}
 async function handleTts(req, env) {
   const body = await req.json().catch(() => ({}));
   const text = String(body.text || '').slice(0, 800);
   if (!text) return json(400, { error: 'text is empty' });
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'TTS setup pending hai.' });
+  // 1) Gemini TTS (owner's model map) — works when a full Gemini key is in the pool
+  {
+    const gvoice = body.voice === 'badshah' ? 'Charon' : 'Achernar';
+    const gkeys = await poolKeys(env, 'gemini').catch(() => []);
+    for (const k of gkeys) {
+      const r = await fetch(GEMINI_REST + GEMINI_TTS_MODEL + ':generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
+        body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: gvoice } } } } })
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+        const au = parts.find(p => p.inlineData && p.inlineData.data);
+        if (au) { await touchKey(env, k); return new Response(pcmToWav(au.inlineData.data, 24000), { status: 200, headers: { 'content-type': 'audio/wav', 'cache-control': 'no-store', ...SECURITY_HEADERS } }); }
+      }
+      if (r.status !== 401 && r.status !== 403 && r.status !== 429 && r.status !== 404) break;
+    }
+  }
+  // 2) ElevenLabs pool (working voice today)
   const keys = await poolKeys(env, 'elevenlabs').catch(() => []);
   if (!keys.length) return json(404, { error: 'ElevenLabs key pool khaali hai.' });
   const voice = EL_VOICES[body.voice] || body.voice || EL_VOICES.rani;
@@ -280,6 +404,8 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
+    if (url.pathname === '/api/image') return handleImage(req, env, url);
+    if (url.pathname === '/api/video') return handleVideo(req, env, url);
     if (url.pathname === '/api/live-key') return handleLiveKey(req, env);
     if (url.pathname === '/api/tts' && req.method === 'POST') return handleTts(req, env);
     if (url.pathname.startsWith('/admin-api/')) return handleAdmin(req, env, url);

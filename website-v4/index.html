@@ -276,8 +276,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
   <h2 class="sec-t reveal">Everything a digital friend should do</h2>
   <div class="grid3">
     <div class="feat reveal" data-tilt><div class="ic">📞</div><h3>Live Voice Calls</h3><p>Talk face-to-face on a real-time call powered by Gemini 3.8 Live — smooth, emotional, unlimited back-and-forth until you say goodbye.</p></div>
-    <div class="feat reveal" data-tilt><div class="ic">🧠</div><h3>12 AI Brains</h3><p>FT Fusion models for chat, coding and heavy work. Free: Flex &amp; Max unlimited. Paid unlocks Pulse, Synth, Void, Reaper, Abyss and more.</p></div>
-    <div class="feat reveal" data-tilt><div class="ic">🎨</div><h3>Image Studio</h3><p>Describe it, see it. Fusion-Uni creates images free; Fusion-Astra (paid) takes quality to the next level.</p></div>
+    <div class="feat reveal" data-tilt><div class="ic">🧠</div><h3>Gemini AI Brains</h3><p>Google Gemini models for chat and coding — 3.8 Flash, 3.5 Flash Lite, 3.1 Pro — plus Groq speed. Sab kuch free, unlimited.</p></div>
+    <div class="feat reveal" data-tilt><div class="ic">🎨</div><h3>Image Studio</h3><p>Describe it, see it. Gemini image models (3.1 Flash Image + 3 Pro Image) create images — bilkul free.</p></div>
     <div class="feat reveal" data-tilt><div class="ic">📱</div><h3>Phone Control</h3><p>With the Android app, BADSHAH opens apps, sends messages, makes calls and browses for you — a true Jarvis for your phone.</p></div>
     <div class="feat reveal" data-tilt><div class="ic">💻</div><h3>Computer Control</h3><p>Pair your computer with a code and let BADSHAH work on it — open apps, type, search and manage files from anywhere.</p></div>
     <div class="feat reveal" data-tilt><div class="ic">🛟</div><h3>Help Center</h3><p>Real human support inside the app. Messages reach the creator directly — plus WhatsApp and email, always open.</p></div>
@@ -324,7 +324,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
       <ul>
         <li>Saare 12 chat models — Flex, Max, Pulse, Synth, Void… sab</li>
         <li>Groq fast models (Llama 3.3) bhi free</li>
-        <li>Images — Fusion-Uni + Fusion-Astra, dono free</li>
+        <li>Images — Gemini 3.1 Flash Image + Gemini 3 Pro Image, dono free</li>
         <li>Live calls — bina apni key ke, feelings ke saath</li>
         <li>Both modes — BADSHAH &amp; RANI</li>
         <li>Awaaz sunna (ElevenLabs premium voices) — free</li>
@@ -335,7 +335,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
       <span class="tag">NO PAYMENT • NO KEY</span>
       <h3>Free kaise hai? Sach ye hai 👇</h3>
       <ul>
-        <li>Ye service creator ki apni API keys se chalti hai — FT Fusion, Gemini, Groq aur ElevenLabs</li>
+        <li>Ye service creator ki apni API keys se chalti hai — Gemini, Groq aur ElevenLabs</li>
         <li>Tumhe na payment karna hai, na apni API key lagani hai</li>
         <li>Bas account banao, login karo aur enjoy karo</li>
         <li>Kisi key ki limit khatam ho to admin nayi key laga deta hai — tumhe rukna nahi padta</li>
@@ -367,7 +367,7 @@ footer{border-top:1px solid var(--line);padding:44px 0 54px;color:var(--mut);fon
     <details><summary>Is BADSHAH AI really free?</summary><p>Yes. Bilkul — sab kuch. Saare chat models, Uni + Astra images, Groq models, live calls aur premium awaazein, sab free hain. Koi paid plan hai hi nahi.</p></details>
     <details><summary>How do live calls work?</summary><p>Calls Gemini 3.8 Live par chalti hain aur key hamari taraf se free milti hai — tumhe apni key lagane ki zarurat nahi. Login karke Call dabao, bas. BADSHAH (Charon) aur RANI (Aoede) real feelings ke saath baat karte hain, sunte pehle hain, jawab baad mein dete hain.</p></details>
     <details><summary>Can BADSHAH control my phone and computer?</summary><p>On Android, the BADSHAH AI app can open apps, message, call and browse for you, and can be your default digital assistant. On the web you can pair a computer with a code and control it through BADSHAH.</p></details>
-    <details><summary>Do I need my own API key?</summary><p>No. Saari API keys (Gemini, Groq, ElevenLabs, FT Fusion) hamari taraf se lagi hui hain aur admin panel se rotate hoti rehti hain. Tumhe sirf login karna hai — baqi sab free aur automatic hai.</p></details>
+    <details><summary>Do I need my own API key?</summary><p>No. Saari API keys (Gemini, Groq, ElevenLabs) hamari taraf se lagi hui hain aur admin panel se rotate hoti rehti hain. Tumhe sirf login karna hai — baqi sab free aur automatic hai.</p></details>
   </div>
 </div></section>
 
@@ -407,7 +407,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
   async function ask(){ const v=q.value.trim(); if(!v||busy) return; busy=true; btn.disabled=true; clearTimeout(idleT);
     const m=BadshahOrb.detectMood(v); orb.setMood(m); orb.setState('thinking'); out.classList.add('on'); out.innerHTML='<span class="caret"></span>';
     let text='';
-    try{ const r=await fetch('/api/chat?model=fusion-flex&q='+encodeURIComponent(v)); const d=await r.json().catch(()=>({}));
+    try{ const r=await fetch('/api/chat?provider=groq&q='+encodeURIComponent(v)); const d=await r.json().catch(()=>({}));
       text=d.text||d.reply||d.response||d.answer||('⚠️ '+(d.error||'Server abhi busy hai — App kholo, wahan sab chalega.')); }
     catch(e){ text='⚠️ Demo sirf live site par chalta hai (Cloudflare Pages). App kholo — wahan sab kuch chalega.'; orb.setMood('angry'); }
     reveal(text); }

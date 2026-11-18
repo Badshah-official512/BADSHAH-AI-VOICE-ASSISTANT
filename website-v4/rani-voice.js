@@ -51,7 +51,8 @@
 var MODELS = [
   { id: 'gemini-3.8-live',                      label: 'Gemini 3.8 Live — default',        verified: '2026-11-18' },
   { id: 'gemini-3.1-flash-live-preview',         label: 'Gemini 3.1 Flash Live (preview)',  verified: '2026-11-18' },
-  { id: 'gemini-2.5-flash-native-audio-latest',  label: 'Gemini 2.5 Flash Native Audio',    verified: '2026-11-18' }
+  { id: 'gemini-2.5-flash-native-audio-latest',  label: 'Gemini 2.5 Flash Native Audio',    verified: '2026-11-18' },
+  { id: 'gemini-3.8-live-extended-thinking',     label: 'Gemini 3.8 Live — Advanced (deep thinking)', verified: '2026-11-18', thinking: true }
 ];
 var VOICES = ['Achernar', 'Aoede', 'Algieba', 'Despina', 'Callirrhoe', 'Enceladus', 'Leda', 'Kore'];
 
@@ -195,10 +196,13 @@ function flushPlayback() { liveSources.forEach(function (s) { try { s.stop(); } 
 
 /* ------------------------------ live session ------------------------------ */
 function setupPayload(modelId) {
+  var entry = MODELS.find(function (m) { return m.id === modelId; });
+  var genCfg = { responseModalities: ['AUDIO'],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: settings.voice } } } };
+  if (entry && entry.thinking) genCfg.thinkingConfig = { thinkingLevel: 'HIGH' };
   var setup = {
     model: 'models/' + modelId,
-    generationConfig: { responseModalities: ['AUDIO'],
-      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: settings.voice } } } },
+    generationConfig: genCfg,
     systemInstruction: { parts: [{ text: PERSONA }] },
     inputAudioTranscription: {}, outputAudioTranscription: {},
     contextWindowCompression: { slidingWindow: {} },
