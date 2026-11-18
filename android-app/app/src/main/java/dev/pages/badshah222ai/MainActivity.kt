@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
         private const val REQ_MIC = 41
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQ_MIC) {
             val req = pendingPermReq ?: return
