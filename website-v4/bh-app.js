@@ -5,7 +5,7 @@
 'use strict';
 const detect=BadshahOrb.detectMood;
 const inp=$('input');
-const AV={badshah:'assets/avatar.jpg',rani:'assets/rani.png'};
+const AV={badshah:'assets/avatar.jpg'};
 const T=(n,m)=>{ try{ if(window.BHTrack) BHTrack.event(n,m); }catch(e){} };
 const escH=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const orb=new BadshahOrb($('orbHost'),{portrait:AV[state.mode]||AV.badshah,varTarget:$('chatPanel')});
@@ -129,7 +129,7 @@ const isImageModel=v=>(CFG.imageModels||[]).includes(v);
 function niceErr(m){ m=String(m||''); if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Internet ka masla lag raha hai — connection check karke dobara try karo.'; return m; }
 function buildPrompt(text){
   const cp=(window.BH_CONFIG&&BH_CONFIG.app&&BH_CONFIG.app.systemPrompt)||'';
-  const persona=state.mode==='rani'?'You are RANI, the sweet, caring and expressive female AI assistant of BADSHAH AI, created by Zain Shah (Badshah) from Pakistan.':'You are BADSHAH AI Assistant — a smart, loyal and friendly male AI assistant created by Zain Shah (Badshah) from Pakistan.';
+  const persona='You are BADSHAH AI Assistant — a smart, loyal and friendly male AI assistant created by Zain Shah (Badshah) from Pakistan.';
   const lang={auto:'Reply in the same language and script the user writes in (Urdu, Roman Urdu, English or Hindi).',roman:'Always reply in Roman Urdu (Urdu written with English letters).',en:'Always reply in English.',ur:'Always reply in Urdu script (اردو).'}[S.lang]||'';
   const sys=[persona,'Be accurate, helpful and to the point. Use markdown (lists, headings, code blocks) when it helps.',lang,cp,S.instr?('User instructions: '+S.instr):''].filter(Boolean).join('\n');
   const hist=chat().msgs.slice(0,-1).slice(-8).map(m=>(m.role==='user'?'User: ':'Assistant: ')+String(m.content).slice(0,800));
@@ -359,10 +359,10 @@ window.BH={
   callPulse(){ if(!callOrb) return; callOrb.setState('speaking'); callOrb.pulse(.9); callOrb.say('ae'); clearTimeout(callT); callT=setTimeout(()=>callOrb.setState('listening'),650); }
 };
 function setBaseMood(){ baseMood=state.mode==='rani'?'love':'calm'; }
-window.setMode=function(m){
+window.setMode=function(m){ m='badshah';
   state.mode=m; localStorage.setItem('ba_mode',m);
   $('modeBadshah').classList.toggle('on',m==='badshah'); $('modeRani').classList.toggle('on',m==='rani');
-  const nm=m==='rani'?'RANI':'BADSHAH'; $('whoImg').src=AV[m]; $('whoName').textContent=nm; $('stageName').textContent=nm+(tempChat?' · temp':''); $('modeFlipTxt').textContent=m==='rani'?'BADSHAH se baat karo':'RANI se baat karo';
+  const nm=m==='rani'?'RANI':'BADSHAH'; $('whoImg').src=AV[m]; $('whoName').textContent=nm; $('stageName').textContent=nm+(tempChat?' · temp':''); const _mf=$('modeFlipTxt'); if(_mf) _mf.textContent='BADSHAH';
   orb.setPortrait(AV[m],m==='badshah'); setBaseMood(); orb.setBase(m==='rani'?'love':'calm'); orb.setMood(baseMood); titleFor(m); setComposeMode(composeMode); renderMsgs();
 };
 $('modeBadshah').onclick=()=>setMode('badshah'); $('modeRani').onclick=()=>setMode('rani');

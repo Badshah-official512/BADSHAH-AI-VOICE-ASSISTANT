@@ -267,3 +267,8 @@ select.model{display:none}
   .stop-btn{bottom:calc(86px + var(--sab))}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* v6.1 responsive hardening: chat header never overflows small screens */
+.topbar{flex-wrap:nowrap;overflow:hidden}
+.topbar select,.topbar .model-pick{max-width:46vw;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+@media (max-width:420px){ .topbar{gap:6px;padding-left:10px;padding-right:10px} .topbar .who small{display:none} }

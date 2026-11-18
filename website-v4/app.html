@@ -66,9 +66,16 @@
       <button class="side-btn" id="btnSettings">⚙️ <span>Settings</span></button>
     </nav>
     <div class="mode-switch">
-      <button id="modeBadshah" class="on"><img src="assets/avatar.jpg" alt="">BADSHAH</button>
-      <button id="modeRani"><img src="assets/rani.png" alt="">RANI</button>
+      <button id="modeBadshah" class="on" style="flex:1"><img src="assets/avatar.jpg" alt="">BADSHAH 👑</button>
+      <button id="modeRani" class="hidden" style="display:none"><img src="assets/rani.png" alt="">RANI</button>
     </div>
+    <div class="theme-row" id="themeRow"><span>🎨 Theme</span><div class="theme-dots">
+      <button class="tdot on" data-theme="emerald" style="background:linear-gradient(135deg,#0E9F6E,#2EE6A6)" title="Emerald"></button>
+      <button class="tdot" data-theme="royal" style="background:linear-gradient(135deg,#7C3AED,#38BDF8)" title="Royal Violet"></button>
+      <button class="tdot" data-theme="sunset" style="background:linear-gradient(135deg,#F97316,#EC4899)" title="Sunset"></button>
+      <button class="tdot" data-theme="ocean" style="background:linear-gradient(135deg,#0369A1,#22D3EE)" title="Ocean"></button>
+      <button class="tdot" data-theme="neon" style="background:linear-gradient(135deg,#D946EF,#22D3EE)" title="Neon 3D"></button>
+    </div></div>
     <div class="user-row">
       <div class="av" id="userAv">B</div>
       <div style="min-width:0"><b id="userName" style="font-size:13.5px">Guest</b><small id="userEmail"></small></div>
@@ -181,7 +188,6 @@
     <div class="grab"></div>
     <div class="more-list">
       <button data-more="new">＋ Nayi chat</button>
-      <button data-more="mode">🔁 <span id="modeFlipTxt">RANI se baat karo</span></button>
       <button data-more="device">📱 Device Control</button>
       <button data-more="settings">⚙️ Settings</button>
       <button data-more="help">🛟 Help Center</button>
@@ -224,7 +230,7 @@
     <button class="btn btn-g" id="btnKeyCancel">Cancel</button>
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
-    <div class="call-orb" id="callOrbHost"></div><img id="callPhoto" class="hidden" src="assets/avatar.jpg" alt="">
+    <div class="call-orb" id="callOrbHost" style="display:none"></div><img id="callPhoto" src="assets/avatar.jpg" alt="BADSHAH">
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -237,6 +243,25 @@
   </div>
 </div>
 
+<style>
+#callView{background:radial-gradient(120% 90% at 50% 0%,#0d2f24 0%,#06130f 55%,#030a08 100%);align-items:center;justify-content:flex-start;padding-top:calc(26px + env(safe-area-inset-top,0px))}
+#callPhoto{width:172px;height:172px;border-radius:50%;object-fit:cover;object-position:top;border:3px solid rgba(var(--mc),.75);box-shadow:0 0 0 10px rgba(var(--mc),.12),0 0 64px rgba(var(--mc),.35);animation:callPulse 2.6s ease-in-out infinite;margin-top:3vh}
+@keyframes callPulse{0%,100%{box-shadow:0 0 0 8px rgba(var(--mc),.12),0 0 48px rgba(var(--mc),.3)}50%{box-shadow:0 0 0 16px rgba(var(--mc),.05),0 0 84px rgba(var(--mc),.5)}}
+#callName{font-size:27px;letter-spacing:2.5px;margin-top:20px}
+#callStatus{color:var(--vsoft);font-size:15px;margin-top:5px;text-align:center;padding:0 22px}
+#callCaption{max-width:520px;text-align:center;color:#d9fbeecf;font-size:15.5px;line-height:1.55;min-height:44px;padding:0 24px;margin-top:8px}
+#callView .call-btns{margin-top:auto;padding-bottom:calc(30px + env(safe-area-inset-bottom,0px));gap:26px}
+#callView .cbtn{width:62px;height:62px;font-size:24px}
+#callView .cbtn.end{width:74px;height:74px;font-size:28px}
+.theme-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px}
+.theme-dots{display:flex;gap:8px}
+.tdot{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.tdot.on{border-color:#fff;transform:scale(1.12)}
+body[data-theme="royal"]{--mc:139,92,246;--violet:#8B5CF6;--vdeep:#7C3AED;--vsoft:#C4B5FD;--ok:#A78BFA}
+body[data-theme="sunset"]{--mc:249,115,22;--violet:#F97316;--vdeep:#EA580C;--vsoft:#FDBA74;--ok:#FB923C}
+body[data-theme="ocean"]{--mc:34,211,238;--violet:#22D3EE;--vdeep:#0891B2;--vsoft:#A5F3FC;--ok:#22D3EE}
+body[data-theme="neon"]{--mc:217,70,239;--violet:#D946EF;--vdeep:#A21CAF;--vsoft:#F0ABFC;--ok:#E879F9}
+</style>
 <script src="bh-core.js"></script>
 <script src="config.js"></script>
 <script src="orb.js"></script>
@@ -302,10 +327,10 @@ function buildModels(){
 }
 $('modelSel').onchange=e=>{ state.imgMode = CFG.imageModels.includes(e.target.value); };
 function setMode(m){
-  state.mode=m; localStorage.setItem('ba_mode',m);
+  m='badshah'; state.mode=m; localStorage.setItem('ba_mode',m);
   $('modeBadshah').classList.toggle('on',m==='badshah'); $('modeRani').classList.toggle('on',m==='rani');
-  $('whoImg').src = m==='badshah'?'assets/image1.png':'assets/rani.png';
-  $('whoName').textContent = m==='badshah'?'BADSHAH':'RANI';
+  $('whoImg').src = 'assets/image1.png';
+  $('whoName').textContent = 'BADSHAH';
 }
 $('modeBadshah').onclick=()=>setMode('badshah'); $('modeRani').onclick=()=>setMode('rani');
 
@@ -331,12 +356,12 @@ function renderChats(){
 function renderMsgs(){
   const w=$('msgWrap'); w.innerHTML='';
   chat().msgs.forEach(m=>addMsgEl(m.role,m.content,m.img));
-  if(!chat().msgs.length && !document.getElementById('stage')) addMsgEl('ai', state.mode==='rani' ? 'Assalam o Alaikum! Main RANI hoon 💜 Kuch bhi poochho, ya Call par baat karte hain.' : 'Assalam o Alaikum! Main BADSHAH hoon 👑 Kuch bhi poochho — chat, image, ya seedha Call kar lo.');
+  if(!chat().msgs.length && !document.getElementById('stage')) addMsgEl('ai', 'Assalam o Alaikum! Main BADSHAH hoon 👑 Kuch bhi poochho — chat, image, ya seedha Call kar lo.');
   $('msgs').scrollTop=$('msgs').scrollHeight;
 }
 function addMsgEl(role, content, img){
   const w=$('msgWrap'); const d=document.createElement('div'); d.className='msg '+(role==='user'?'user':'ai');
-  const av = role==='user' ? '' : `<img class="av" src="${state.mode==='badshah'?'assets/image1.png':'assets/rani.png'}" alt="">`;
+  const av = role==='user' ? '' : `<img class="av" src="${'assets/image1.png'}" alt="">`;
   d.innerHTML = av + `<div class="body">${img?`<img class="gen" src="${img}" alt="AI image">`:''}<div class="txt">${role==='ai'?md(content):esc(content)}</div>${role==='ai'?'<div class="acts"><button class="spk">🔊 Suno</button><button class="cpy">📋 Copy</button></div>':''}</div>`;
   const spk=d.querySelector('.spk'); if(spk) spk.onclick=()=>speak(content);
   const cpy=d.querySelector('.cpy'); if(cpy) cpy.onclick=()=>navigator.clipboard.writeText(content);
@@ -354,6 +379,7 @@ async function speak(text){
 async function send(){
   const inp=$('input'); const text=inp.value.trim(); if(!text||state.busy) return;
   const model=$('modelSel').value; const imgMode = state.imgMode || CFG.imageModels.includes(model);
+  if(!imgMode && typeof tryDeviceCommand==='function'){ const ack=tryDeviceCommand(text); if(ack){ inp.value=''; chat().msgs.push({role:'user',content:text}); if(chat().msgs.length===1) chat().title=text.slice(0,34); addMsgEl('user',text); addMsgEl('ai',ack); chat().msgs.push({role:'ai',content:ack}); renderChats(); saveChats(); return; } }
   inp.value=''; inp.style.height='auto';
   chat().msgs.push({role:'user',content:text}); if(chat().msgs.length===1) chat().title=text.slice(0,34);
   addMsgEl('user',text); renderChats(); saveChats(); if(window.BH) BH.onSend(text);
@@ -425,38 +451,41 @@ async function getLiveKey(){
   try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
   return localStorage.getItem('ba_gemini_key')||null;
 }
-function openCallSmart(){
-  if(state.mode==='rani' && window.RaniVoice){ RaniVoice.start({keyProvider:getLiveKey}); return; }
-  openCall();
-}
+function openCallSmart(){ openCall(); }
 $('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=closeCall;
 $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startLive(k); };
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ live.muted=!live.muted; $('btnMute').classList.toggle('muted',live.muted); if(live.stream) live.stream.getAudioTracks().forEach(t=>t.enabled=!live.muted); };
 $('btnSpk').onclick=()=>{ /* web: output goes to default device; toggle caption emphasis */ $('callCaption').scrollIntoView(); };
-function callUI(){ if(window.BH&&BH.callOpen) BH.callOpen(); $('callPhoto').src = state.mode==='badshah'?'assets/avatar.jpg':'assets/rani.png'; $('callName').textContent = state.mode==='badshah'?'BADSHAH':'RANI'; }
+function callUI(){ $('callPhoto').src='assets/avatar.jpg'; $('callName').textContent='BADSHAH'; }
 function sysPrompt(){
-  const who = state.mode==='badshah' ? 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah.' : 'You are RANI, a sweet, caring and expressive female best friend and digital assistant created by Zain Shah.';
+  const who = 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah.';
   return who+' Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and not too long. You can help with anything: questions, coding, browsing topics, daily life.';
 }
 async function startLive(key){
-  callUI(); live.on=true; live.retries=0;
+  callUI(); live.on=true; live.retries=0; live.sources=[];
   $('callStatus').textContent='Connecting to Gemini 3.8 Live…';
   try{
-    live.stream=await navigator.mediaDevices.getUserMedia({audio:true});
-    live.ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});
+    live.stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const AC=window.AudioContext||window.webkitAudioContext;
+    live.ac=new AC();
+    if(live.ac.state==='suspended'){ try{ await live.ac.resume(); }catch(e){} }
+    live.playT=0;
     connectWs(key);
-    startMic(key);
+    startMic();
   }catch(e){ $('callStatus').textContent='🎙️ Mic permission chahiye — browser mein Allow karo.'; }
 }
 function connectWs(key){
   const ws=new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${encodeURIComponent(key)}`);
   live.ws=ws;
   ws.onopen=()=>{
-    const voice = state.mode==='badshah' ? (localStorage.getItem('ba_voice_m')||'Charon') : (localStorage.getItem('ba_voice_f')||'Aoede');
-    ws.send(JSON.stringify({ setup:{ model:'models/'+CFG.liveModel,
-      generationConfig:{ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } },
+    const voice=(localStorage.getItem('ba_voice_m')||'Charon');
+    const lm=CFG.liveModel||'gemini-3.8-live';
+    const gen={ responseModalities:['AUDIO'], speechConfig:{ voiceConfig:{ prebuiltVoiceConfig:{ voiceName:voice } } } };
+    if(/extended-thinking/.test(lm)) gen.thinkingConfig={thinkingLevel:'HIGH'};
+    ws.send(JSON.stringify({ setup:{ model:'models/'+lm,
+      generationConfig:gen,
       systemInstruction:{ parts:[{text:sysPrompt()}] },
       inputAudioTranscription:{}, outputAudioTranscription:{},
       contextWindowCompression:{ slidingWindow:{} },
@@ -470,16 +499,17 @@ function connectWs(key){
     if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) live.handle=data.sessionResumptionUpdate.newHandle;
     const sc=data.serverContent;
     if(sc){
-      if(sc.interrupted){ live.playT=0; }
+      if(sc.interrupted){ flushPlayback(); }
       const parts=(sc.modelTurn&&sc.modelTurn.parts)||[];
       for(const p of parts){ if(p.inlineData&&p.inlineData.data) playPcm(p.inlineData.data); }
       if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; eqPulse(); }
       if(sc.inputTranscription&&sc.inputTranscription.text){ $('callStatus').textContent='🎧 Tum: '+sc.inputTranscription.text; }
+      if(sc.turnComplete){ setTimeout(()=>{ if(live.on) $('callStatus').textContent='🟢 Live — bolo, main sun raha hoon'; },500); }
     }
     if(data.goAway){ try{ws.close()}catch(e){} scheduleReconnect(key); }
   };
   ws.onclose=()=>{ if(live.on) scheduleReconnect(key); };
-  ws.onerror=()=>{ $('callStatus').textContent='⚠️ Connection masla — key check karo (sirf Gemini 3.8 Live chalta hai).'; };
+  ws.onerror=()=>{ $('callStatus').textContent='⚠️ Connection masla — dobara try ho raha hai…'; };
 }
 function scheduleReconnect(key){
   if(!live.on) return;
@@ -487,43 +517,90 @@ function scheduleReconnect(key){
   live.retries++; $('callStatus').textContent='↻ Dobara connect ho raha hai… ('+live.retries+')';
   setTimeout(()=>{ if(live.on) connectWs(key); }, Math.min(600*live.retries,3000));
 }
+function downsampleTo16k(f, rate){
+  if(!rate || rate===16000) return f;
+  const ratio=rate/16000; const len=Math.max(1,Math.floor(f.length/ratio)); const out=new Float32Array(len);
+  for(let i=0;i<len;i++){ const idx=i*ratio; const i0=Math.floor(idx); const i1=Math.min(i0+1,f.length-1); const fr=idx-i0; out[i]=f[i0]*(1-fr)+f[i1]*fr; }
+  return out;
+}
 function startMic(){
-  const ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
-  live.mic=ac;
+  const ac=live.ac; if(!ac||!live.stream) return;
   const src=ac.createMediaStreamSource(live.stream);
-  const proc=ac.createScriptProcessor(4096,1,1);
+  const proc=ac.createScriptProcessor(2048,1,1);
+  live.proc=proc;
   src.connect(proc); proc.connect(ac.destination);
   proc.onaudioprocess=e=>{
     if(!live.ws||live.ws.readyState!==1||live.muted) return;
-    const f=e.inputBuffer.getChannelData(0); const pcm=new Int16Array(f.length);
+    const f=downsampleTo16k(e.inputBuffer.getChannelData(0), ac.sampleRate);
+    const pcm=new Int16Array(f.length);
     for(let i=0;i<f.length;i++) pcm[i]=Math.max(-1,Math.min(1,f[i]))*32767;
     let bin=''; const bytes=new Uint8Array(pcm.buffer); for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
-    live.ws.send(JSON.stringify({ realtimeInput:{ mediaChunks:[{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) }] } }));
+    try{ live.ws.send(JSON.stringify({ realtimeInput:{ mediaChunks:[{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) }] } })); }catch(err){}
   };
 }
 function playPcm(b64){
   const ac=live.ac; if(!ac) return;
+  if(ac.state==='suspended'){ ac.resume().catch(()=>{}); }
   const bin=atob(b64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
   const pcm=new Int16Array(bytes.buffer); const buf=ac.createBuffer(1,pcm.length,24000); const ch=buf.getChannelData(0);
   for(let i=0;i<pcm.length;i++) ch[i]=pcm[i]/32768;
   const s=ac.createBufferSource(); s.buffer=buf; s.connect(ac.destination);
-  const now=ac.currentTime; live.playT=Math.max(live.playT,now); s.start(live.playT); live.playT+=buf.duration; eqPulse();
+  if(!live.sources) live.sources=[];
+  live.sources.push(s); s.onended=()=>{ const i=live.sources.indexOf(s); if(i>=0) live.sources.splice(i,1); };
+  const now=ac.currentTime; live.playT=Math.max(live.playT||0,now+0.02); s.start(live.playT); live.playT+=buf.duration; eqPulse();
+}
+function flushPlayback(){
+  (live.sources||[]).forEach(s=>{ try{s.stop()}catch(e){} });
+  live.sources=[]; live.playT=0;
 }
 function eqPulse(){ if(window.BH&&BH.callPulse) BH.callPulse(); document.querySelectorAll('#callEq i').forEach(b=>{ b.style.height=(6+Math.random()*20)+'px'; setTimeout(()=>b.style.height='7px',160); }); }
 function stopLive(){
   live.on=false;
   try{ live.ws&&live.ws.close(); }catch(e){}
+  try{ live.proc&&live.proc.disconnect(); }catch(e){}
   try{ live.stream&&live.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
-  try{ live.mic&&live.mic.close(); }catch(e){}
   try{ live.ac&&live.ac.close(); }catch(e){}
-  live.ws=live.stream=live.mic=live.ac=null; live.playT=0;
+  live.ws=live.stream=live.mic=live.ac=live.proc=null; live.playT=0; live.sources=[];
 }
 
 /* ---------- init ---------- */
 function renderAll(){ setMode(state.mode); buildModels(); renderChats(); renderMsgs(); }
 renderAll();
 </script>
-<script src="rani-voice.js"></script>
 <script src="bh-app.js"></script>
+<script>
+/* ---- themes ---- */
+(function(){
+  const saved=localStorage.getItem('ba_theme')||'emerald';
+  document.body.dataset.theme=saved;
+  document.querySelectorAll('#themeRow .tdot').forEach(b=>{
+    b.classList.toggle('on', b.dataset.theme===saved);
+    b.onclick=()=>{ document.body.dataset.theme=b.dataset.theme; localStorage.setItem('ba_theme',b.dataset.theme); document.querySelectorAll('#themeRow .tdot').forEach(x=>x.classList.toggle('on',x===b)); };
+  });
+})();
+/* ---- device commands: APK bridge (window.BadshahBridge) + web fallback ---- */
+const APP_PKGS={whatsapp:'com.whatsapp',facebook:'com.facebook.katana',instagram:'com.instagram.android',tiktok:'com.zhiliaoapp.musically',youtube:'com.google.android.youtube',chrome:'com.android.chrome',telegram:'org.telegram.messenger',messenger:'com.facebook.orca',camera:'camera',gallery:'gallery',settings:'settings'};
+function bridgeDo(action, arg){ if(window.BadshahBridge){ try{ BadshahBridge[action](String(arg)); return true; }catch(e){} } return false; }
+function tryDeviceCommand(raw){
+  let m;
+  if((m=raw.match(/youtube\s*(?:par|pe)?\s*(.+?)\s*(?:chalao|play|khol|lagao|search|dhundo)/i)) || (m=raw.match(/(.+?)\s+youtube\s*(?:par|pe)?\s*(?:chalao|play|lagao)/i))){
+    const q=m[1].trim(); if(q){ if(!bridgeDo('openYouTube',q)) window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank'); return '▶️ YouTube par "'+q+'" chala raha hoon…'; }
+  }
+  if((m=raw.match(/(?:google|web)\s*(?:par|pe)?\s*(.+?)\s*(?:search|dhundo)/i)) || (m=raw.match(/(.+?)\s+(?:search|dhundo)\s*(?:karo|kar)/i))){
+    const q=m[1].trim(); if(q && !/youtube/i.test(raw)){ if(!bridgeDo('searchWeb',q)) window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank'); return '🔎 Google par "'+q+'" search kar raha hoon…'; }
+  }
+  const low=' '+raw.toLowerCase()+' ';
+  for(const name in APP_PKGS){
+    if(low.includes(' '+name+' ') && /(khol|kholo|open|chalao|chalana)/.test(low)){
+      bridgeDo('openApp',APP_PKGS[name]);
+      return '📱 '+name.charAt(0).toUpperCase()+name.slice(1)+' khol raha hoon…';
+    }
+  }
+  if(m=raw.match(/(.+?)\s*ko\s+message\s*[:\-]?\s*(.+)/i)){
+    const msg=m[2].trim(); if(!bridgeDo('shareText',msg)) window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); return '✉️ Message tayyar hai — bhejne ke liye app chuno: "'+msg+'"';
+  }
+  return null;
+}
+</script>
 </body>
 </html>
