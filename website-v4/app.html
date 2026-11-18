@@ -227,14 +227,16 @@
 <!-- ================= CALL ================= -->
 <div id="callView" class="hidden">
   <div id="keyBox" class="key-box hidden">
-    <h3>🔑 Backup option: apni Gemini key</h3>
-    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Hamari <b style="color:#fff">free key</b> abhi available nahi ho saki (limit ya setup). Agar tum chaho to apni free Gemini key laga kar bhi call kar sakte ho — key sirf tumhare browser mein rehti hai, hamare server par kabhi nahi jati.</p>
+    <h3>🔑 Voice call ke liye apni key dalo</h3>
+    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Chat hamari keys par chalti hai, lekin <b style="color:#fff">voice call ke liye tumhari apni Gemini key lazmi hai</b> — key sirf tumhare phone mein rehti hai, hamare server par kabhi nahi jati.</p>
     <ol>
-      <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> kholo aur sign in karo</li>
-      <li>“Create API key” par click karo — key free hai</li>
-      <li>Key copy karke yahan paste kar do</li>
+      <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> kholo — account banao / sign in karo</li>
+      <li>“Create API key” par click karo — key bilkul free hai</li>
+      <li>Key copy karke neeche paste kar do</li>
     </ol>
-    <input class="field" id="gemKey" placeholder="Paste your Gemini API key">
+    <input class="field" id="gemKey" placeholder="Apni Gemini API key yahan paste karo">
+    <p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:14px">🎙️ <b style="color:#fff">ElevenLabs key (optional):</b> ElevenLabs wali awaz ke liye — <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">elevenlabs.io</a> se free account bana kar key lo. Na dalo to bhi Gemini wali call chalegi.</p>
+    <input class="field" id="elKey" placeholder="ElevenLabs key (optional)">
     <div class="err" id="keyErr"></div>
     <button class="btn btn-p" id="btnKeySave">Save &amp; Start Call 📞</button>
     <button class="btn btn-g" id="btnKeyCancel">Cancel</button>
@@ -248,6 +250,7 @@
     <div class="call-ctl">
       <div class="eng-row"><button id="engGem" class="eng on" type="button">⚡ Gemini Live</button><button id="engEl" class="eng" type="button">🎙️ ElevenLabs</button></div>
       <select id="callVoice" class="voice-sel" aria-label="Voice chuno"></select>
+      <div class="eng-row"><button id="btnScreen" class="eng" type="button">📺 Screen dikhao — Gemini mashwara dega</button></div>
       <div class="mic-meter"><i id="micBar"></i></div>
     </div>
     <div class="call-btns">
@@ -502,13 +505,46 @@ async function openCall(){
 function openCallSmart(){ openCall(); }
 $('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=closeCall;
-$('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); if(k.length<20){ $('keyErr').textContent='Ye key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); call.key=k; connectGemini(); };
+$('btnScreen').onclick=()=>toggleScreen();
+$('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); const el=$('elKey').value.trim(); if(el) localStorage.setItem('ba_el_key',el); if(k){ if(k.length<20){ $('keyErr').textContent='Ye Gemini key mukammal nahi lagti — AI Studio se puri key copy karo.'; return; } localStorage.setItem('ba_gemini_key',k); } if(!k && !el && !localStorage.getItem('ba_gemini_key') && !localStorage.getItem('ba_el_key')){ $('keyErr').textContent='Pehle kam az kam Gemini key dalo.'; return; } $('keyErr').textContent=''; $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startEngine(); };
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'🔇 Mute — mic band hai':'🟢 Live — bolo, main sun raha hoon'); };
 $('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
+function closeCall(){ if(call.screenOn) toggleScreen(); call.on=false; stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
+/* ----- Screen share: Gemini screen dekh kar mashwara deta hai ----- */
+function bhSendFrame(b64){ if(call.screenOn && call.engine==='gemini' && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({realtimeInput:{video:{mimeType:'image/jpeg',data:b64}}})); }catch(e){} } }
+window.__bhScreenFrame=function(b64){ bhSendFrame(b64); };
+window.__bhScreenOff=function(){ if(call.screenOn){ call.screenOn=false; const b=$('btnScreen'); if(b) b.classList.remove('on'); } };
+function bhScreenHint(){ if(call.engine==='gemini' && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'Main ne apni phone ki screen share kar di hai. Meri screen dekho — jab main apne phone ke kisi maslay ke baray mein poochun, screen dekh kar step by step batao ke kaise theek hoga.'}]}],turnComplete:true}})); }catch(e){} } }
+let webScreenStream=null, webScreenTimer=null;
+async function toggleScreen(){
+  const b=$('btnScreen');
+  if(call.screenOn){
+    call.screenOn=false; if(b) b.classList.remove('on');
+    if(window.BadshahBridge && BadshahBridge.stopScreenShare){ try{ BadshahBridge.stopScreenShare(); }catch(e){} }
+    if(webScreenTimer){ clearInterval(webScreenTimer); webScreenTimer=null; }
+    if(webScreenStream){ webScreenStream.getTracks().forEach(t=>t.stop()); webScreenStream=null; }
+    callStatus('📺 Screen band ho gayi'); return;
+  }
+  if(window.BadshahBridge && BadshahBridge.startScreenShare){
+    try{ BadshahBridge.startScreenShare(); call.screenOn=true; if(b) b.classList.add('on'); callStatus('📺 Screen share ho rahi hai — Gemini dekh raha hai'); bhScreenHint(); }catch(e){ callStatus('📺 Screen share nahi ho saki'); }
+    return;
+  }
+  if(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia){
+    try{
+      webScreenStream=await navigator.mediaDevices.getDisplayMedia({video:true});
+      const vid=document.createElement('video'); vid.srcObject=webScreenStream; await vid.play();
+      const cv=document.createElement('canvas');
+      webScreenTimer=setInterval(()=>{ if(!webScreenStream) return; const vw=vid.videoWidth||1280; const sc=Math.min(1,640/vw); cv.width=Math.max(2,Math.round(vw*sc)); cv.height=Math.max(2,Math.round((vid.videoHeight||720)*sc)); cv.getContext('2d').drawImage(vid,0,0,cv.width,cv.height); bhSendFrame(cv.toDataURL('image/jpeg',0.55).split(',')[1]); },1000);
+      webScreenStream.getVideoTracks()[0].onended=()=>{ if(call.screenOn) toggleScreen(); };
+      call.screenOn=true; if(b) b.classList.add('on'); callStatus('📺 Screen share ho rahi hai — Gemini dekh raha hai'); bhScreenHint();
+    }catch(e){ callStatus('📺 Screen share cancel ho gayi'); }
+    return;
+  }
+  callStatus('📺 Is device par screen share nahi hai');
+}
 async function getLiveKey(){
-  try{ const t=await idToken(); const r=await fetch(CFG.liveKeyUrl,{headers:t?{'Authorization':'Bearer '+t}:{}}); if(r.ok){ const d=await r.json(); if(d.key) return d.key; } }catch(e){}
+  // BYOK: voice call sirf user ki apni Gemini key par — owner pool chat ke liye hai.
   return localStorage.getItem('ba_gemini_key')||null;
 }
 async function bhMicTakeover(){ if(window.BadshahBridge && BadshahBridge.micTakeover){ try{ BadshahBridge.micTakeover(); }catch(e){} await new Promise(r=>setTimeout(r,350)); } }
@@ -572,12 +608,13 @@ function onAudioChunk(e){
 }
 async function startEngine(){
   if(call.engine==='gemini'){
-    callStatus('🔑 Supabase pool se Gemini key la raha hoon…');
+    callStatus('🔑 Tumhari Gemini key se connect kar raha hoon…');
     call.key=await getLiveKey();
     if(!call.key){ $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden'); return; }
     if(!await ensureAudio()) return;
     call.retries=0; connectGemini();
   } else {
+    if(!localStorage.getItem('ba_el_key')){ $('callMain').classList.add('hidden'); $('keyBox').classList.remove('hidden'); return; }
     if(!await ensureAudio()) return;
     call.elHist=[]; call.elBuf=[]; call.elSpeech=false; call.elBusy=true;
     callStatus('🎙️ ElevenLabs mode — greeting bhej raha hoon…');
@@ -673,7 +710,7 @@ async function elTurn(samples){
   if(call.on&&call.engine==='eleven') callStatus('🟢 ElevenLabs Live — bolo, main sun raha hoon');
 }
 async function elSpeak(text){
-  const r=await fetch(CFG.ttsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:'elevenlabs',voice:selVoice(),text:String(text).slice(0,600)})});
+  const r=await fetch(CFG.ttsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:'elevenlabs',voice:selVoice(),text:String(text).slice(0,600),userKey:localStorage.getItem('ba_el_key')||undefined})});
   if(!r.ok) throw new Error('tts '+r.status);
   const blob=await r.blob();
   const url=URL.createObjectURL(blob);
@@ -735,6 +772,12 @@ function tryDeviceCommand(raw){
       bridgeDo('openApp',APP_PKGS[name]);
       return '📱 '+name.charAt(0).toUpperCase()+name.slice(1)+' khol raha hoon…';
     }
+  }
+  if(/whatsapp/i.test(raw) && (m=raw.match(/(\+?\d[\d\s\-]{8,15}\d)/))){
+    const num=m[1].replace(/[\s\-]/g,'');
+    const text=raw.replace(/(\+?\d[\d\s\-]{8,15}\d)/,' ').replace(/whatsapp/ig,' ').replace(/\s+/g,' ').replace(/^(par|pe|ko|message|msg|bhejo|bhej|kar|karo|do|:|-|\s)+/i,'').trim()||'Assalam o Alaikum!';
+    if(window.BadshahBridge && BadshahBridge.openWhatsApp){ try{ BadshahBridge.openWhatsApp(num,text); return '💬 WhatsApp par message type karke tayyar kar diya hai — bas send wala button dabana hai.'; }catch(e){} }
+    window.open('https://wa.me/'+num.replace(/^\+/,'')+'?text='+encodeURIComponent(text),'_blank'); return '💬 WhatsApp khol raha hoon…';
   }
   if(m=raw.match(/(.+?)\s*ko\s+message\s*[:\-]?\s*(.+)/i)){
     const msg=m[2].trim(); if(!bridgeDo('shareText',msg)) window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); return '✉️ Message tayyar hai — bhejne ke liye app chuno: "'+msg+'"';

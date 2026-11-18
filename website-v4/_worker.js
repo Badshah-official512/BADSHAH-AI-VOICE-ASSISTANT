@@ -346,8 +346,9 @@ async function handleTts(req, env) {
     }
   }
   // 2) ElevenLabs pool (working voice today)
-  const keys = await poolKeys(env, 'elevenlabs').catch(() => []);
-  if (!keys.length) return json(404, { error: 'ElevenLabs key pool khaali hai.' });
+  const userKey = body.userKey ? String(body.userKey).trim() : '';
+  const keys = userKey.length >= 20 ? [{ key_value: userKey }] : await poolKeys(env, 'elevenlabs').catch(() => []);
+  if (!keys.length) return json(404, { error: 'ElevenLabs key nahi mili — apni key dalo.' });
   const voice = EL_VOICES[body.voice] || body.voice || EL_VOICES.badshah;
   for (const k of keys) {
     const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice, {
@@ -355,7 +356,7 @@ async function handleTts(req, env) {
       headers: { 'xi-api-key': k.key_value, 'Content-Type': 'application/json', 'accept': 'audio/mpeg' },
       body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.45, similarity_boost: 0.8 } })
     });
-    if (r.ok) { await touchKey(env, k); return new Response(r.body, { status: 200, headers: { 'content-type': 'audio/mpeg', 'cache-control': 'no-store', ...SECURITY_HEADERS } }); }
+    if (r.ok) { if (!userKey) { try { await touchKey(env, k); } catch (e) {} } return new Response(r.body, { status: 200, headers: { 'content-type': 'audio/mpeg', 'cache-control': 'no-store', ...SECURITY_HEADERS } }); }
     if (r.status !== 401 && r.status !== 429) return json(502, { error: 'ElevenLabs error ' + r.status });
   }
   return json(502, { error: 'Saari ElevenLabs keys ki limit khatam — admin se nayi key add karwao.' });
