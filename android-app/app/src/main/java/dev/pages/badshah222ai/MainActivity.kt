@@ -44,7 +44,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import dev.pages.badshah222ai.core.WakeWordService
 
 /**
  * BADSHAH AI v4 — the app IS the living web assistant (same experience as the
@@ -56,24 +55,17 @@ class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
     private var triedFallback = false
     private var pendingPermReq: PermissionRequest? = null
-    private var pendingWake = false
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_MIC = 41
-        private const val REQ_WAKE = 43
         private const val REQ_MIC_PRE = 44
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_WAKE) {
-            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            if (granted && wakeEnabled()) WakeWordService.start(this)
-            return
-        }
         if (requestCode == REQ_MIC) {
             val req = pendingPermReq ?: return
             pendingPermReq = null
@@ -85,21 +77,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun wakeEnabled(): Boolean =
-        getSharedPreferences("bh_shell", Context.MODE_PRIVATE).getBoolean("wake_on", false)
-
-    private fun handleWakeIntent(intent: Intent?) {
-        if (intent?.getStringExtra(WakeWordService.EXTRA_WAKE) == "1") pendingWake = true
-    }
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleWakeIntent(intent)
-        if (pendingWake && this::web.isInitialized) {
-            pendingWake = false
-            web.evaluateJavascript("window.__bhWake&&window.__bhWake()", null)
-        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -108,10 +88,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         AgentService.start(this)
-        handleWakeIntent(intent)
-        if (wakeEnabled() && ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            WakeWordService.start(this)
-        }
 
         web = WebView(this).apply {
             layoutParams = FrameLayout.LayoutParams(
@@ -158,13 +134,6 @@ class MainActivity : ComponentActivity() {
                     if (internal) return false
                     startActivity(Intent(Intent.ACTION_VIEW, req.url))
                     return true
-                }
-
-                override fun onPageFinished(view: WebView, url: String) {
-                    if (pendingWake) {
-                        pendingWake = false
-                        view.evaluateJavascript("window.__bhWake&&window.__bhWake()", null)
-                    }
                 }
 
                 override fun onReceivedError(view: WebView, req: WebResourceRequest, err: WebResourceError) {
@@ -286,20 +255,6 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
-        fun callStarted() {
-            // Wake-word recognizer mic pakad kar baitha hota hai — call ke dauran use roko,
-            // warna getUserMedia "audio source busy" par fail hota hai (TECNO par dekha gaya).
-            if (wakeEnabled()) WakeWordService.stop(this@MainActivity)
-        }
-
-        @JavascriptInterface
-        fun callEnded() {
-            if (wakeEnabled() && ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                WakeWordService.start(this@MainActivity)
-            }
-        }
-
-        @JavascriptInterface
         fun googleSignIn() {
             // v6.4: ASLI Google sign-in — phone ke Gmail accounts ka native picker
             // (Credential Manager). WebView ke andar popup OAuth Google band karta hai,
@@ -326,26 +281,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        @JavascriptInterface
-        fun setWakeWord(on: Boolean) {
-            getSharedPreferences("bh_shell", Context.MODE_PRIVATE).edit().putBoolean("wake_on", on).apply()
-            runOnUiThread {
-                if (on) {
-                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        WakeWordService.start(this@MainActivity)
-                        Toast.makeText(this@MainActivity, "Wake word ON — 'BADSHAH' bolo, main aa jaunga 🎙️", Toast.LENGTH_LONG).show()
-                    } else {
-                        ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_WAKE)
-                    }
-                } else {
-                    WakeWordService.stop(this@MainActivity)
-                    Toast.makeText(this@MainActivity, "Wake word band ho gaya", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        @JavascriptInterface
-        fun isWakeWord(): Boolean = wakeEnabled()
 
         @JavascriptInterface
         fun appVersionCode(): Int {

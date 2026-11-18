@@ -43,7 +43,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pages.badshah222ai.BadshahApp
 import dev.pages.badshah222ai.R
-import dev.pages.badshah222ai.core.WakeWordService
 import dev.pages.badshah222ai.data.ai.*
 import dev.pages.badshah222ai.data.voice.*
 import dev.pages.badshah222ai.domain.*
@@ -240,7 +239,7 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
     var orbOn by remember { mutableStateOf(dev.pages.badshah222ai.core.FloatingOrbService.running) }
     var wakeDraft by remember { mutableStateOf(vm.customWakeWord.value) }
     val wakeMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (ok && vm.wakeWord.value) WakeWordService.start(ctx) else if (!ok) vm.setWakeWord(false)
+        if (!ok) vm.setWakeWord(false)
     }
     var key by remember(provider) { mutableStateOf("") }; var showKey by remember { mutableStateOf(false) }
     var eKey by remember { mutableStateOf("") }; var modelMenu by remember { mutableStateOf(false) }
@@ -434,16 +433,13 @@ fun SettingsScreen(session: SessionViewModel, vm: SettingsViewModel, onBack: () 
                     Text("Wake word", Modifier.weight(1f))
                     Switch(wakeOn, { on ->
                         vm.setWakeWord(on)
-                        if (on) {
-                            if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) WakeWordService.start(ctx)
-                            else wakeMic.launch(Manifest.permission.RECORD_AUDIO)
-                        } else WakeWordService.stop(ctx)
+                        if (on && ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) wakeMic.launch(Manifest.permission.RECORD_AUDIO)
                     })
                 }
                 Text("Custom wake phrase (optional, BADSHAH ke ilawa)", style = MaterialTheme.typography.labelLarge)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(wakeDraft, { wakeDraft = it }, Modifier.weight(1f), singleLine = true, label = { Text("e.g. Hey assistant") })
-                    Button({ vm.setCustomWakeWord(wakeDraft); if (wakeOn) { WakeWordService.stop(ctx); WakeWordService.start(ctx) } }) { Text("Save") }
+                    Button({ vm.setCustomWakeWord(wakeDraft) }) { Text("Save") }
                 }
             } }
             item { Section("App settings", Icons.Default.Tune) {
