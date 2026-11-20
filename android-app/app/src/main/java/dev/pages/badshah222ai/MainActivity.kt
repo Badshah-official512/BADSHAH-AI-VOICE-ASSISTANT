@@ -417,6 +417,33 @@ class MainActivity : ComponentActivity() {
         fun toast(msg: String) {
             runOnUiThread { Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show() }
         }
+
+        @JavascriptInterface
+        fun setTorch(on: String) {
+            // v7: Phone Control — Gemini Live tool / chat command se torch on/off.
+            // CameraManager.setTorchMode ko CAMERA permission nahi chahiye.
+            runOnUiThread {
+                try {
+                    val cm = getSystemService(Context.CAMERA_SERVICE) as android.hardware.camera2.CameraManager
+                    val id = cm.cameraIdList.firstOrNull {
+                        cm.getCameraCharacteristics(it).get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+                    }
+                    if (id != null) cm.setTorchMode(id, on == "on")
+                } catch (e: Exception) { }
+            }
+        }
+
+        @JavascriptInterface
+        fun adjustVolume(dir: String) {
+            // v7: Phone Control — media volume barhao/kam karo (system UI ke saath).
+            runOnUiThread {
+                try {
+                    val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    val d = if (dir == "down") AudioManager.ADJUST_LOWER else AudioManager.ADJUST_RAISE
+                    am.adjustStreamVolume(AudioManager.STREAM_MUSIC, d, AudioManager.FLAG_SHOW_UI)
+                } catch (e: Exception) { }
+            }
+        }
     }
 
     override fun onBackPressed() {
