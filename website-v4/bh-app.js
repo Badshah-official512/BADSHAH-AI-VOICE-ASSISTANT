@@ -131,7 +131,7 @@ function buildPrompt(text){
   const cp=(window.BH_CONFIG&&BH_CONFIG.app&&BH_CONFIG.app.systemPrompt)||'';
   const persona='You are BADSHAH AI Assistant — a smart, loyal and friendly male AI assistant created by Zain Shah (Badshah) from Pakistan.';
   const lang={auto:'Reply in the same language and script the user writes in (Urdu, Roman Urdu, English or Hindi).',roman:'Always reply in Roman Urdu (Urdu written with English letters).',en:'Always reply in English.',ur:'Always reply in Urdu script (اردو).'}[S.lang]||'';
-  const sys=[persona,'Be accurate, helpful and to the point. Use markdown (lists, headings, code blocks) when it helps.',lang,cp,S.instr?('User instructions: '+S.instr):''].filter(Boolean).join('\n');
+  const sys=[persona,'Be accurate, helpful and to the point. Use markdown (lists, headings, code blocks) when it helps.',lang,cp,S.instr?('User instructions: '+S.instr):'',(window.__bhMemPrompt?('User ki saved yaadein (in ka khayal rakho aur naturally use karo): '+window.__bhMemPrompt):'')].filter(Boolean).join('\n');
   const hist=chat().msgs.slice(0,-1).slice(-8).map(m=>(m.role==='user'?'User: ':'Assistant: ')+String(m.content).slice(0,800));
   const make=()=>sys+(hist.length?'\n\nConversation so far:\n'+hist.join('\n'):'')+'\n\nUser: '+text+'\nAssistant:';
   let p=make(); while(p.length>9000&&hist.length){ hist.shift(); p=make(); }

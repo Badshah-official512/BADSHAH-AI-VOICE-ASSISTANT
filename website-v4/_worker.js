@@ -657,6 +657,37 @@ async function handleProfileSync(req, env) {
     return json(200, { ok: true, blocked: !!rows[0].blocked, isNew: false }, CORS);
   } catch (e) { return json(200, { ok: true, blocked: false, note: 'migration_006_pending' }, CORS); }
 }
+/* ---------------- /api/memories (Yaad — long-term memory, migration 003) ---------------- */
+async function handleMemories(req, env, url) {
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  const authz = req.headers.get('authorization') || '';
+  const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
+  const payload = token ? await verifyFirebaseToken(token) : null;
+  if (!payload) return json(401, { error: 'login required' }, CORS);
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(503, { error: 'backend key missing' }, CORS);
+  const uid = payload.user_id || payload.sub;
+  try {
+    if (req.method === 'GET') {
+      const rows = await sbAdmin(env, 'memories?select=id,kind,text,created_at&user_id=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&limit=100');
+      return json(200, { memories: Array.isArray(rows) ? rows : [] }, CORS);
+    }
+    if (req.method === 'POST') {
+      const b = await req.json().catch(() => ({}));
+      const text = String(b.text || '').trim().slice(0, 300);
+      if (!text) return json(400, { error: 'text khaali hai' }, CORS);
+      const kind = ['note', 'zaat', 'kaam', 'pasand'].includes(b.kind) ? b.kind : 'note';
+      const rows = await sbAdmin(env, 'memories', { method: 'POST', body: JSON.stringify({ user_id: uid, kind, text }) });
+      return json(200, { ok: true, memory: Array.isArray(rows) ? rows[0] : null }, CORS);
+    }
+    if (req.method === 'DELETE') {
+      const id = url.searchParams.get('id') || '';
+      if (!id) return json(400, { error: 'id chahiye' }, CORS);
+      await sbAdmin(env, 'memories?id=eq.' + encodeURIComponent(id) + '&user_id=eq.' + encodeURIComponent(uid), { method: 'DELETE', prefer: 'return=minimal' });
+      return json(200, { ok: true }, CORS);
+    }
+    return json(405, { error: 'method not allowed' }, CORS);
+  } catch (e) { return json(500, { error: 'memory server masla' }, CORS); }
+}
 /* device-control queue (web -> Android app / desktop agent) */
 async function handleDeviceCmd(req, env) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -680,6 +711,7 @@ export default {
     if (url.pathname === '/api/config') return handleConfig(req, env);
     if (url.pathname === '/api/track') return handleTrack(req, env);
     if (url.pathname === '/api/profile-sync') return handleProfileSync(req, env);
+    if (url.pathname === '/api/memories') return handleMemories(req, env, url);
     if (url.pathname === '/api/device') return handleDeviceCmd(req, env);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
     if (url.pathname === '/api/image') return handleImage(req, env, url);
