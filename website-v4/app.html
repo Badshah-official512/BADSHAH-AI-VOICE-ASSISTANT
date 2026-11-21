@@ -872,7 +872,7 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"><video id="callVidA" class="callvid" muted loop playsinline preload="auto" src="assets/char-idle.mp4"></video><video id="callVidB" class="callvid" muted loop playsinline preload="none"></video></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"><canvas id="callWave"></canvas></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -2445,7 +2445,7 @@ const PT_STEPS=[
  {k:'bluetooth', ic:'🎧', t:'Bluetooth ki ijazat?', x:'Headphones aur doosre devices se jodne ke liye.'},
  {k:'calendar', ic:'📅', t:'Calendar dekh sakoon?', x:'Tumhare events aur mulaqaton ki yaad dehani ke liye.'},
  {k:'notifications', ic:'🔔', t:'Notifications bhejoon?', x:'Zaroori khabrein, reminders aur replies waqt par pohanchane ke liye.'},
- {k:'a11y', ic:'🖐️', t:'Phone control ki ijazat doge?', x:'Accessibility se main tumhare kehne par type, tap, scroll aur screen parh sakta hoon. Ye Android ki Settings se ON hota hai — aur wahi se kabhi bhi band.'},
+ {k:'a11y', ic:'🖐️', t:'Phone control ki ijazat doge?', x:'Accessibility se main tumhare kehne par type, tap, scroll aur screen parh sakta hoon. Ye Android ki Settings se ON hota hai — aur wahi se kabhi bhi band. AGAR phone \'App was denied access\' kahe to ghabrana nahi: pehle Settings → Apps → BADSHAH AI → upar teen dots (⋮) → \'Allow restricted settings\' ON karo, phir wapas aakar Accessibility on kar do. Ye Android ki hifazat hai — website se install hone wali har app ke saath aisa hota hai.'},
  {k:'overlay', ic:'💬', t:'Floating character ki ijazat?', x:'Call ke doran chhota character doosri apps ke upar dikhe — taake app band karke bhi baat chalti rahe.'},
  {k:'battery', ic:'🔋', t:'Battery ki bandish khatam karoon?', x:'Background mein call na kate, is ke liye battery restrictions hatani hongi (TECNO par ye khaas zaroori hai).'}];
 let __ptIdx=0;
@@ -2477,37 +2477,32 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
 (function(){ const old=window.__bhOnLogin; window.__bhOnLogin=function(u){ if(old) old(u);
   setTimeout(()=>{ try{ if(window.BadshahBridge && window.BadshahBridge.requestPerm && localStorage.getItem('ba_perm_tour')!=='seen') startPermTour(false); }catch(e){} }, 1200); }; })();
 
-/* ===== v7.3: Character VIDEO LOOPS — bolna / sunna / saakin (poster fallback) ===== */
+/* ===== v7.3.1: Poster + VOICE WAVE — awaaz ke saath nachti lehren (lyrics style) ===== */
 (function(){
-  const SRC={talk:'assets/char-talk.mp4', listen:'assets/char-listen.mp4', idle:'assets/char-idle.mp4'};
-  let cur='', front='A', __warmed=false;
-  function want(){
-    try{
-      if(document.body.classList.contains('rm')) return '';
-      if(typeof call==='undefined' || !call.on) return '';
-      const st=$('callStage'); if(!st) return 'idle';
-      if(st.classList.contains('speaking')) return 'talk';
-      if(st.classList.contains('listening')) return 'listen';
-      return 'idle';
-    }catch(e){ return ''; }
+  const cv=document.getElementById('callWave'); if(!cv) return; const ctx=cv.getContext('2d');
+  let W=0,H=0;
+  function size(){ const r=cv.getBoundingClientRect(); W=cv.width=Math.max(200,Math.round(r.width||300)); H=cv.height=Math.max(30,Math.round(r.height||56)); }
+  size(); addEventListener('resize',size);
+  const bars=26, data=new Uint8Array(64);
+  function bar(x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect){ ctx.roundRect(x,y,w,h,r); } else { ctx.rect(x,y,w,h); } ctx.fill(); }
+  function frame(){
+    requestAnimationFrame(frame);
+    if(typeof call==='undefined'||!call.on){ if(W) ctx.clearRect(0,0,W,H); return; }
+    if(!W) size();
+    const st=$('callStage'); const speaking=st&&st.classList.contains('speaking');
+    let an=(speaking&&call.outAn)?call.outAn:(call.analyser||call.outAn);
+    if(an){ try{ an.getByteFrequencyData(data); }catch(e){} }
+    ctx.clearRect(0,0,W,H);
+    const bw=W/bars;
+    for(let i=0;i<bars;i++){
+      const v=an? data[Math.floor(i*1.6)]/255 : 0;
+      const h=Math.max(3, v*(H-6));
+      const x=i*bw+bw*0.22, w=bw*0.56, y=(H-h)/2;
+      const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#A3E635');
+      ctx.fillStyle=g; bar(x,y,w,h,3);
+    }
   }
-  function show(state){
-    const A=$('callVidA'), B=$('callVidB'); if(!A||!B) return;
-    if(state && !__warmed){ __warmed=true; try{ fetch(SRC.talk).catch(()=>{}); fetch(SRC.listen).catch(()=>{}); }catch(e){} }
-    if(!state){ A.classList.remove('on'); B.classList.remove('on'); try{A.pause();B.pause();}catch(e){} cur=''; return; }
-    if(state===cur){ const onEl=A.classList.contains('on')?A:(B.classList.contains('on')?B:null); if(onEl&&onEl.paused){ const q=onEl.play(); if(q&&q.catch) q.catch(()=>{}); } return; }
-    cur=state;
-    const onEl = front==='A'?A:B, offEl = front==='A'?B:A;
-    if(onEl.getAttribute('data-s')!==state){ onEl.src=SRC[state]; onEl.setAttribute('data-s',state); }
-    const p=onEl.play(); if(p&&p.catch) p.catch(()=>{ cur=''; setTimeout(()=>{ if(onEl.classList.contains('on')){ const q=onEl.play(); if(q&&q.catch) q.catch(()=>{}); } },300); });
-    onEl.classList.add('on'); offEl.classList.remove('on'); setTimeout(()=>{ try{offEl.pause();}catch(e){} },500);
-    front = front==='A'?'B':'A';
-  }
-  function tick(){ show(want()); }
-  const stEl=$('callStage');
-  if(stEl && window.MutationObserver){ new MutationObserver(tick).observe(stEl,{attributes:true, attributeFilter:['class']}); }
-  setInterval(tick, 2000);
-  tick();
+  requestAnimationFrame(frame);
 })();
 
 /* ===== v7.3 Phase 3: call se image/video banao ===== */
