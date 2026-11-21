@@ -168,7 +168,10 @@ async function callVideo(text,waitEl){
   for(let k=0;k<45;k++){
     await new Promise(res=>setTimeout(res,8000)); if(ctrl.signal.aborted) throw Object.assign(new Error('abort'),{name:'AbortError'});
     waitEl.querySelector('.txt').innerHTML='🎬 Video ban rahi hai… '+Math.round((Date.now()-t0)/1000)+'s <span class="typing"><i></i><i></i><i></i></span>';
-    const s=await fetch(CFG.videoUrl+'?name='+encodeURIComponent(d.name),{headers:await authHeaders(),signal:ctrl.signal}); const sd=await s.json().catch(()=>({}));
+    const s=await fetch(CFG.videoUrl+'?name='+encodeURIComponent(d.name),{headers:await authHeaders(),signal:ctrl.signal});
+    if((s.headers.get('content-type')||'').includes('video/')){ const blob=await s.blob(); const u=URL.createObjectURL(blob); return '🎬 Video tayyar!\n\n[Video dekho]('+u+')'; }
+    const sd=await s.json().catch(()=>({}));
+    if(!s.ok) throw new Error(sd.error||('Video status nahi mila ('+s.status+')'));
     if(sd.done){ const url=(JSON.stringify(sd).match(/https?:[^"\\]+/)||[])[0]; return url?'🎬 Video tayyar!\n\n[Video dekho]('+url+')':'🎬 Video tayyar ho gayi, lekin link nahi mila.'; }
   }
   throw new Error('Video mein bohat waqt lag raha hai — baad mein try karo.');

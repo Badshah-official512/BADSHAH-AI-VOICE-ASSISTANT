@@ -301,6 +301,20 @@ async function handleImage(req, env, url) {
     }
   }
   { const alt = await altImage(env, q); if (alt) return json(200, alt); }
+  // v7.3: owner ki Pollinations image key (Supabase pool) — key kabhi frontend par nahi jati, image yahin se proxy hoti hai
+  if (env.SUPABASE_SERVICE_ROLE_KEY) {
+    const pks = await poolKeys(env, 'pollinations-image').catch(() => []);
+    for (const k of pks) {
+      try {
+        const r = await fetchT('https://gen.pollinations.ai/image/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true', { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 45000);
+        if (r.ok) { const buf = await r.arrayBuffer(); await touchKey(env, k);
+          let bin = ''; const bytes = new Uint8Array(buf); const CH = 32768;
+          for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+          return json(200, { image: 'data:image/jpeg;base64,' + btoa(bin), provider: 'pollinations-key', model: 'flux' }); }
+        if (r.status !== 401 && r.status !== 403 && r.status !== 429) break;
+      } catch (e) {}
+    }
+  }
   const purl = 'https://gen.pollinations.ai/image/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true';
   return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'gemini_pending_full_key' });
 }
@@ -311,6 +325,29 @@ async function handleVideo(req, env, url) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Key pool setup pending hai.' });
   const opName0 = url.searchParams.get('name') || '';
   if (req.method === 'GET' && opName0.startsWith('rep:')) { const rv = await replicateVideo(env, req, url, ''); if (rv) return rv; }
+  // v7.3: Pollinations video (owner ki keys, Supabase pool) — POST par stateless token, GET poll par ya to MP4 binary ya {done:false}
+  const vkeys = [...await poolKeys(env, 'pollinations-video').catch(() => []), ...await poolKeys(env, 'pollinations-image').catch(() => [])];
+  if (req.method === 'GET' && opName0.startsWith('pol:')) {
+    let job = null;
+    try { job = JSON.parse(decodeURIComponent(escape(atob(opName0.slice(4).replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) {}
+    if (!job || !job.p) return json(400, { error: 'Video token ghalat hai.' });
+    if (!vkeys.length) return json(404, { error: 'Video key pool mein nahi hai.' });
+    for (const k of vkeys) {
+      try {
+        const r = await fetchT('https://gen.pollinations.ai/video/' + encodeURIComponent(job.p) + '?model=' + encodeURIComponent(job.m || 'seedance-2.5-flash'), { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 50000);
+        if (r.ok) { const buf = await r.arrayBuffer(); await touchKey(env, k); return new Response(buf, { status: 200, headers: { 'Content-Type': 'video/mp4', 'Cache-Control': 'no-store' } }); }
+        if (r.status === 401 || r.status === 403) return json(401, { error: 'Is key par video generation ki ijazat nahi hai — Pollinations par video ke liye key par balance/entitlement chahiye. Sahi video key Admin Panel mein dalo to video chal jayega.' });
+      } catch (e) {}
+    }
+    return json(200, { done: false });
+  }
+  if (req.method === 'POST' && vkeys.length) {
+    const b = await req.clone().json().catch(() => ({}));
+    const pr = String(b.prompt || '').slice(0, 1000);
+    if (pr) { const mdl = String(b.model || '').includes('ltx') ? 'ltx-2.5-pro' : 'seedance-2.5-flash';
+      const tok = 'pol:' + btoa(unescape(encodeURIComponent(JSON.stringify({ p: pr, m: mdl })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      return json(200, { name: tok, done: false, provider: 'pollinations', model: mdl }); }
+  }
   const keys = await poolKeys(env, 'gemini').catch(() => []);
   if (!keys.length) { const b0 = await req.clone().json().catch(() => ({})); const rv = await replicateVideo(env, req, url, String(b0.prompt || '').slice(0, 1000)); if (rv) return rv; return json(404, { error: 'Video ke liye Gemini ya Replicate key available nahi hai.' }); }
   const key = keys[0].key_value;
@@ -514,7 +551,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'keys-add': {
         const provider = String(body.provider || '');
-        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate', 'openrouter', 'mistral'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
+        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate', 'openrouter', 'mistral', 'pollinations-image', 'pollinations-video'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
         if (!body.key_value || String(body.key_value).length < 10) return json(400, { error: 'Key mukammal nahi lagti' });
         await sbAdmin(env, 'api_keys', { method: 'POST', body: JSON.stringify({ provider, key_value: String(body.key_value).trim(), label: String(body.label || 'key'), active: true }) });
         return json(200, { ok: true });
@@ -703,6 +740,27 @@ async function handleProfileSync(req, env) {
     return json(200, { ok: true, blocked: !!rows[0].blocked, isNew: false }, CORS);
   } catch (e) { return json(200, { ok: true, blocked: false, note: 'migration_006_pending' }, CORS); }
 }
+/* ---------------- /api/dost (Dost Room — group chat, v7.3) ---------------- */
+async function handleDost(req, env, url) {
+  const authz = req.headers.get('authorization') || '';
+  const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
+  if (!token) return json(401, { error: 'Dost Room ke liye pehle login karo.' });
+  const payload = await verifyFirebaseToken(token);
+  if (!payload) return json(401, { error: 'Session expire — dobara login karo.' });
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Server setup pending hai.' });
+  const room = (url.searchParams.get('room') || 'aam').slice(0, 40);
+  if (req.method === 'GET') {
+    const rows = await sbAdmin(env, 'dost_messages?select=name,text,created_at&room=eq.' + encodeURIComponent(room) + '&order=created_at.desc&limit=50');
+    return json(200, { items: (rows || []).slice().reverse() });
+  }
+  const body = await req.json().catch(() => ({}));
+  const text = String(body.text || '').trim().slice(0, 500);
+  const name = String(body.name || 'Dost').slice(0, 40);
+  if (!text) return json(400, { error: 'Message khaali hai.' });
+  await sbAdmin(env, 'dost_messages', { method: 'POST', body: JSON.stringify({ room, name, text, uid: payload.user_id || payload.sub || '' }) });
+  return json(200, { ok: true });
+}
+
 /* ---------------- /api/news (Khabrein — free RSS, v7.2) ---------------- */
 async function handleNews() {
   const feeds = [['Dawn', 'https://www.dawn.com/feeds/home'], ['BBC Urdu', 'https://www.bbc.com/urdu/index.xml'], ['Geo Urdu', 'https://urdu.geo.tv/rss/']];
@@ -778,6 +836,7 @@ export default {
     if (url.pathname === '/api/profile-sync') return handleProfileSync(req, env);
     if (url.pathname === '/api/memories') return handleMemories(req, env, url);
     if (url.pathname === '/api/news') return handleNews();
+    if (url.pathname === '/api/dost') return handleDost(req, env, url);
     if (url.pathname === '/api/device') return handleDeviceCmd(req, env);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
     if (url.pathname === '/api/image') return handleImage(req, env, url);
