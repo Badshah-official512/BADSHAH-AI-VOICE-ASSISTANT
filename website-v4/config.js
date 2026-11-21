@@ -49,6 +49,6 @@ window.BADSHAH_CONFIG = {
 
   // Gemini Live (call) — key comes from the owner's pool via /api/live-key
   liveModel: "gemini-3.8-live",
-  voicesMale: ["Charon", "Fenrir", "Puck", "Orus", "Algieba", "Achird"],
-  voicesFemale: ["Aoede", "Kore", "Zephyr", "Leda", "Sulafat", "Callirrhoe"]
+  voicesMale: ["Charon", "Fenrir", "Puck", "Orus", "Algieba", "Achird", "Enceladus", "Iapetus", "Umbriel", "Algenib", "Rasalgethi", "Alnilam", "Schedar", "Gacrux", "Zubenelgenubi", "Sadachbia", "Sadaltager"],
+  voicesFemale: ["Aoede", "Kore", "Zephyr", "Leda", "Sulafat", "Callirrhoe", "Autonoe", "Despina", "Erinome", "Laomedeia", "Pulcherrima", "Vindemiatrix"]
 };

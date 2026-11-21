@@ -1088,7 +1088,11 @@ async function fillVoices(){
   const s=$('callVoice'); if(!s) return; s.innerHTML='';
   if(call.engine==='gemini'){
     const saved=localStorage.getItem('ba_voice_gem')||'Charon';
-    GEM_VOICES.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent='🎙️ '+v+(v==='Charon'?' (default)':''); if(v===saved)o.selected=true; s.appendChild(o); });
+    const female=(CFG.voicesFemale&&CFG.voicesFemale.length)?CFG.voicesFemale:['Aoede','Kore','Zephyr','Leda','Sulafat','Callirrhoe'];
+    const addGroup=(label,list)=>{ if(!list.length) return; const g=document.createElement('optgroup'); g.label=label; list.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent='🎙️ '+v+(v==='Charon'?' (default)':''); if(v===saved)o.selected=true; g.appendChild(o); }); s.appendChild(g); };
+    addGroup('Mardana awaazein', GEM_VOICES);
+    addGroup('Zanana awaazein', female);
+    if(!s.value) s.value=saved;
   } else {
     if(!call.elVoices){
       try{ const r=await fetch('/api/voices'); const d=await r.json(); if(d.voices&&d.voices.length) call.elVoices=d.voices.filter(v=>!/female|woman|girl/i.test(v.name||'')); }catch(e){}
@@ -1375,6 +1379,7 @@ function logLine(w,t){ if(!t) return; if(!window.__callLog) window.__callLog=[];
   try{ const box=$('callChatBox'); if(box){ const d=document.createElement('div'); d.className='ccb '+(w==='Tum'?'me':'ai'); d.textContent=s; box.appendChild(d); while(box.children.length>40) box.removeChild(box.firstChild); box.scrollTop=box.scrollHeight; } }catch(e){} }
 function connectGemini(){
   const key=call.key; if(!key) return;
+  if(call.ws){ try{ const old=call.ws; old.onclose=null; old.onmessage=null; old.onerror=null; old.close(); }catch(e){} call.ws=null; }
   const ws=new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key='+encodeURIComponent(key));
   call.ws=ws;
   ws.onopen=()=>{
@@ -1393,7 +1398,7 @@ function connectGemini(){
   ws.onmessage=async ev=>{
     let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
     if(data.setupComplete){ callStatus('Gemini Live — bolo, main sun raha hoon'); call.retries=0;
-      try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help.)'}]}],turnComplete:true}})); }catch(e){}
+      if(!call.greeted){ call.greeted=true; try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help.)'}]}],turnComplete:true}})); }catch(e){} }
     }
     if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) call.handle=data.sessionResumptionUpdate.newHandle;
     if(data.toolCall && data.toolCall.functionCalls){ for(const fc of data.toolCall.functionCalls){ runPhoneTool(fc, ws); } }
@@ -1410,16 +1415,17 @@ function connectGemini(){
       }
       if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — bolo, main sun raha hoon'); },600); }
     }
-    if(data.goAway){ try{ws.close()}catch(e){} scheduleReconnect(); }
+    if(data.goAway){ try{ws.close()}catch(e){} }
   };
-  ws.onclose=()=>{ if(call.on&&call.engine==='gemini') scheduleReconnect(); };
+  ws.onclose=()=>{ if(call.ws!==ws) return; call.ws=null; if(call.on&&call.engine==='gemini') scheduleReconnect(); };
   ws.onerror=()=>{ callStatus('Connection masla — dobara try ho raha hai…'); };
 }
 function scheduleReconnect(){
-  if(!call.on) return;
-  if(call.retries>=8){ callStatus('Connection bar bar cut raha hai — thodi dair baad try karo.'); return; }
-  call.retries++; callStatus('Dobara connect ho raha hai… ('+call.retries+')');
-  setTimeout(async()=>{ if(call.on&&call.engine==='gemini'){ const nk=await getLiveKey(); if(nk) call.key=nk; connectGemini(); } }, Math.min(600*call.retries,3000));
+  if(!call.on||call.engine!=='gemini') return;
+  if(call.rcT) return; // ek waqt mein sirf EK reconnect — do sockets kabhi nahi
+  if(call.retries>=12){ callStatus('Connection bar bar cut raha hai — thodi dair baad try karo.'); return; }
+  call.retries++; callStatus('Dobara connect ho raha hai…');
+  call.rcT=setTimeout(()=>{ call.rcT=null; if(call.on&&call.engine==='gemini') connectGemini(); }, Math.min(800*call.retries,4000));
 }
 function playPcm(b64){
   const ac=call.ac; if(!ac) return;
@@ -1493,7 +1499,7 @@ function stopAudio(){
   try{ call.proc&&call.proc.disconnect(); }catch(e){}
   try{ call.stream&&call.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   try{ call.ac&&call.ac.close(); }catch(e){}
-  call.ac=call.stream=call.proc=call.analyser=null; call.playT=0; call.sources=[]; call.handle=null;
+  call.ac=call.stream=call.proc=call.analyser=null; call.playT=0; call.sources=[]; call.handle=null; call.greeted=false; if(call.rcT){ clearTimeout(call.rcT); call.rcT=null; }
 }
 
 /* ---------- init ---------- */
