@@ -779,6 +779,80 @@ async function handleProfileSync(req, env) {
     return json(200, { ok: true, blocked: !!rows[0].blocked, isNew: false }, CORS);
   } catch (e) { return json(200, { ok: true, blocked: false, note: 'migration_006_pending' }, CORS); }
 }
+
+/* ---------------- /api/agent (Agent Computer — GitHub Codespaces, v7.4) ---------------- */
+const AGENT_REPO_FULL = 'Badshah-official512/badshah-agent-computer';
+async function ghApi(env, path, method) {
+  if (!env.GITHUB_AGENT_TOKEN) return null;
+  const r = await fetchT('https://api.github.com' + path, { method: method || 'GET', headers: { Authorization: 'Bearer ' + env.GITHUB_AGENT_TOKEN, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'badshah-ai-worker' } }, 20000).catch(() => null);
+  if (!r) return { error: 'GitHub se rabta nahi hua.' };
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) return { error: 'GitHub: ' + (d.message || ('HTTP ' + r.status)) };
+  return d;
+}
+async function agentCs(env) {
+  const d = await ghApi(env, '/user/codespaces?per_page=100');
+  if (!d || d.error) return d;
+  const cs = (d.codespaces || []).find(c => c.repository && c.repository.full_name === AGENT_REPO_FULL);
+  if (!cs) return { found: false };
+  return { found: true, name: cs.name, state: cs.state, webUrl: cs.web_url, lastUsed: cs.last_used_at };
+}
+function agentBearer(req) { const a = req.headers.get('authorization') || ''; return a.startsWith('Bearer ') ? a.slice(7) : null; }
+async function agentUser(req) { const t = agentBearer(req); if (!t) return null; return verifyFirebaseToken(t); }
+async function handleAgentStatus(req, env) {
+  const p = await agentUser(req); if (!p) return json(401, { error: 'Login zaroori hai.' });
+  if (!env.GITHUB_AGENT_TOKEN) return json(200, { configured: false });
+  const cs = await agentCs(env);
+  if (!cs) return json(200, { configured: false });
+  if (cs.error) return json(200, { configured: true, error: cs.error });
+  return json(200, { configured: true, codespace: cs });
+}
+async function handleAgentPower(req, env, action) {
+  const p = await agentUser(req); if (!p) return json(401, { error: 'Login zaroori hai.' });
+  if (!env.GITHUB_AGENT_TOKEN) return json(400, { configured: false, error: 'GitHub token abhi nahi laga.' });
+  const cs = await agentCs(env);
+  if (!cs || cs.error || !cs.found) return json(404, { error: 'Codespace nahi mila.' });
+  const d = await ghApi(env, '/user/codespaces/' + cs.name + '/' + action, 'POST');
+  if (!d || d.error) return json(502, { error: (d && d.error) || 'GitHub se rabta nahi.' });
+  return json(200, { ok: true });
+}
+async function handleAgentTaskCreate(req, env) {
+  const p = await agentUser(req); if (!p) return json(401, { error: 'Login zaroori hai.' });
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Server setup pending hai.' });
+  const body = await req.json().catch(() => ({}));
+  const goal = String(body.goal || '').trim().slice(0, 600);
+  if (goal.length < 3) return json(400, { error: 'Task likho pehle.' });
+  const uid = p.user_id || p.sub || '';
+  const rows = await sbAdmin(env, 'agent_tasks', { method: 'POST', body: JSON.stringify({ firebase_uid: uid, agent: 'browser', goal, status: 'queued' }) });
+  const row = Array.isArray(rows) ? rows[0] : rows;
+  return json(200, { ok: true, id: row && row.id });
+}
+async function handleAgentTasks(req, env) {
+  const p = await agentUser(req); if (!p) return json(401, { error: 'Login zaroori hai.' });
+  const uid = p.user_id || p.sub || '';
+  const rows = await sbAdmin(env, 'agent_tasks?select=id,goal,status,result,error,created_at&firebase_uid=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&limit=10');
+  return json(200, { tasks: rows || [] });
+}
+function runnerOk(req, env) { return !!env.AGENT_RUNNER_KEY && req.headers.get('x-agent-key') === env.AGENT_RUNNER_KEY; }
+async function handleAgentQueue(req, env) {
+  if (!runnerOk(req, env)) return json(403, { error: 'Runner key ghalat hai.' });
+  const rows = await sbAdmin(env, 'agent_tasks?select=id,goal,firebase_uid,created_at&status=eq.queued&order=created_at.asc&limit=3');
+  return json(200, { tasks: rows || [] });
+}
+async function handleAgentReport(req, env) {
+  if (!runnerOk(req, env)) return json(403, { error: 'Runner key ghalat hai.' });
+  const body = await req.json().catch(() => ({}));
+  const id = String(body.id || '');
+  const status = String(body.status || '');
+  if (!id || !['running', 'done', 'failed'].includes(status)) return json(400, { error: 'Report adhoora hai.' });
+  const patch = { status, updated_at: new Date().toISOString() };
+  if (body.result) patch.result = body.result;
+  if (body.error) patch.error = String(body.error).slice(0, 400);
+  await sbAdmin(env, 'agent_tasks?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(patch) });
+  if (body.log) await sbAdmin(env, 'agent_task_logs', { method: 'POST', body: JSON.stringify({ task_id: id, level: status === 'failed' ? 'error' : 'info', message: String(body.log).slice(0, 300) }) });
+  return json(200, { ok: true });
+}
+
 /* ---------------- /api/dost (Dost Room — group chat, v7.3) ---------------- */
 async function handleDost(req, env, url) {
   const authz = req.headers.get('authorization') || '';
@@ -876,6 +950,13 @@ export default {
     if (url.pathname === '/api/memories') return handleMemories(req, env, url);
     if (url.pathname === '/api/news') return handleNews();
     if (url.pathname === '/api/dost') return handleDost(req, env, url);
+    if (url.pathname === '/api/agent/status') return handleAgentStatus(req, env);
+    if (url.pathname === '/api/agent/start') return handleAgentPower(req, env, 'start');
+    if (url.pathname === '/api/agent/stop') return handleAgentPower(req, env, 'stop');
+    if (url.pathname === '/api/agent/task') return handleAgentTaskCreate(req, env);
+    if (url.pathname === '/api/agent/tasks') return handleAgentTasks(req, env);
+    if (url.pathname === '/api/agent/queue') return handleAgentQueue(req, env);
+    if (url.pathname === '/api/agent/report') return handleAgentReport(req, env);
     if (url.pathname === '/api/device') return handleDeviceCmd(req, env);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
     if (url.pathname === '/api/image') return handleImage(req, env, url);

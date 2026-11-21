@@ -641,6 +641,16 @@
         <div style="display:flex;gap:8px"><input class="field" id="dostInput" placeholder="Message likho…" style="flex:1"><button class="btn btn-p" style="margin:0" onclick="dostSend()">Bhejo</button></div>
       </div>
     </section>
+    <!-- ===== AGENT COMPUTER (v7.4) ===== -->
+    <section class="view" id="v-agent">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('rooms')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="cpu"></span> Agent Computer</div><div class="psub">Mera apna cloud computer — web par kaam karke report deta hai</div></div></div>
+        <div class="card" style="margin-bottom:12px"><h3><span data-ic="cpu"></span> Computer ki halat</h3><p id="agStat" style="font-weight:600;margin:6px 0">Check ho raha hai…</p><p style="color:var(--mut);font-size:13.5px;line-height:1.6">Ye wohi computer hai jo GitHub Codespaces par bana hai — bina card ke. Computer ON ho to neeche task likho: wo khud web par ja kar page khole ga, parhe ga aur screenshot ke saath report yahi bhejega.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-p" id="agStart">▶ Chalao</button><button class="btn" id="agStop">⏸ Band karo</button><a class="btn" href="https://github.com/codespaces" target="_blank" rel="noopener">Computer kholo ↗</a></div></div>
+        <div class="card" style="margin-bottom:12px"><h3><span data-ic="send"></span> Naya task</h3><textarea id="agGoal" rows="3" placeholder="Masalan: https://badshah222-ai.pages.dev khol kar batao wahan kya hai — ya koi sawal likho, computer web par dhoondhe ga" style="width:100%"></textarea><button class="btn btn-p w" id="agSend" style="margin-top:8px">Task bhejo</button><p style="color:var(--mut);font-size:12.5px;margin-top:6px">Login wale kaam (jahan tumhara account ya OTP chahiye) agent nahi karega — wo kaam tumhare saamne hote hain.</p></div>
+        <div class="card"><h3><span data-ic="doc"></span> Mere tasks</h3><div id="agTasks"><p style="color:var(--mut)">Abhi koi task nahi.</p></div></div>
+      </div>
+    </section>
 
     <!-- ===== SETTINGS DETAIL: VOICE ===== -->
     <section class="view" id="v-set-voice">
@@ -1081,7 +1091,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.'; }
 function callUI(){ $('callPhoto').src='assets/poster-call.jpg'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1930,7 +1940,8 @@ const GALAXY=[
     ['mic','Awaaz Studio','Voice notes + awaaz sunao','view:voice'],
     ['doc','CV Maker','Professional CV tayyar','view:cv'],
     ['phone','Call Chat','Live calls ki alag chat + khulasa','view:calllogs'],
-    ['message','Dost Room','Doston ke saath group chat','view:dost']
+    ['message','Dost Room','Doston ke saath group chat','view:dost'],
+    ['cpu','Agent Computer','Mera cloud computer — web par kaam karke report deta hai','view:agent']
   ]]
 ];
 (function(){
@@ -2386,6 +2397,29 @@ window.installApp=async function(){
   bhToast('Browser menu (⋮) → "Add to Home screen" dabao — app ban jayegi');
 };
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ try{ navigator.serviceWorker.register('/sw.js'); }catch(e){} }); }
+/* ===== v7.4: AGENT COMPUTER ===== */
+async function agFetch(path, opts){ try{ const r=await fetch(path, Object.assign({headers: await authHeaders()}, opts||{})); return await r.json().catch(()=>({})); }catch(e){ return {}; } }
+async function agLoad(){
+  const st=$('agStat'); if(!st) return;
+  const s=await agFetch('/api/agent/status');
+  if(s.configured===false){ st.textContent='⚠ Abhi GitHub token nahi laga — owner ka setup baqi hai (tasks phir bhi likh sakte ho, line mein lag jayenge).'; }
+  else if(s.error){ st.textContent='⚠ '+s.error; }
+  else if(s.codespace&&s.codespace.found){ st.textContent = s.codespace.state==='Available' ? '🟢 Computer CHAL raha hai — task bhejo, kaam shuru ho jayega.' : '⚪ Computer band hai — pehle ▶ Chalao dabao, 1-2 minute mein tayyar hoga.'; }
+  else { st.textContent='⚠ Codespace nahi mila.'; }
+  const t=await agFetch('/api/agent/tasks');
+  const box=$('agTasks'); if(!box) return;
+  if(t.tasks&&t.tasks.length){ box.innerHTML=t.tasks.map(x=>{ const r=x.result||{}; const chip=x.status==='done'?'🟢 Ho gaya':x.status==='running'?'🟡 Chal raha hai':x.status==='failed'?'🔴 Fail ho gaya':'⚪ Line mein hai';
+    return '<div style="border-top:1px solid var(--line);padding:9px 0"><b>'+esc(x.goal)+'</b><div style="color:var(--mut);font-size:12.5px;margin:2px 0">'+chip+' · '+esc(new Date(x.created_at).toLocaleString())+'</div>'+(r.title?'<div style="font-size:13.5px"><b>'+esc(r.title)+'</b></div>':'')+(r.url?'<div style="font-size:12.5px;color:var(--mut)">'+esc(r.url)+'</div>':'')+(r.text?'<div style="font-size:13px;white-space:pre-wrap;max-height:130px;overflow:auto;margin-top:4px">'+esc(String(r.text).slice(0,900))+'</div>':'')+(r.screenshot?'<img src="data:image/jpeg;base64,'+r.screenshot+'" style="width:100%;border-radius:10px;margin-top:6px">':'')+(x.error?'<div style="color:var(--red);font-size:12.5px">'+esc(x.error)+'</div>':'')+'</div>'; }).join(''); }
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const sv = window.showView;
+  if(typeof sv==='function'){ window.showView = function(n){ sv(n); if(n==='agent'){ agLoad(); clearInterval(window.__agT); window.__agT=setInterval(()=>{ const v=$('v-agent'); if(v&&v.classList.contains('on')) agLoad(); else clearInterval(window.__agT); }, 12000); } }; }
+  const b1=$('agStart'), b2=$('agStop'), b3=$('agSend');
+  if(b1) b1.onclick=async()=>{ b1.textContent='Chal raha hai…'; await agFetch('/api/agent/start',{method:'POST'}); setTimeout(agLoad, 2500); b1.textContent='▶ Chalao'; };
+  if(b2) b2.onclick=async()=>{ await agFetch('/api/agent/stop',{method:'POST'}); setTimeout(agLoad, 1500); };
+  if(b3) b3.onclick=async()=>{ const g=($('agGoal').value||'').trim(); if(g.length<3){ alert('Pehle task likho.'); return; } const r=await agFetch('/api/agent/task',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({goal:g})}); if(r.ok){ $('agGoal').value=''; agLoad(); } else alert(r.error||'Task nahi gaya.'); };
+});
+
 /* ===== v7.3 Phase 5: Permissions page + Report + Dost Room ===== */
 const PERM_ROWS=[
  ['mic','mic','Microphone','Voice call aur voice input ke liye'],
