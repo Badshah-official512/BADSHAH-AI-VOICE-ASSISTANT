@@ -38,6 +38,10 @@ window.BADSHAH_CONFIG = {
   imageModels: ["gemini-3.1-flash-image", "gemini-3-pro-image"],
   imageModelLabels: { "gemini-3.1-flash-image": "Gemini 3.1 Flash Image — Fast", "gemini-3-pro-image": "Gemini 3 Pro Image — Quality" },
   videoModels: ["gemini-omni-1.1-flash", "veo-3.1-generate-preview"],
+  moreModels: [
+    { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (DeepSeek/Qwen/Gemma)" },
+    { id: "mistral:mistral-small-latest", label: "Mistral Small — Free Tier" }
+  ],
   groqModels: [
     { id: "openai/gpt-oss-120b", label: "Groq GPT-OSS 120B (smart)" },
     { id: "openai/gpt-oss-20b", label: "Groq GPT-OSS 20B (fast)" }

@@ -151,6 +151,32 @@ async function groqAnswer(env, model, q) {
   }
   return null;
 }
+async function oaiAnswer(env, provider, baseUrl, model, q) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const keys = await poolKeys(env, provider).catch(() => []);
+  for (const k of keys) {
+    const r = await fetchT(baseUrl + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] })
+    }, 25000).catch(() => null);
+    if (!r) return null;
+    if (r.ok) {
+      const d = await r.json();
+      await touchKey(env, k);
+      return ((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '');
+    }
+    if (r.status !== 401 && r.status !== 429) return null;
+  }
+  return null;
+}
+async function workersAiAnswer(env, q) {
+  if (!env.AI || !env.AI.run) return null;
+  try {
+    const d = await env.AI.run('@cf/openai/gpt-oss-120b', { messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] });
+    return (d && (d.response || d.result)) || null;
+  } catch (e) { return null; }
+}
 async function geminiAnswer(env, model, q) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
   const keys = await poolKeys(env, 'gemini').catch(() => []);
@@ -188,12 +214,32 @@ async function handleChat(req, env, url) {
     return json(502, { error: 'Groq abhi jawab nahi de raha — thodi dair baad try karo.' });
   }
 
+  if (provider === 'openrouter') {
+    const model = url.searchParams.get('model') || 'openrouter/free';
+    const text = await oaiAnswer(env, 'openrouter', 'https://openrouter.ai/api/v1', model, q);
+    if (text !== null) return json(200, { text, provider: 'openrouter', model });
+    return json(502, { error: 'OpenRouter abhi jawab nahi de raha — Admin Panel mein key check karo, ya thodi dair baad try karo.' });
+  }
+
+  if (provider === 'mistral') {
+    const model = url.searchParams.get('model') || 'mistral-small-latest';
+    const text = await oaiAnswer(env, 'mistral', 'https://api.mistral.ai/v1', model, q);
+    if (text !== null) return json(200, { text, provider: 'mistral', model });
+    return json(502, { error: 'Mistral abhi jawab nahi de raha — Admin Panel mein key check karo, ya thodi dair baad try karo.' });
+  }
+
   const model = url.searchParams.get('model') || 'gemini-3.8-flash';
   if (!GEMINI_CHAT_MODELS.has(model)) return json(400, { error: 'Unknown model: ' + model });
   const gtext = await geminiAnswer(env, model, q);
   if (gtext) return json(200, { text: gtext, provider: 'gemini', model });
   const ftext = await groqAnswer(env, 'openai/gpt-oss-120b', q);
   if (ftext !== null) return json(200, { text: ftext, provider: 'groq', model: 'openai/gpt-oss-120b', note: 'gemini_pending_full_key' });
+  const otext = await oaiAnswer(env, 'openrouter', 'https://openrouter.ai/api/v1', 'openrouter/free', q);
+  if (otext !== null) return json(200, { text: otext, provider: 'openrouter', model: 'openrouter/free', note: 'failover' });
+  const mtext = await oaiAnswer(env, 'mistral', 'https://api.mistral.ai/v1', 'mistral-small-latest', q);
+  if (mtext !== null) return json(200, { text: mtext, provider: 'mistral', model: 'mistral-small-latest', note: 'failover' });
+  const wtext = await workersAiAnswer(env, q);
+  if (wtext !== null) return json(200, { text: wtext, provider: 'workersai', model: '@cf/openai/gpt-oss-120b', note: 'failover' });
   return json(502, { error: 'Abhi koi chat engine jawab nahi de raha — thodi dair baad try karo.' });
 }
 
@@ -468,7 +514,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'keys-add': {
         const provider = String(body.provider || '');
-        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
+        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate', 'openrouter', 'mistral'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
         if (!body.key_value || String(body.key_value).length < 10) return json(400, { error: 'Key mukammal nahi lagti' });
         await sbAdmin(env, 'api_keys', { method: 'POST', body: JSON.stringify({ provider, key_value: String(body.key_value).trim(), label: String(body.label || 'key'), active: true }) });
         return json(200, { ok: true });
@@ -657,6 +703,25 @@ async function handleProfileSync(req, env) {
     return json(200, { ok: true, blocked: !!rows[0].blocked, isNew: false }, CORS);
   } catch (e) { return json(200, { ok: true, blocked: false, note: 'migration_006_pending' }, CORS); }
 }
+/* ---------------- /api/news (Khabrein — free RSS, v7.2) ---------------- */
+async function handleNews() {
+  const feeds = [['Dawn', 'https://www.dawn.com/feeds/home'], ['BBC Urdu', 'https://www.bbc.com/urdu/index.xml'], ['Geo Urdu', 'https://urdu.geo.tv/rss/']];
+  const items = [];
+  for (const [src, furl] of feeds) {
+    try {
+      const r = await fetch(furl, { headers: { 'User-Agent': 'Mozilla/5.0 BADSHAH-AI' } });
+      const x = await r.text();
+      const blocks = x.split('<item').slice(1, 7);
+      for (const b of blocks) {
+        const t = (b.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1];
+        const l = (b.match(/<link>([\s\S]*?)<\/link>/) || [])[1];
+        if (t && l) items.push({ src, title: t.replace(/<[^>]+>/g, '').trim(), link: l.trim() });
+      }
+    } catch (e) { }
+  }
+  return json(200, { items }, { 'cache-control': 'public, max-age=300' });
+}
+
 /* ---------------- /api/memories (Yaad — long-term memory, migration 003) ---------------- */
 async function handleMemories(req, env, url) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
@@ -712,6 +777,7 @@ export default {
     if (url.pathname === '/api/track') return handleTrack(req, env);
     if (url.pathname === '/api/profile-sync') return handleProfileSync(req, env);
     if (url.pathname === '/api/memories') return handleMemories(req, env, url);
+    if (url.pathname === '/api/news') return handleNews();
     if (url.pathname === '/api/device') return handleDeviceCmd(req, env);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
     if (url.pathname === '/api/image') return handleImage(req, env, url);

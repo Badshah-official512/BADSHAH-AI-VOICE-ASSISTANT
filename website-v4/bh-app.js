@@ -141,6 +141,8 @@ async function authHeaders(){ const t=await idToken(); return t?{'Authorization'
 async function callChat(text){
   const model=$('modelSel').value; let q='?model=gemini-3.8-flash&provider=gemini';
   if(model.startsWith('groq:')) q='?provider=groq&model='+encodeURIComponent(model.slice(5));
+  else if(model.startsWith('openrouter:')) q='?provider=openrouter&model='+encodeURIComponent(model.slice(11));
+  else if(model.startsWith('mistral:')) q='?provider=mistral&model='+encodeURIComponent(model.slice(8));
   else if(model.startsWith('gemini:')) q='?provider=gemini&model='+encodeURIComponent(model.slice(7));
   const r=await fetch(CFG.apiUrl+q,{method:'POST',headers:{'Content-Type':'application/json',...(await authHeaders())},body:JSON.stringify({q:buildPrompt(text)}),signal:ctrl.signal});
   const d=await r.json().catch(()=>({}));
