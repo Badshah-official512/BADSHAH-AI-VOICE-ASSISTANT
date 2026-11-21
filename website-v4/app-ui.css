@@ -633,3 +633,8 @@ body.rm #msgs img.av[class*="emo-"]{animation:none}
 /* ===== v7.4: CALL — character par soft neon lighting ===== */
 #callStage .neonwash{ position:absolute; inset:0; z-index:2; pointer-events:none; mix-blend-mode:screen; opacity:.38; background:radial-gradient(420px 300px at 18% 8%, rgba(168,85,247,.55), transparent 65%), radial-gradient(460px 340px at 85% 20%, rgba(34,211,238,.45), transparent 65%), radial-gradient(520px 380px at 50% 105%, rgba(163,230,53,.28), transparent 60%); animation:neonDrift 9s ease-in-out infinite alternate; }
 @keyframes neonDrift{ from{ filter:hue-rotate(0deg); opacity:.30; } to{ filter:hue-rotate(35deg); opacity:.45; } }
+
+/* v7.4 content-language switch */
+.clangrow{display:flex;gap:8px;margin-top:10px}
+.clang-btn{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}
+.clang-btn.on{background:var(--purple);border-color:var(--purple);color:#fff}
