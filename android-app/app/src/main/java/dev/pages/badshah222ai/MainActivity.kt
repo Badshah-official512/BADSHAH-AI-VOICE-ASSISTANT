@@ -112,6 +112,8 @@ class MainActivity : ComponentActivity() {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_WEB = 45
+        private const val REQ_ALL = 47
+        private const val REQ_ONE = 48
         private const val REQ_MIC_PRE = 44
         @Volatile var appInForeground = false
     }
@@ -520,6 +522,66 @@ class MainActivity : ComponentActivity() {
         fun a11yRead(): String {
             val s = BadshahAccessibilityService.instance ?: return "off"
             return s.readScreen()
+        }
+
+        @JavascriptInterface
+        fun permStatus(): String {
+            // v7.3: Settings > Permissions page ke liye — kaunsi permission mili hui hai
+            fun g(p: String) = checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED
+            return try {
+                val o = JSONObject()
+                o.put("mic", g(Manifest.permission.RECORD_AUDIO))
+                o.put("camera", g(Manifest.permission.CAMERA))
+                o.put("contacts", g(Manifest.permission.READ_CONTACTS))
+                o.put("callLog", g(Manifest.permission.READ_CALL_LOG))
+                o.put("phone", g(Manifest.permission.READ_PHONE_STATE))
+                o.put("location", g(Manifest.permission.ACCESS_FINE_LOCATION) || g(Manifest.permission.ACCESS_COARSE_LOCATION))
+                o.put("media", if (Build.VERSION.SDK_INT >= 33) g(Manifest.permission.READ_MEDIA_IMAGES) else g(Manifest.permission.READ_EXTERNAL_STORAGE))
+                o.put("bluetooth", if (Build.VERSION.SDK_INT >= 31) g(Manifest.permission.BLUETOOTH_CONNECT) else true)
+                o.put("calendar", g(Manifest.permission.READ_CALENDAR))
+                o.put("notifications", if (Build.VERSION.SDK_INT >= 33) g(Manifest.permission.POST_NOTIFICATIONS) else true)
+                o.toString()
+            } catch (e: Exception) { "{}" }
+        }
+
+        @JavascriptInterface
+        fun requestAllPerms() {
+            // v7.3: saari runtime permissions ek saath mango (sirf user ke button dabane par)
+            val list = mutableListOf(
+                Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA,
+                Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+            if (Build.VERSION.SDK_INT >= 33) { list += Manifest.permission.POST_NOTIFICATIONS; list += Manifest.permission.READ_MEDIA_IMAGES; list += Manifest.permission.READ_MEDIA_VIDEO; list += Manifest.permission.READ_MEDIA_AUDIO }
+            else { list += Manifest.permission.READ_EXTERNAL_STORAGE }
+            if (Build.VERSION.SDK_INT >= 31) list += Manifest.permission.BLUETOOTH_CONNECT
+            val missing = list.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+            if (missing.isNotEmpty()) runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, missing.toTypedArray(), REQ_ALL) }
+        }
+
+        @JavascriptInterface
+        fun requestPerm(which: String) {
+            // v7.3: login ke baad sawal-tour — ek waqt mein EK permission group mango
+            val list = when (which) {
+                "mic" -> listOf(Manifest.permission.RECORD_AUDIO)
+                "camera" -> listOf(Manifest.permission.CAMERA)
+                "contacts" -> listOf(Manifest.permission.READ_CONTACTS)
+                "call" -> listOf(Manifest.permission.READ_CALL_LOG, Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE)
+                "location" -> listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                "media" -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_AUDIO) else listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                "bluetooth" -> if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_CONNECT) else listOf("android.permission.BLUETOOTH")
+                "calendar" -> listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                "notifications" -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
+                else -> emptyList()
+            }
+            val missing = list.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+            if (missing.isNotEmpty()) runOnUiThread { ActivityCompat.requestPermissions(this@MainActivity, missing.toTypedArray(), REQ_ONE) }
+        }
+
+        @JavascriptInterface
+        fun openBatterySettings() {
+            try { val i = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS); i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(i) } catch (e: Exception) {}
         }
 
         @JavascriptInterface
