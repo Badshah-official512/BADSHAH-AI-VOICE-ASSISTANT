@@ -310,13 +310,14 @@ async function handleImage(req, env, url) {
           let bin = ''; const bytes = new Uint8Array(buf); const CH = 32768;
           for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
           return json(200, { image: 'data:image/jpeg;base64,' + btoa(bin), provider: 'pollinations-key', model: 'flux' }); }
+        globalThis.__imgDiag = 'status=' + r.status;
         if (r.status !== 401 && r.status !== 403 && r.status !== 429) break;
-      } catch (e) {}
+      } catch (e) { globalThis.__imgDiag = 'throw=' + (e && e.message || e); }
     }
   }
   { const alt = await altImage(env, q); if (alt) return json(200, alt); }
   const purl = 'https://gen.pollinations.ai/image/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true';
-  return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'gemini_pending_full_key' });
+  return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'gemini_pending_full_key', diag: globalThis.__imgDiag || 'no-key-rows' });
 }
 
 /* ---------------- /api/video (Gemini video models, long-running) ---------------- */
