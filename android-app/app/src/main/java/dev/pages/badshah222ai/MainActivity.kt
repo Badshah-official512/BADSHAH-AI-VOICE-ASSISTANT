@@ -229,8 +229,7 @@ class MainActivity : ComponentActivity() {
      *  play YouTube, search the web and draft messages on the user's own command. */
     inner class BadshahBridge {
         @JavascriptInterface
-        fun openApp(target: String) {
-            runOnUiThread {
+        fun openApp(target: String) {            runOnUiThread {
                 try {
                     when (target) {
                         "camera" -> startActivity(Intent(MediaStore.ACTION_IMAGE_CAPTURE))
@@ -248,6 +247,41 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(this@MainActivity, "App nahi khul saka", Toast.LENGTH_SHORT).show()
                 }
             }
+        }
+
+        @JavascriptInterface
+        fun openAppByName(name: String): String {
+            // v7.1: phone mein installed KOI BHI app naam se kholo — installed apps ke
+            // labels search karke best match launch karte hain. Koi naya permission nahi:
+            // manifest ki <queries> MAIN/LAUNCHER declaration hi kaafi hai.
+            return try {
+                val q = name.lowercase().replace(" ", "").trim()
+                if (q.length < 2) return "notfound"
+                val qi = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+                val apps = packageManager.queryIntentActivities(qi, 0)
+                var bestPkg: String? = null
+                var bestScore = -1
+                for (ri in apps) {
+                    val label = ri.loadLabel(packageManager).toString().lowercase().replace(" ", "")
+                    val score = when {
+                        label == q -> 100
+                        label.startsWith(q) -> 80
+                        label.contains(q) -> 60
+                        label.length >= 3 && q.contains(label) -> 40
+                        else -> -1
+                    }
+                    if (score > bestScore) { bestScore = score; bestPkg = ri.activityInfo.packageName }
+                }
+                val pkg = bestPkg
+                if (pkg == null || bestScore < 0) return "notfound"
+                runOnUiThread {
+                    try {
+                        val launch = packageManager.getLaunchIntentForPackage(pkg)
+                        if (launch != null) startActivity(launch)
+                    } catch (e: Exception) { }
+                }
+                "ok"
+            } catch (e: Exception) { "notfound" }
         }
 
         @JavascriptInterface
