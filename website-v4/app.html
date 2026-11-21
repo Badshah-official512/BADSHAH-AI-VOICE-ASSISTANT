@@ -872,7 +872,7 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div id="callChar"><img id="callPhoto" src="assets/character.png" alt="BADSHAH"></div><div id="emoteBadge"></div><div class="ring"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1082,7 +1082,7 @@ const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
 function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves.'; }
-function callUI(){ $('callPhoto').src='assets/character.png'; $('callName').textContent='BADSHAH'; }
+function callUI(){ $('callPhoto').src='assets/poster-call.jpg'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
   const s=$('callVoice'); if(!s) return; s.innerHTML='';
@@ -1402,7 +1402,7 @@ function connectGemini(){
       if(sc.interrupted) flushPlayback();
       const parts=(sc.modelTurn&&sc.modelTurn.parts)||[];
       for(const p of parts){ if(p.inlineData&&p.inlineData.data) playPcm(p.inlineData.data); }
-      if(sc.inputTranscription&&sc.inputTranscription.text){ txFeed(sc.inputTranscription.text); if(window.charEmote) charEmote(sc.inputTranscription.text); call._lastIn=sc.inputTranscription.text; }
+      if(sc.inputTranscription&&sc.inputTranscription.text){ txFeed(sc.inputTranscription.text); call._lastIn=sc.inputTranscription.text; }
       if(sc.outputTranscription&&sc.outputTranscription.text){ call._lastOut=sc.outputTranscription.text; }
       if(localStorage.getItem('ba_set_transcript')!=='0'){
         if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; }
@@ -2098,7 +2098,7 @@ const EMOTES=[
   setInterval(()=>{
     let on=false; try{ on=!!(typeof call!=='undefined' && call.on); }catch(e){}
     if(on&&!wasOn){ stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('enter'); }
-    if(!on&&wasOn){ stage.classList.remove('enter','speaking','listening'); if(photo) photo.style.transform=''; }
+    if(!on&&wasOn){ stage.classList.remove('enter','speaking','listening'); }
     wasOn=on; if(!on) return;
     let sp=0;
     try{
@@ -2106,9 +2106,9 @@ const EMOTES=[
       else if(call.elAudio&&!call.elAudio.paused&&!call.elAudio.ended) sp=.5+Math.random()*.3;
     }catch(e){}
     const mic=lvl(call.analyser);
-    if(sp>.06){ stage.classList.add('speaking'); stage.classList.remove('listening'); if(photo) photo.style.transform='scale('+(1+sp*.07).toFixed(3)+') translateY('+(-sp*7).toFixed(1)+'px)'; }
-    else if(mic>.08){ stage.classList.add('listening'); stage.classList.remove('speaking'); if(photo) photo.style.transform='rotate(-1.4deg) scale(1.015)'; }
-    else { stage.classList.remove('speaking','listening'); if(photo) photo.style.transform=''; }
+    if(sp>.06){ stage.classList.add('speaking'); stage.classList.remove('listening'); }
+    else if(mic>.08){ stage.classList.add('listening'); stage.classList.remove('speaking'); }
+    else { stage.classList.remove('speaking','listening'); }
   },120);
 })();
 
@@ -2380,52 +2380,6 @@ window.installApp=async function(){
   bhToast('Browser menu (⋮) → "Add to Home screen" dabao — app ban jayegi');
 };
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ try{ navigator.serviceWorker.register('/sw.js'); }catch(e){} }); }
-/* ============================================================
-   BADSHAH CHARACTER — EMOTE ENGINE (v7.3)
-   Har jumlay ke saath character ka apna action hota hai.
-   AI jo jumla bolta hai (aur user jo kehta hai) us ke ALFAZ
-   neeche wali list se match hote hain — pehli match jeet-ti hai.
-   Har rule: name (emote ka naam), words (kis word par chale),
-   act (character ka action), badge (upar wala emoji), ms (kitni der).
-   Ye sirf voice call ke doran #callChar par chalta hai.
-   ============================================================ */
-const EMOTE_RULES=[
- {name:'salaam', words:/assalam|salaam|welcome|khush amdeed|adaab/, act:'act-bow', badge:'\u{1F932}', ms:1150},
- {name:'hansna', words:/haha|hans|mazay|mazak|mazaak|funny|joke/, act:'act-laugh', badge:'\u{1F602}', ms:950},
- {name:'gussa', words:/gussa|naraz|ghalti ho|nahi ho sakta|khatra|danger/, act:'act-angry', badge:'\u{1F620}', ms:750},
- {name:'dukh', words:/afsoos|sorry|maazrat|dukh|pareshan/, act:'act-sad', badge:'\u{1F614}', ms:1650},
- {name:'pyaar', words:/khayal rakh|fikar na|tension na|pyaar|mohabbat|aram karo|mere dost/, act:'act-love', badge:'\u2764\uFE0F', ms:1850},
- {name:'hairan', words:/wow|hairan|zabardast|kamal|waqai/, act:'act-wow', badge:'\u{1F632}', ms:850},
- {name:'khushi', words:/ho gaya|khol diya|ban gaya|mubarak|congrats|shukriya|bohat acha|great|done/, act:'act-cheer', badge:'\u{1F389}', ms:1050},
- {name:'sochna', words:/socho|sochta|matlab|hmm|umm|shayad/, act:'act-think', badge:'\u{1F914}', ms:1550},
- {name:'alvida', words:/alvida|khuda hafiz|good night|goodbye|milte hain/, act:'act-wave', badge:'\u{1F44B}', ms:1250},
- {name:'sunna', words:/\?|kya |kaise|kyun|kab |kahan |kis /, act:'act-listen', badge:'', ms:1250},
-];
-let __emoBusy=false;
-function charEmote(text){
-  const ch=$('callChar'); if(!ch || !text || __emoBusy) return;
-  const t=' '+String(text).toLowerCase()+' ';
-  for(const r of EMOTE_RULES){ if(r.words.test(t)){ __emoBusy=true;
-    ch.classList.remove(r.act); void ch.offsetWidth; ch.classList.add(r.act);
-    const b=$('emoteBadge'); if(b && r.badge){ b.textContent=r.badge; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); }
-    setTimeout(()=>{ ch.classList.remove(r.act); __emoBusy=false; }, r.ms);
-    return; } }
-}
-window.charEmote=charEmote;
-(function(){
-  let lastTxt='';
-  setInterval(()=>{
-    try{
-      if(typeof call==='undefined' || !call.on) return;
-      const ch=$('callChar'); if(!ch) return;
-      const st=$('callStage');
-      const speaking = st && st.classList.contains('speaking');
-      ch.classList.toggle('act-talk', !!speaking && !__emoBusy);
-      const t=(call._lastOut||'');
-      if(t && t!==lastTxt){ lastTxt=t; charEmote(t); }
-    }catch(e){}
-  }, 420);
-})();
 /* ===== v7.3 Phase 5: Permissions page + Report + Dost Room ===== */
 const PERM_ROWS=[
  ['mic','mic','Microphone','Voice call aur voice input ke liye'],
