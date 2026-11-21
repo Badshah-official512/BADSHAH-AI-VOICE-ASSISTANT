@@ -1,3 +1,4 @@
+// redeploy 2026-11-21: agent key secret refresh
 /* v7.4 agent secrets refresh — redeploy taake naye secrets active hon */
 // BADSHAH AI — secure backend v3 (Cloudflare Pages "advanced mode" worker)
 //
