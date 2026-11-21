@@ -872,7 +872,7 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"><video id="callVidA" class="callvid" muted loop playsinline preload="auto" src="assets/char-idle.mp4"></video><video id="callVidB" class="callvid" muted loop playsinline preload="none"></video></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -2470,6 +2470,39 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
   n.onclick=()=>{ if(__ptIdx>=PT_STEPS.length){ permTourClose(); return; } __ptIdx++; ptShow(); }; });
 (function(){ const old=window.__bhOnLogin; window.__bhOnLogin=function(u){ if(old) old(u);
   setTimeout(()=>{ try{ if(window.BadshahBridge && window.BadshahBridge.requestPerm && localStorage.getItem('ba_perm_tour')!=='seen') startPermTour(false); }catch(e){} }, 1200); }; })();
+
+/* ===== v7.3: Character VIDEO LOOPS — bolna / sunna / saakin (poster fallback) ===== */
+(function(){
+  const SRC={talk:'assets/char-talk.mp4', listen:'assets/char-listen.mp4', idle:'assets/char-idle.mp4'};
+  let cur='', front='A', __warmed=false;
+  function want(){
+    try{
+      if(document.body.classList.contains('rm')) return '';
+      if(typeof call==='undefined' || !call.on) return '';
+      const st=$('callStage'); if(!st) return 'idle';
+      if(st.classList.contains('speaking')) return 'talk';
+      if(st.classList.contains('listening')) return 'listen';
+      return 'idle';
+    }catch(e){ return ''; }
+  }
+  function show(state){
+    const A=$('callVidA'), B=$('callVidB'); if(!A||!B) return;
+    if(state && !__warmed){ __warmed=true; try{ fetch(SRC.talk).catch(()=>{}); fetch(SRC.listen).catch(()=>{}); }catch(e){} }
+    if(!state){ A.classList.remove('on'); B.classList.remove('on'); try{A.pause();B.pause();}catch(e){} cur=''; return; }
+    if(state===cur){ const onEl=A.classList.contains('on')?A:(B.classList.contains('on')?B:null); if(onEl&&onEl.paused){ const q=onEl.play(); if(q&&q.catch) q.catch(()=>{}); } return; }
+    cur=state;
+    const onEl = front==='A'?A:B, offEl = front==='A'?B:A;
+    if(onEl.getAttribute('data-s')!==state){ onEl.src=SRC[state]; onEl.setAttribute('data-s',state); }
+    const p=onEl.play(); if(p&&p.catch) p.catch(()=>{ cur=''; setTimeout(()=>{ if(onEl.classList.contains('on')){ const q=onEl.play(); if(q&&q.catch) q.catch(()=>{}); } },300); });
+    onEl.classList.add('on'); offEl.classList.remove('on'); setTimeout(()=>{ try{offEl.pause();}catch(e){} },500);
+    front = front==='A'?'B':'A';
+  }
+  function tick(){ show(want()); }
+  const stEl=$('callStage');
+  if(stEl && window.MutationObserver){ new MutationObserver(tick).observe(stEl,{attributes:true, attributeFilter:['class']}); }
+  setInterval(tick, 2000);
+  tick();
+})();
 
 /* ===== v7.3 Phase 3: call se image/video banao ===== */
 async function bhTok(){ try{ if(window.firebase && firebase.auth){ const u=firebase.auth().currentUser; if(u) return await u.getIdToken(); } }catch(e){} return ''; }
