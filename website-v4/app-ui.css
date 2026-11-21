@@ -469,8 +469,9 @@ body.noavatar .avatarhide{display:none!important}
 #callView .stage.speaking{box-shadow:0 0 0 2px rgba(63,169,255,.65),0 18px 54px rgba(63,169,255,.4)}
 #callView .stage.listening{box-shadow:0 0 0 2px rgba(87,255,164,.5),0 18px 44px rgba(87,255,164,.22)}
 #callStage{position:relative;overflow:hidden}
-.rgbglow{position:absolute;inset:0;overflow:hidden;z-index:1;background:radial-gradient(120% 90% at 50% 0%,#141D52,#05081A 78%)}
-.rgbglow i{position:absolute;border-radius:50%;filter:blur(46px);opacity:.5;mix-blend-mode:screen}
+.rgbglow{position:absolute;inset:0;overflow:hidden;z-index:1;background:#05081A url('assets/call-bg.jpg') center/cover no-repeat;animation:bgBreathe 16s ease-in-out infinite alternate}
+@keyframes bgBreathe{from{transform:scale(1)}to{transform:scale(1.07)}}
+.rgbglow i{position:absolute;border-radius:50%;filter:blur(46px);opacity:.3;mix-blend-mode:screen}
 .rgbglow .g1{width:55%;height:38%;background:#A3E635;left:-8%;top:-6%;animation:glowDrift 11s ease-in-out infinite}
 .rgbglow .g2{width:60%;height:42%;background:#EF4444;right:-10%;bottom:-8%;animation:glowDrift 13s ease-in-out infinite reverse}
 .rgbglow .g3{width:52%;height:40%;background:#3B82F6;left:26%;top:32%;animation:glowPulse 8s ease-in-out infinite}
