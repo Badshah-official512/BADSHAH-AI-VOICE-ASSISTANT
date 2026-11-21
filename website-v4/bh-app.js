@@ -5,7 +5,7 @@
 'use strict';
 const detect=BadshahOrb.detectMood;
 const inp=$('input');
-const AV={badshah:'assets/avatar.jpg'};
+const AV={badshah:'assets/avatar-bust.png'};
 const T=(n,m)=>{ try{ if(window.BHTrack) BHTrack.event(n,m); }catch(e){} };
 const escH=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const orb=new BadshahOrb($('orbHost'),{portrait:AV[state.mode]||AV.badshah,varTarget:$('chatPanel')});
@@ -206,7 +206,7 @@ $('btnStop').onclick=()=>{ if(ctrl) ctrl.abort(); cancelReveal=true; stopSpeak()
 /* ---------------- composer ---------------- */
 function autosize(){ inp.style.height='auto'; const h=inp.scrollHeight; if(h>0) inp.style.height=Math.min(140,h)+'px'; }
 function syncComposer(){ $$c().classList.toggle('has-text',!!inp.value.trim()); }
-const $$c=()=>document.querySelector('.comp-in');
+const $$c=()=>document.querySelector('#chatPanel .comp-in')||document.querySelector('.comp-in');
 inp.addEventListener('input',()=>{ autosize(); syncComposer(); BH.typed(); });
 inp.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&innerWidth>860){ e.preventDefault(); send(); } });
 $('btnSend').onclick=()=>send();

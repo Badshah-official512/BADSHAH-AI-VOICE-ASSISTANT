@@ -74,7 +74,7 @@
       <button class="side-btn" id="btnSettings"><span data-ic="gear"></span> <span>Settings</span></button>
     </nav>
     <div class="mode-switch">
-      <button id="modeBadshah" class="on" style="flex:1"><img src="assets/avatar.jpg" alt="">BADSHAH</button>
+      <button id="modeBadshah" class="on" style="flex:1"><img src="assets/avatar-bust.png" alt="">BADSHAH</button>
       <button id="modeRani" class="hidden" style="display:none"><img src="assets/rani.png" alt="">RANI</button>
     </div>
     <div class="user-row">
@@ -127,7 +127,7 @@
     <section class="view" id="v-chat">
       <div class="topbar" style="max-width:860px;margin:0 auto;width:100%">
         <button class="icobtn round" id="menuBtn" aria-label="Menu">☰</button>
-        <div class="who" style="display:flex;gap:9px;align-items:center;flex:1;margin-left:6px"><img id="whoImg" src="assets/avatar.jpg" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line)"><div><b id="whoName" style="font-size:14px">BADSHAH</b><small style="display:block;color:var(--green);font-size:11px">● online</small></div></div>
+        <div class="who" style="display:flex;gap:9px;align-items:center;flex:1;margin-left:6px"><img id="whoImg" src="assets/avatar-bust.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line)"><div><b id="whoName" style="font-size:14px">BADSHAH</b><small style="display:block;color:var(--green);font-size:11px">● online</small></div></div>
         <button class="model-chip" id="btnModel" aria-label="Model chuno" style="display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:8px 13px;font-size:12.5px;font-weight:600"><span id="modelChipTxt">Model</span><i style="font-style:normal;color:var(--mut)">▾</i></button>
         <div class="top-actions" style="display:flex;gap:8px;margin-left:8px">
           <button class="call-fab" id="btnCall" aria-label="Live call" data-cfg-feature="call" style="display:flex;gap:6px;align-items:center;background:linear-gradient(90deg,var(--blue),var(--purple));color:#fff;border-radius:99px;padding:9px 15px;font-weight:700;font-size:13px;box-shadow:0 6px 18px rgba(var(--mc),.4)"><span data-ic="phone"></span><span>Call</span></button>
@@ -718,7 +718,7 @@ $('modelSel').onchange=e=>{ state.imgMode = CFG.imageModels.includes(e.target.va
 function setMode(m){
   m='badshah'; state.mode=m; localStorage.setItem('ba_mode',m);
   $('modeBadshah').classList.toggle('on',m==='badshah'); $('modeRani').classList.toggle('on',m==='rani');
-  $('whoImg').src = 'assets/image1.png';
+  $('whoImg').src = 'assets/avatar-bust.png';
   $('whoName').textContent = 'BADSHAH';
 }
 $('modeBadshah').onclick=()=>setMode('badshah'); $('modeRani').onclick=()=>setMode('rani');
@@ -750,7 +750,7 @@ function renderMsgs(){
 }
 function addMsgEl(role, content, img){
   const w=$('msgWrap'); const d=document.createElement('div'); d.className='msg '+(role==='user'?'user':'ai');
-  const av = role==='user' ? '' : `<img class="av" src="${'assets/image1.png'}" alt="">`;
+  const av = role==='user' ? '' : `<img class="av" src="${'assets/avatar-bust.png'}" alt="">`;
   d.innerHTML = av + `<div class="body">${img?`<img class="gen" src="${img}" alt="AI image">`:''}<div class="txt">${role==='ai'?md(content):esc(content)}</div>${role==='ai'?'<div class="acts"><button class="spk">🔊 Suno</button><button class="cpy">📋 Copy</button></div>':''}</div>`;
   const spk=d.querySelector('.spk'); if(spk) spk.onclick=()=>speak(content);
   const cpy=d.querySelector('.cpy'); if(cpy) cpy.onclick=()=>navigator.clipboard.writeText(content);
@@ -983,7 +983,7 @@ async function startEngine(){
 }
 /* ----- Phone Control: Gemini Live function calling ----- */
 const LIVE_TOOLS=[{functionDeclarations:[
-  {name:'open_app',description:'Open an app on the user Android phone (works only inside the BADSHAH Android app).',parameters:{type:'OBJECT',properties:{app:{type:'STRING',description:'App name: WhatsApp, YouTube, Camera, Facebook, Instagram, TikTok, Chrome, Telegram, Messenger, Gallery or Settings'}},required:['app']}},
+  {name:'open_app',description:'Open ANY app installed on the user Android phone by its name (works only inside the BADSHAH Android app).',parameters:{type:'OBJECT',properties:{app:{type:'STRING',description:'App name exactly as the user says it, e.g. WhatsApp, YouTube, Camera, PUBG, JazzCash, any installed app'}},required:['app']}},
   {name:'open_youtube',description:'Search and open a video/topic on YouTube.',parameters:{type:'OBJECT',properties:{query:{type:'STRING',description:'What to search on YouTube'}},required:['query']}},
   {name:'open_whatsapp',description:'Open a WhatsApp chat with the given number and a message typed, ready for the user to press send.',parameters:{type:'OBJECT',properties:{number:{type:'STRING',description:'Phone number with country code'},message:{type:'STRING'}},required:['number','message']}},
   {name:'set_torch',description:'Turn the phone flashlight (torch) on or off (Android app v7+).',parameters:{type:'OBJECT',properties:{on:{type:'BOOLEAN'}},required:['on']}},
@@ -991,7 +991,11 @@ const LIVE_TOOLS=[{functionDeclarations:[
 ]}];
 function execPhoneTool(name,a){
   const B=window.BadshahBridge;
-  if(name==='open_app'){ const key=String(a.app||'').toLowerCase().replace(/\s+/g,''); const pkg=(window.APP_PKGS&&APP_PKGS[key])||String(a.app||''); if(bridgeDo('openApp',pkg)) return a.app+' khol diya hai'; return 'App kholna sirf Android app mein hota hai — website par nahi'; }
+  if(name==='open_app'){ const key=String(a.app||'').toLowerCase().replace(/\s+/g,''); const pkg=(window.APP_PKGS&&APP_PKGS[key]);
+    if(pkg && bridgeDo('openApp',pkg)) return a.app+' khol diya hai';
+    if(B&&B.openAppByName){ try{ const r=B.openAppByName(String(a.app||'')); if(r==='ok') return a.app+' khol diya hai'; return a.app+' naam ki app phone mein nahi mili'; }catch(e){} }
+    if(bridgeDo('openApp',String(a.app||''))) return a.app+' khol diya hai';
+    return 'App kholna sirf Android app mein hota hai — website par nahi'; }
   if(name==='open_youtube'){ if(bridgeDo('openYouTube',a.query)) return 'YouTube par "'+a.query+'" laga diya hai'; window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(a.query||''),'_blank'); return 'YouTube website khol di hai'; }
   if(name==='open_whatsapp'){ if(B&&B.openWhatsApp){ try{ B.openWhatsApp(String(a.number||''),String(a.message||'')); return 'WhatsApp chat message type karke tayyar hai — user ko send dabana hai'; }catch(e){} } window.open('https://wa.me/'+String(a.number||'').replace(/\D/g,'')+'?text='+encodeURIComponent(a.message||''),'_blank'); return 'WhatsApp web khol diya hai'; }
   if(name==='set_torch'){ if(B&&B.setTorch){ try{ B.setTorch(a.on?'on':'off'); return 'Torch '+(a.on?'on':'off')+' kar di hai'; }catch(e){} } return 'Torch sirf naye Android app (v7) mein chalta hai'; }
@@ -1055,7 +1059,9 @@ function playPcm(b64){
   const bin=atob(b64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
   const pcm=new Int16Array(bytes.buffer); const buf=ac.createBuffer(1,pcm.length,24000); const ch=buf.getChannelData(0);
   for(let i=0;i<pcm.length;i++) ch[i]=pcm[i]/32768;
-  const s=ac.createBufferSource(); s.buffer=buf; s.connect(ac.destination);
+  const s=ac.createBufferSource(); s.buffer=buf;
+  if(!call.outAn){ try{ call.outAn=ac.createAnalyser(); call.outAn.fftSize=256; call.outAn.connect(ac.destination); }catch(e){} }
+  if(call.outAn) s.connect(call.outAn); else s.connect(ac.destination);
   call.sources.push(s); s.onended=()=>{ const i=call.sources.indexOf(s); if(i>=0) call.sources.splice(i,1); };
   const now=ac.currentTime; call.playT=Math.max(call.playT||0,now+0.02); s.start(call.playT); call.playT+=buf.duration; eqPulse();
 }
@@ -1173,6 +1179,15 @@ function tryDeviceCommand(raw){
   }
   if(m=raw.match(/(.+?)\s*ko\s+message\s*[:\-]?\s*(.+)/i)){
     const msg=m[2].trim(); if(!bridgeDo('shareText',msg)) window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); return 'Message tayyar hai — bhejne ke liye app chuno: "'+msg+'"';
+  }
+  /* v7.1: koi bhi installed app naam se kholo (bridge label-search) */
+  if((m=raw.match(/^(.{2,30}?)\s+(?:kholo|khol do|khol|open karo|open|chalao|chala do|start karo)\s*[.!]*$/i)) || (m=raw.match(/(?:kholo|open karo|open|chalao)\s+(.{2,30}?)\s*[.!]*$/i))){
+    const nm=m[1].trim().replace(/^(please|plz|zara|bhai)\s+/i,'');
+    const key=nm.toLowerCase().replace(/\s+/g,'');
+    if(window.APP_PKGS && APP_PKGS[key]){ if(bridgeDo('openApp',APP_PKGS[key])) return nm+' khol diya hai'; }
+    const B=window.BadshahBridge;
+    if(B&&B.openAppByName){ try{ if(B.openAppByName(nm)==='ok') return nm+' khol diya hai'; return nm+' naam ki app phone mein nahi mili'; }catch(e){} }
+    if(bridgeDo('openApp',nm)) return nm+' khol diya hai';
   }
   return null;
 }
@@ -1514,7 +1529,7 @@ const GALAXY=[
     ['gear','Settings','Poora control','view:settings'],
     ['key','API Keys','Apni keys (BYOK)','view:keys'],
     ['plug','Connectors','Jurri hui services','view:connectors'],
-    ['shield','Admin Panel','Owner ke liye (password)','href:/admin']
+    ['ghost','Hologram Test Room','Avatar ke emotes test karo','view:testroom']
   ]]
 ];
 (function(){
@@ -1611,19 +1626,19 @@ const TERMS=['Acceptance of Terms','Definitions','Eligibility & Accounts','Accou
 
 /* ================= TEST ROOM ================= */
 const EMOTES=[
-  ['🙂','Idle','none','Halat: Idle — hologram tayyar khara hai'],
-  ['👋','Salaam','transform:rotate(-2deg) translateY(5px)','Halat: Salaam — jhuk kar salaam'],
-  ['😊','Muskurahat','filter:brightness(1.16) saturate(1.25)','Halat: Muskurahat — glow barh gaya'],
-  ['🤔','Soch','transform:scale(.965);filter:brightness(.92)','Halat: Soch — gehri soch mein'],
-  ['👍','Thumbs Up','transform:scale(1.035);filter:brightness(1.1)','Halat: Thumbs Up — shabash!'],
-  ['👂','Sunna','transform:scale(1.012)','Halat: Sunna — dhyan se sun raha hai'],
-  ['🗣️','Bolna','filter:brightness(1.12)','Halat: Bolna — jawab de raha hai'],
-  ['😄','Khushi','filter:brightness(1.28) saturate(1.3)','Halat: Khushi — poora glow'],
-  ['😲','Hairani','transform:scale(1.055)','Halat: Hairani — hairan ho gaya'],
-  ['❓','Sawal','transform:rotate(1.6deg)','Halat: Sawal — pooch raha hai'],
-  ['😴','Neend','filter:brightness(.68) saturate(.65)','Halat: Neend — dim, sukoon'],
-  ['🙏','Shukriya','transform:translateY(4px);filter:brightness(1.08)','Halat: Shukriya — adab se'],
-  ['👋','Alvida','transform:translateX(7px);filter:opacity(.85)','Halat: Alvida — rukhsat']
+  ['🙂','Idle','','Halat: Idle — hologram tayyar khara hai'],
+  ['👋','Salaam','emo-bow','Halat: Salaam — adab se jhuk kar salaam'],
+  ['😊','Muskurahat','emo-glow','Halat: Muskurahat — chehre par glow'],
+  ['🤔','Soch','emo-think','Halat: Soch — gehri soch mein'],
+  ['👍','Thumbs Up','emo-bounce','Halat: Thumbs Up — shabash!'],
+  ['👂','Sunna','emo-listen','Halat: Sunna — dhyan se sun raha hai'],
+  ['🗣️','Bolna','emo-talk','Halat: Bolna — jawab de raha hai'],
+  ['😄','Khushi','emo-bounce','Halat: Khushi — khushi se uchhal'],
+  ['😲','Hairani','emo-pop','Halat: Hairani — hairan ho gaya'],
+  ['❓','Sawal','emo-listen','Halat: Sawal — gaur se pooch raha hai'],
+  ['😴','Neend','emo-sleep','Halat: Neend — dim, sukoon'],
+  ['🙏','Shukriya','emo-bow','Halat: Shukriya — adab se shukriya'],
+  ['👋','Alvida','emo-fade','Halat: Alvida — rukhsat']
 ];
 (function(){
   const G=$('emoteGrid'); if(!G) return;
@@ -1632,11 +1647,34 @@ const EMOTES=[
     b.innerHTML='<span class="e">'+e[0]+'</span><span class="n">'+e[1]+'</span>';
     b.onclick=()=>{
       document.querySelectorAll('#emoteGrid .emote').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-      const w=$('testAvatarWrap'); if(w){ w.style.cssText=e[2]==='none'?'':e[2]; }
+      const w=$('testAvatarWrap');
+      if(w){ w.classList.remove('emo-bow','emo-glow','emo-think','emo-bounce','emo-listen','emo-talk','emo-pop','emo-sleep','emo-fade'); w.style.cssText=''; void w.offsetWidth; if(e[2]) w.classList.add(e[2]); }
       const st=$('testStatus'); if(st) st.textContent=e[3];
     };
     G.appendChild(b);
   });
+})();
+
+/* ================= v7.1 AVATAR MOTION (call: awaaz ke saath harkat) ================= */
+(function(){
+  const stage=document.querySelector('#callView .stage'); if(!stage) return;
+  const photo=$('callPhoto'); const buf=new Uint8Array(128); let wasOn=false;
+  function lvl(an){ if(!an) return 0; try{ an.getByteFrequencyData(buf); let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]; return Math.min(1,s/buf.length/110); }catch(e){ return 0; } }
+  setInterval(()=>{
+    let on=false; try{ on=!!(typeof call!=='undefined' && call.on); }catch(e){}
+    if(on&&!wasOn){ stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('enter'); }
+    if(!on&&wasOn){ stage.classList.remove('enter','speaking','listening'); if(photo) photo.style.transform=''; }
+    wasOn=on; if(!on) return;
+    let sp=0;
+    try{
+      if(call.engine==='gemini') sp=lvl(call.outAn);
+      else if(call.elAudio&&!call.elAudio.paused&&!call.elAudio.ended) sp=.5+Math.random()*.3;
+    }catch(e){}
+    const mic=lvl(call.analyser);
+    if(sp>.06){ stage.classList.add('speaking'); stage.classList.remove('listening'); if(photo) photo.style.transform='scale('+(1+sp*.07).toFixed(3)+') translateY('+(-sp*7).toFixed(1)+'px)'; }
+    else if(mic>.08){ stage.classList.add('listening'); stage.classList.remove('speaking'); if(photo) photo.style.transform='rotate(-1.4deg) scale(1.015)'; }
+    else { stage.classList.remove('speaking','listening'); if(photo) photo.style.transform=''; }
+  },120);
 })();
 
 /* ================= PERFORMANCE ================= */
