@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import android.view.Gravity
 import android.view.MotionEvent
@@ -31,6 +33,14 @@ class FloatingOrbService : Service() {
 
     private var wm: WindowManager? = null
     private var orb: ImageView? = null
+    private val visHandler = Handler(Looper.getMainLooper())
+    private val visLoop = object : Runnable {
+        override fun run() {
+            // v7.2: app khud saamne ho to bubble chhupao — sirf doosri apps ke upar dikhao
+            orb?.visibility = if (MainActivity.appInForeground) View.GONE else View.VISIBLE
+            visHandler.postDelayed(this, 600)
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -87,9 +97,11 @@ class FloatingOrbService : Service() {
         orb = iv
         runCatching { wm?.addView(iv, params) }
         running = true
+        visHandler.post(visLoop)
     }
 
     override fun onDestroy() {
+        visHandler.removeCallbacks(visLoop)
         orb?.let { runCatching { wm?.removeView(it) } }
         orb = null; running = false
         super.onDestroy()

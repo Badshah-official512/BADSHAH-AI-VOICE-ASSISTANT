@@ -11,7 +11,9 @@ import android.graphics.Bitmap
 import android.media.projection.MediaProjectionManager
 import android.util.Base64
 import androidx.activity.result.contract.ActivityResultContracts
+import dev.pages.badshah222ai.core.BadshahAccessibilityService
 import dev.pages.badshah222ai.core.CallService
+import dev.pages.badshah222ai.core.FloatingOrbService
 import dev.pages.badshah222ai.core.ScreenShareService
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.delay
@@ -20,12 +22,14 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.graphics.Color
 import android.net.Uri
+import android.app.role.RoleManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.webkit.JavascriptInterface
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -65,6 +69,7 @@ import org.json.JSONObject
  */
 class MainActivity : ComponentActivity() {
     private lateinit var web: WebView
+    private var rootLayout: FrameLayout? = null
     private var triedFallback = false
     private var pendingPermReq: PermissionRequest? = null
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -106,22 +111,35 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
-        private const val REQ_MIC = 41
+        private const val REQ_WEB = 45
         private const val REQ_MIC_PRE = 44
+        @Volatile var appInForeground = false
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQ_MIC) {
+        if (requestCode == REQ_WEB) {
             val req = pendingPermReq ?: return
             pendingPermReq = null
-            val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            if (allGranted) req.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) else {
+            val grant = ArrayList<String>()
+            for (res in req.resources) {
+                val perm = when (res) {
+                    PermissionRequest.RESOURCE_AUDIO_CAPTURE -> Manifest.permission.RECORD_AUDIO
+                    PermissionRequest.RESOURCE_VIDEO_CAPTURE -> Manifest.permission.CAMERA
+                    else -> null
+                }
+                if (perm != null && ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) grant.add(res)
+            }
+            if (grant.isNotEmpty()) req.grant(grant.toTypedArray()) else {
                 req.deny()
-                Toast.makeText(this, "Mic permission ke baghair call nahi ho sakti 🎙️", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Permission ke baghair ye feature nahi chal sakta", Toast.LENGTH_LONG).show()
             }
         }
     }
+
+    override fun onResume() { super.onResume(); appInForeground = true }
+
+    override fun onPause() { appInForeground = false; super.onPause() }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -139,7 +157,7 @@ class MainActivity : ComponentActivity() {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
             )
-            setBackgroundColor(Color.parseColor("#F3E8FF"))
+            setBackgroundColor(Color.parseColor("#F7F7F4"))
             settings.apply {
                 javaScriptEnabled = true
                 domStorageEnabled = true
@@ -160,16 +178,17 @@ class MainActivity : ComponentActivity() {
                 override fun onPermissionRequest(request: PermissionRequest) {
                     // v6.2: NEVER deny outright — hold the web request, ask Android,
                     // then grant/deny in onRequestPermissionsResult so the SAME call connects.
-                    // v6.3: sirf AUDIO — camera permission manifest mein hai hi nahi.
+                    // v7.2: AUDIO (call) + VIDEO (Camera Share) — jo permission missing ho, wahi mango.
                     val wantsAudio = request.resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
-                    if (!wantsAudio) { request.deny(); return }
+                    val wantsVideo = request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                    if (!wantsAudio && !wantsVideo) { request.deny(); return }
+                    val missing = ArrayList<String>()
+                    if (wantsAudio && ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.RECORD_AUDIO)
+                    if (wantsVideo && ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.CAMERA)
+                    if (missing.isEmpty()) { request.grant(request.resources); return }
                     if (pendingPermReq != null) { runCatching { pendingPermReq?.deny() }; pendingPermReq = null }
-                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                        pendingPermReq = request
-                        ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC)
-                        return
-                    }
-                    request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
+                    pendingPermReq = request
+                    ActivityCompat.requestPermissions(this@MainActivity, missing.toTypedArray(), REQ_WEB)
                 }
             }
             webViewClient = object : WebViewClient() {
@@ -210,9 +229,10 @@ class MainActivity : ComponentActivity() {
         // kuch phones (TECNO waghera) par kaam nahi karti thi, margin hamesha kaam karta hai.
         val root = FrameLayout(this).apply {
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            setBackgroundColor(Color.parseColor("#F3E8FF"))
+            setBackgroundColor(Color.parseColor("#F7F7F4"))
             addView(web)
         }
+        rootLayout = root
         setContentView(root)
         val extraTop = (30 * resources.displayMetrics.density).toInt()
         root.setOnApplyWindowInsetsListener { _, insets ->
@@ -348,6 +368,8 @@ class MainActivity : ComponentActivity() {
                 } catch (e: Exception) { }
                 // Call ko minimize/background mein zinda rakho (foreground service)
                 try { CallService.start(this@MainActivity) } catch (e: Exception) { }
+                // v7.2: floating bubble — sirf jab overlay permission pehle se granted ho
+                try { if (Settings.canDrawOverlays(this@MainActivity)) FloatingOrbService.start(this@MainActivity) } catch (e: Exception) { }
             }
         }
 
@@ -362,6 +384,7 @@ class MainActivity : ComponentActivity() {
                     am.mode = AudioManager.MODE_NORMAL
                 } catch (e: Exception) { }
                 try { CallService.stop(this@MainActivity) } catch (e: Exception) { }
+                try { FloatingOrbService.stop(this@MainActivity) } catch (e: Exception) { }
             }
         }
 
@@ -438,6 +461,121 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+
+        @JavascriptInterface
+        fun a11yStatus(): String {
+            return if (BadshahAccessibilityService.isEnabled(this@MainActivity)) "on" else "off"
+        }
+
+        @JavascriptInterface
+        fun openA11ySettings() {
+            runOnUiThread {
+                try { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) } catch (e: Exception) { }
+            }
+        }
+
+        @JavascriptInterface
+        fun overlayStatus(): String {
+            return try { if (Settings.canDrawOverlays(this@MainActivity)) "on" else "off" } catch (e: Exception) { "off" }
+        }
+
+        @JavascriptInterface
+        fun openOverlaySettings() {
+            runOnUiThread {
+                try { startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + packageName))) } catch (e: Exception) { }
+            }
+        }
+
+        @JavascriptInterface
+        fun a11yType(text: String): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.typeText(text)
+        }
+
+        @JavascriptInterface
+        fun a11yTap(text: String): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.tapText(text)
+        }
+
+        @JavascriptInterface
+        fun a11yScroll(dir: String): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.scroll(dir)
+        }
+
+        @JavascriptInterface
+        fun a11yBack(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.goBack()
+        }
+
+        @JavascriptInterface
+        fun a11yHome(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.goHome()
+        }
+
+        @JavascriptInterface
+        fun a11yRead(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.readScreen()
+        }
+
+        @JavascriptInterface
+        @JavascriptInterface
+        fun deviceInfo(): String {
+            // v7.2 Phase 5: Settings > Performance & Device ke liye asal device maloomat
+            return try {
+                val pi = packageManager.getPackageInfo(packageName, 0)
+                JSONObject()
+                    .put("model", Build.MODEL ?: "")
+                    .put("maker", Build.MANUFACTURER ?: "")
+                    .put("android", Build.VERSION.RELEASE ?: "")
+                    .put("app", pi.versionName ?: "")
+                    .toString()
+            } catch (e: Exception) { "{}" }
+        }
+
+        @JavascriptInterface
+        fun assistantStatus(): String {
+            // v7.2 Phase 5: kya BADSHAH AI phone ka default assistant hai?
+            if (Build.VERSION.SDK_INT < 29) return "na"
+            return try {
+                val rm = getSystemService(RoleManager::class.java)
+                if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_ASSISTANT) && rm.isRoleHeld(RoleManager.ROLE_ASSISTANT)) "on" else "off"
+            } catch (e: Exception) { "na" }
+        }
+
+        @JavascriptInterface
+        fun requestAssistant() {
+            // v7.2 Phase 5: Android ki apni screen se default assistant chunne do (user khud tap karega)
+            if (Build.VERSION.SDK_INT < 29) return
+            runOnUiThread {
+                try {
+                    val rm = getSystemService(RoleManager::class.java)
+                    if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_ASSISTANT) && !rm.isRoleHeld(RoleManager.ROLE_ASSISTANT)) {
+                        @Suppress("DEPRECATION")
+                        startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_ASSISTANT), 46)
+                    }
+                } catch (e: Exception) { }
+            }
+        }
+
+        fun setChromeTheme(mode: String) {
+            // v7.2 G4: call screen (dark) par status-bar hissa bhi dark, warna light
+            runOnUiThread {
+                try {
+                    val dark = mode == "dark"
+                    rootLayout?.setBackgroundColor(Color.parseColor(if (dark) "#0A0F2E" else "#F7F7F4"))
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        val ctl = window.insetsController
+                        if (dark) ctl?.setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
+                        else ctl?.setSystemBarsAppearance(WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
+                    }
+                } catch (e: Exception) { }
+            }
+        }
 
         @JavascriptInterface
         fun appVersionCode(): Int {
