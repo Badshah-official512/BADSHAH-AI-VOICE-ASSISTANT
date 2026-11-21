@@ -1,3 +1,4 @@
+/* v7.4 agent secrets refresh — redeploy taake naye secrets active hon */
 // BADSHAH AI — secure backend v3 (Cloudflare Pages "advanced mode" worker)
 //
 // v3 changes (owner's order, 2026-11-18): EVERYTHING IS FREE for users.
