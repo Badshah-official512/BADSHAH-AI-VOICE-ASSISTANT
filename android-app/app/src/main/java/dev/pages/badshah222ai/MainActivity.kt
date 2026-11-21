@@ -523,7 +523,6 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
-        @JavascriptInterface
         fun deviceInfo(): String {
             // v7.2 Phase 5: Settings > Performance & Device ke liye asal device maloomat
             return try {
@@ -562,6 +561,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        @JavascriptInterface
         fun setChromeTheme(mode: String) {
             // v7.2 G4: call screen (dark) par status-bar hissa bhi dark, warna light
             runOnUiThread {
