@@ -310,14 +310,13 @@ async function handleImage(req, env, url) {
           let bin = ''; const bytes = new Uint8Array(buf); const CH = 32768;
           for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
           return json(200, { image: 'data:image/jpeg;base64,' + btoa(bin), provider: 'pollinations-key', model: 'flux' }); }
-        globalThis.__imgDiag = 'status=' + r.status;
         if (r.status !== 401 && r.status !== 403 && r.status !== 429) break;
-      } catch (e) { globalThis.__imgDiag = 'throw=' + (e && e.message || e); }
+      } catch (e) {}
     }
   }
   { const alt = await altImage(env, q); if (alt) return json(200, alt); }
-  const purl = 'https://gen.pollinations.ai/image/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true';
-  return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'gemini_pending_full_key', diag: globalThis.__imgDiag || 'no-key-rows' });
+  const purl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(q) + '?width=1024&height=1024&model=flux&nologo=true';
+  return json(200, { image: purl, provider: 'pollinations', model: 'flux', note: 'keyless_route' });
 }
 
 /* ---------------- /api/video (Gemini video models, long-running) ---------------- */
@@ -356,13 +355,12 @@ async function handleVideo(req, env, url) {
           const d = await r.json().catch(() => ({}));
           const vid = d.video_id || (d.data && d.data.video_id) || d.id || d.task_id || (d.data && (d.data.id || d.data.task_id));
           if (vid) { await touchKey(env, k); const tok = 'agn:' + btoa(unescape(encodeURIComponent(JSON.stringify({ v: String(vid), k: k.id })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); return json(200, { name: tok, done: false, provider: 'agnes', model: 'agnes-video-2.5-flash' }); }
-          globalThis.__agnDiag = 'status=' + r.status + ' body=' + JSON.stringify(d).slice(0, 160);
           const code = String(d.code || (d.error && d.error.code) || '');
           if (code === 'video_queue_full') return json(429, { error: 'Agnes ki free video queue abhi full hai — thodi dair baad phir try karo.' });
           if (code === 'insufficient_user_quota') return json(402, { error: 'Agnes account ka quota khatam hai.' });
         } catch (e) {}
       }
-      return json(502, { error: 'Agnes par video start nahi hui — thodi dair baad try karo.', diag: globalThis.__agnDiag || null });
+      return json(502, { error: 'Agnes par video start nahi hui — thodi dair baad try karo.' });
     }
   }
   if (req.method === 'GET' && opName0.startsWith('rep:')) { const rv = await replicateVideo(env, req, url, ''); if (rv) return rv; }
