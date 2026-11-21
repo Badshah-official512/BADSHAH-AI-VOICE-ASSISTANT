@@ -599,3 +599,24 @@ body.rm #msgs img.av[class*="emo-"]{animation:none}
   body.force-laptop #tabbar{display:none}
   body.force-laptop [data-drawer]{display:none}
 }
+
+/* ===== v7.4 design pass: logo polish + lighting + AGENTIC terminal theme ===== */
+.brand img{ border:1px solid rgba(124,77,255,.45); box-shadow:0 0 0 2px rgba(124,77,255,.18), 0 0 16px rgba(47,124,246,.45), 0 0 26px rgba(124,77,255,.25), 0 4px 12px rgba(0,0,0,.20); }
+#rgbFrame{ filter:saturate(1.25) brightness(1.1) drop-shadow(0 0 6px rgba(124,77,255,.45)); }
+#v-agent{ background:#04070c; color:#d9fbe8; }
+#v-agent .viewc{ background:radial-gradient(900px 480px at 85% -10%, rgba(34,255,170,.12), transparent 60%), radial-gradient(700px 420px at -10% 0%, rgba(0,180,255,.12), transparent 55%), linear-gradient(rgba(34,255,170,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(34,255,170,.05) 1px, transparent 1px), #04070c; background-size:auto,auto,26px 26px,26px 26px,auto; }
+#v-agent .ptitle{ color:#eafff3; } #v-agent .psub{ color:#7fd8ae; } #v-agent .backbtn{ color:#22ffaa; }
+#v-agent .card{ background:rgba(9,17,25,.92); border:1px solid rgba(34,255,170,.30); box-shadow:0 0 22px rgba(34,255,170,.09), inset 0 0 30px rgba(0,255,170,.03); color:#d9fbe8; }
+#v-agent .card h3{ color:#8fffc9; letter-spacing:.4px; }
+#v-agent .card p{ color:#a9cdbb !important; }
+#v-agent #agStat{ font-family:ui-monospace,Menlo,Consolas,monospace; color:#22ffaa !important; text-shadow:0 0 9px rgba(34,255,170,.55); }
+#v-agent #agStat::after{ content:' \258A'; animation:agBlink 1.05s steps(1) infinite; }
+@keyframes agBlink{ 50%{ opacity:0; } }
+#v-agent textarea{ background:#06110b; color:#d9fbe8; border:1px solid rgba(34,255,170,.38); border-radius:10px; padding:10px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+#v-agent textarea::placeholder{ color:#5f8a74; }
+#v-agent #agTasks{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; }
+#v-agent #agTasks > div{ border-top-color:rgba(34,255,170,.22) !important; }
+#v-agent .btn{ border:1px solid rgba(34,255,170,.42); color:#d9fbe8; background:rgba(34,255,170,.07); }
+#v-agent .btn-p{ background:linear-gradient(135deg,#0ecb7f,#0a7cff); color:#fff; border:none; box-shadow:0 0 18px rgba(34,255,170,.35); }
+#v-agent a.btn{ text-decoration:none; display:inline-flex; align-items:center; }
+.agterm{ font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; color:#22ffaa; border:1px solid rgba(34,255,170,.30); background:rgba(34,255,170,.06); border-radius:8px; padding:6px 10px; margin-bottom:10px; letter-spacing:.3px; }
