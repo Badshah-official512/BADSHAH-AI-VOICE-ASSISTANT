@@ -591,7 +591,7 @@
     <section class="view" id="v-perms">
       <div class="viewc">
         <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="shield"></span> Permissions</div><div class="psub">Kaunsi ijazat mili hui hai — sab yahan se control karo</div></div></div>
-        <div class="card" style="margin-bottom:12px"><b>Sab permissions ek saath</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">Neeche wala button dabane par Android ek ek karke saari permissions mangega — jo chaho do, jo na chaho mana kar do. Baghair ijazat ke koi feature nahi chalta.</p><button class="btn btn-p" style="margin-top:10px" onclick="permsAskAll()">Saari permissions mango</button><button class="btn btn-g" style="margin-top:8px" onclick="refreshPerms()">Status dobara check karo</button></div>
+        <div class="card" style="margin-bottom:12px"><b>Sab permissions ek saath</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">Neeche wala button dabane par Android ek ek karke saari permissions mangega — jo chaho do, jo na chaho mana kar do. Baghair ijazat ke koi feature nahi chalta.</p><button class="btn btn-p" style="margin-top:10px" onclick="permsAskAll()">Saari permissions mango</button><button class="btn btn-g" style="margin-top:8px" onclick="refreshPerms()">Status dobara check karo</button><button class="btn btn-g" style="margin-top:8px" onclick="startPermTour(true)">Sawal wala tour chalao (ek ek karke)</button></div>
         <div id="permsList"></div>
         <div class="card"><b>Note — SMS permissions</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">SMS parhne/bhejne wali permissions jaan kar nahi dali gayi: in ki wajah se Google Play Protect app ki install rok deta hai (pehle azmaya hua hai). Is ke ilawa har kaam ki permission app mein shamil hai.</p></div>
       </div>
@@ -833,6 +833,18 @@
 <div id="blockedView" class="hidden"><div><img src="assets/logo-poster.jpg" alt=""><h2>Account block hai</h2><p>Admin ne aapka account block kiya hai. Madad ke liye WhatsApp ya email karo.</p><a class="btn btn-p" href="https://wa.me/923251787969" target="_blank" rel="noopener">WhatsApp</a></div></div>
 
 <div id="rgbFrame"></div>
+<div id="permTour" class="hidden">
+  <div class="pt-card">
+    <div class="pt-top"><b id="ptCount">Sawal 1 / 12</b><button class="pt-x" onclick="permTourClose()">✕</button></div>
+    <div class="pt-bar"><i id="ptBarFill"></i></div>
+    <div class="pt-ic" id="ptIcon">🎤</div>
+    <h3 id="ptTitle">Sawal</h3>
+    <p id="ptText"></p>
+    <button class="btn btn-p" id="ptYes">Haan, ijazat do</button>
+    <button class="btn btn-g" id="ptNo" style="margin-top:8px">Abhi nahi</button>
+    <p class="pt-note">Ye sawal sirf app mein aate hain — website par nahi. Har ijazat tum jab chaho Android Settings se wapas le sakte ho.</p>
+  </div>
+</div>
 <!-- ================= CALL ================= -->
 <div id="callView" class="hidden">
   <div id="keyBox" class="key-box hidden">
@@ -2461,6 +2473,49 @@ window.dostSend=async function(){ const inp=$('dostInput'); const text=(inp.valu
     if(v==='perms') setTimeout(window.refreshPerms,80);
     if(v==='dost'){ setTimeout(dostLoad,80); if(__dostTimer) clearInterval(__dostTimer); __dostTimer=setInterval(()=>{ const dv=$('v-dost'); if(dv && dv.classList.contains('on')) dostLoad(); },4000); }
   }; } })();
+
+/* ===== v7.3: Login ke baad SAWAL-TOUR — ek ek karke saari permissions (sirf APP mein) ===== */
+const PT_STEPS=[
+ {k:'mic', ic:'🎤', t:'Kya main tumhari awaaz sun sakoon?', x:'Voice call aur voice commands ke liye microphone chahiye. Baghair is ke call nahi ho sakti.'},
+ {k:'camera', ic:'📷', t:'Camera ki ijazat doge?', x:'Call ke doran Camera Share ke liye — taake tum jo dikhao, main dekh kar jawab doon. Camera sirf tumhare dabane par khulta hai.'},
+ {k:'contacts', ic:'👥', t:'Contacts dekh sakoon?', x:'"Ahmed ko call karo" jaise commands ke liye contacts chahiye. Contacts phone se bahar nahi jate.'},
+ {k:'call', ic:'📞', t:'Call lagane aur history ki ijazat?', x:'Voice se number dial karne aur call history dikhane ke liye.'},
+ {k:'location', ic:'📍', t:'Location ki ijazat doge?', x:'Mausam, namaz ke auqaat aur qareebi jagahon ke sahi jawabon ke liye.'},
+ {k:'media', ic:'🖼️', t:'Photos aur media ki ijazat?', x:'Gallery se photo chun kar chat mein lagane aur media dikhane ke liye.'},
+ {k:'bluetooth', ic:'🎧', t:'Bluetooth ki ijazat?', x:'Headphones aur doosre devices se jodne ke liye.'},
+ {k:'calendar', ic:'📅', t:'Calendar dekh sakoon?', x:'Tumhare events aur mulaqaton ki yaad dehani ke liye.'},
+ {k:'notifications', ic:'🔔', t:'Notifications bhejoon?', x:'Zaroori khabrein, reminders aur replies waqt par pohanchane ke liye.'},
+ {k:'a11y', ic:'🖐️', t:'Phone control ki ijazat doge?', x:'Accessibility se main tumhare kehne par type, tap, scroll aur screen parh sakta hoon. Ye Android ki Settings se ON hota hai — aur wahi se kabhi bhi band.'},
+ {k:'overlay', ic:'💬', t:'Floating character ki ijazat?', x:'Call ke doran chhota character doosri apps ke upar dikhe — taake app band karke bhi baat chalti rahe.'},
+ {k:'battery', ic:'🔋', t:'Battery ki bandish khatam karoon?', x:'Background mein call na kate, is ke liye battery restrictions hatani hongi (TECNO par ye khaas zaroori hai).'}];
+let __ptIdx=0;
+function ptGranted(k){ const B=window.BadshahBridge; if(!B) return true;
+  try{ if(k==='a11y') return B.a11yStatus && B.a11yStatus()==='on';
+    if(k==='overlay') return B.overlayStatus && B.overlayStatus()==='on';
+    if(k==='battery') return false;
+    const s=JSON.parse(B.permStatus()); return !!s[k]; }catch(e){ return false; } }
+function ptAsk(k){ const B=window.BadshahBridge; if(!B) return;
+  if(k==='a11y'){ if(B.openA11ySettings) B.openA11ySettings(); return; }
+  if(k==='overlay'){ if(B.openOverlaySettings) B.openOverlaySettings(); return; }
+  if(k==='battery'){ if(B.openBatterySettings) B.openBatterySettings(); return; }
+  if(B.requestPerm) B.requestPerm(k); }
+function ptShow(){ const B=window.BadshahBridge; if(!B || !B.requestPerm){ permTourClose(); return; }
+  while(__ptIdx<PT_STEPS.length && ptGranted(PT_STEPS[__ptIdx].k)) __ptIdx++;
+  if(__ptIdx>=PT_STEPS.length){ $('ptIcon').textContent='🎉'; $('ptTitle').textContent='Sab tayyar hai!'; $('ptText').textContent='Saari ijazatein mukammal — ab BADSHAH AI poori taqat se kaam karega.'; $('ptCount').textContent='Mukammal ✔'; $('ptBarFill').style.width='100%'; $('ptYes').textContent='Shuru karo'; $('ptNo').textContent='Band karo'; return; }
+  const st=PT_STEPS[__ptIdx];
+  $('ptCount').textContent='Sawal '+(__ptIdx+1)+' / '+PT_STEPS.length;
+  $('ptBarFill').style.width=Math.round(__ptIdx/PT_STEPS.length*100)+'%';
+  $('ptIcon').textContent=st.ic; $('ptTitle').textContent=st.t; $('ptText').textContent=st.x;
+  $('ptYes').textContent='Haan, ijazat do'; $('ptNo').textContent='Abhi nahi'; }
+window.startPermTour=function(force){ const B=window.BadshahBridge;
+  if(!B || !B.requestPerm){ if(force) bhToast('Sawal-tour sirf Android app mein chalta hai'); return; }
+  __ptIdx=0; $('permTour').classList.remove('hidden'); ptShow(); };
+window.permTourClose=function(){ $('permTour').classList.add('hidden'); try{ localStorage.setItem('ba_perm_tour','seen'); }catch(e){} };
+document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo'); if(!y) return;
+  y.onclick=()=>{ if(__ptIdx>=PT_STEPS.length){ permTourClose(); return; } ptAsk(PT_STEPS[__ptIdx].k); __ptIdx++; setTimeout(ptShow, 650); };
+  n.onclick=()=>{ if(__ptIdx>=PT_STEPS.length){ permTourClose(); return; } __ptIdx++; ptShow(); }; });
+(function(){ const old=window.__bhOnLogin; window.__bhOnLogin=function(u){ if(old) old(u);
+  setTimeout(()=>{ try{ if(window.BadshahBridge && window.BadshahBridge.requestPerm && localStorage.getItem('ba_perm_tour')!=='seen') startPermTour(false); }catch(e){} }, 1200); }; })();
 
 /* ===== v7.3 Phase 3: call se image/video banao ===== */
 async function bhTok(){ try{ if(window.firebase && firebase.auth){ const u=firebase.auth().currentUser; if(u) return await u.getIdToken(); } }catch(e){} return ''; }

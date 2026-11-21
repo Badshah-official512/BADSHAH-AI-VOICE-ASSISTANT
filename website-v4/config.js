@@ -37,7 +37,7 @@ window.BADSHAH_CONFIG = {
   ],
   imageModels: ["gemini-3.1-flash-image", "gemini-3-pro-image"],
   imageModelLabels: { "gemini-3.1-flash-image": "Gemini 3.1 Flash Image — Fast", "gemini-3-pro-image": "Gemini 3 Pro Image — Quality" },
-  videoModels: ["seedance-2.5-flash", "ltx-2.5-pro"],
+  videoModels: ["agnes-video-2.5-flash"],
   moreModels: [
     { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (DeepSeek/Qwen/Gemma)" },
     { id: "mistral:mistral-small-latest", label: "Mistral Small — Free Tier" }
