@@ -7,7 +7,7 @@
 **Your live AI dost — chats, calls, creates images & controls your phone.**
 **Free. Unlimited. Forever.**
 
-[![Version](https://img.shields.io/badge/version-6.1.0-2EE6A6?style=for-the-badge)](#-download)
+[![Version](https://img.shields.io/badge/version-7.1.0-2F7CF6?style=for-the-badge)](#-download)
 [![Live Site](https://img.shields.io/badge/website-live-0E9F6E?style=for-the-badge)](https://badshah222-ai.pages.dev)
 [![Android](https://img.shields.io/badge/Android-APK%20%2B%20AAB-38BDF8?style=for-the-badge)](#-download)
 [![License](https://img.shields.io/badge/license-MIT-FFC94D?style=for-the-badge)](LICENSE)
@@ -20,33 +20,48 @@
 
 ## ✨ BADSHAH AI kya hai?
 
-**BADSHAH AI** ek complete AI voice assistant hai — website + Android app — jo **Zain Shah (Badshah)** ne Swabi, Pakistan se banaya hai. Ye sirf chatbot nahi: ye **sunta hai, bolta hai, live call par baat karta hai, images banata hai aur phone ko voice se control karta hai** — bilkul ek asli dost ki tarah.
+**BADSHAH AI** ek complete AI voice assistant hai — website + Android app — jo **Zain Shah (Badshah)** ne Swabi, Pakistan se banaya hai. Ye sirf chatbot nahi: ye **sunta hai, bolta hai, live call par baat karta hai, images banata hai, cheezein yaad rakhta hai aur phone ko voice se control karta hai** — bilkul ek asli dost ki tarah.
 
 > *"Ek hi mission: free AI — sab ke liye."*
 
-<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/poster-ai.png" alt="BADSHAH AI Assistant" width="420">
+## 📸 Screenshots — v7.1 (naya saaf, Muse-style design)
+
+| Home — Hologram Command Center | Chat — avatar hamesha saath | Feature Galaxy |
+|---|---|---|
+| <img src="docs/screens/screen-home.png" width="250"> | <img src="docs/screens/screen-chat.png" width="250"> | <img src="docs/screens/screen-galaxy.png" width="250"> |
 
 ## 🚀 Features
 
 | Feature | Detail |
 |---|---|
 | 💬 **AI Chat** | Google Gemini models (3.8 Flash · 3.5 Flash Lite · 3.1 Pro) + Groq fast models — Urdu, Roman Urdu, English |
-| 📞 **Live Voice Call** | Gemini 3.8 Live par asli do-tarfa call — pehle sunta hai, phir jawab deta hai, beech mein tok bhi sakte ho |
+| 📞 **Live Voice Call** | Gemini Live par asli do-tarfa call — pehle sunta hai, phir jawab deta hai, beech mein tok bhi sakte ho. **Background call**: app minimize karke bhi baat jaari |
+| 🎭 **Zinda Hologram Avatar** | Call mein avatar AI ki awaaz ke saath hilta hai; emotes (Salaam, Soch, Khushi…) Hologram Test Room mein |
+| 📱 **Phone Control** *(APK)* | Call/chat se **koi bhi installed app naam se kholo**, YouTube chalao, WhatsApp chat tayyar karo, torch on/off, volume control |
+| 🧠 **Yaad — Memory** | "Yaad rakho: …" bolo, BADSHAH hamesha yaad rakhega — Memory page se full control (edit/delete/export) |
 | 🎨 **Image Studio** | Gemini image models + free fallbacks — likho aur image tayyar |
-| 🎙️ **Voice Messages** | Natural Gemini awaaz mein jawab suno |
-| 📱 **Phone Control** *(APK)* | Voice/chat command se apps kholo, YouTube chalao, web search karo, message tayyar karo |
-| 🎨 **Themes** | 5 rang-birange themes — Emerald, Royal Violet, Sunset, Ocean, Neon |
+| 🌅 **Subah ki Briefing** | Roz subah mausam + tumhari yaadein + din ki jhalak ek screen par |
+| 📚 **Parhai Ustaad** | Teacher mode — subjects samjhao, quiz lo |
+| 🏠 **Mode Rooms** | Kaam, Studio, Deen, Fun — har kaam ke liye alag room |
+| 🔑 **BYOK Calls** | Voice call ke liye har user apni free Gemini key use karta hai — chat sab ke liye owner ki key par free |
 | 👤 **Guest Mode** | Bina account chat + images — call ke liye free account |
-| 🛡️ **Admin Control Room** | Users, API key pool, announcements, analytics — sab ek panel se |
-| 🤖 **Agent Platform** | Workspaces, tasks, approvals aur connectors ka database-driven system |
-
-<img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/future.jpg" alt="BADSHAH AI Live Call" width="420"> <img src="https://raw.githubusercontent.com/Badshah-official512/BADSHAH-AI-VOICE-ASSISTANT/main/website-v4/assets/poster-222.png" alt="Built with AI" width="420">
+| 🎨 **Themes** | Royal, Sunset, Ocean, Neon accents — saaf light design ke saath |
+| 🛡️ **Admin Control Room** | Sirf website par: [badshah222-ai.pages.dev/admin](https://badshah222-ai.pages.dev/admin) — users, API key pool, announcements, analytics |
 
 ## 📲 Download
 
 - **Android APK (direct install):** [badshah222-ai.pages.dev/BADSHAH-AI.apk](https://badshah222-ai.pages.dev/BADSHAH-AI.apk)
 - **Web App:** [badshah222-ai.pages.dev/app](https://badshah222-ai.pages.dev/app)
-- Har nayi build ke saath website wala APK khud update ho jata hai.
+- Har nayi build ke saath website wala APK khud update ho jata hai — app ke andar update notice bhi aata hai.
+
+## 🛠️ Tech Stack
+
+- **Frontend:** HTML/CSS/JS web app (Cloudflare Pages + Worker) — Android app ek WebView shell hai jo isi live web app ko chalata hai
+- **Login:** Firebase Authentication (Email/Password + Google)
+- **Backend/Database:** Supabase (PostgreSQL) — profiles, memories, API key pool, admin system
+- **AI:** Gemini Live (voice calls, BYOK), Gemini + Groq (chat), Gemini Image + Pollinations (images), ElevenLabs (optional voices)
+- **Android:** Kotlin, Credential Manager, foreground-service background calls, MediaProjection screen share
+- **Permissions:** Minimal — Internet, Mic, Notifications. Google Play Protect friendly.
 
 ## 🔗 Mere Links
 
@@ -61,29 +76,29 @@
 | 👍 **Facebook** | https://www.facebook.com/share/1Jgyv3r7vG/ |
 | 💬 **WhatsApp** | [+92 325 1787969](https://wa.me/923251787969) |
 
-## 🛠️ Tech Stack
+---
 
-- **Frontend:** Cloudflare Pages — HTML/CSS/JS, living orb UI, PWA
-- **Backend:** Cloudflare Workers (API gateway) + Supabase (database, key pool, analytics)
-- **AI:** Google Gemini (chat · image · TTS · Live voice) · Groq · ElevenLabs · Pollinations
-- **Android:** Kotlin WebView shell + native device bridge, GitHub Actions CI (signed APK + AAB)
-- **Auth:** Firebase Authentication (email + Google)
+## 📝 Changelog
 
-## 👑 Creator
+### v7.1.0 — "As Like As You" Update
+- Poora UI/UX **Muse-app style** mein: saaf light design, chat mein upar center avatar, Muse-style bottom bar — website aur admin panel bhi isi style mein
+- Call mein avatar ab **AI ki awaaz ke saath hilta** hai (speaking/listening motion) + connect par entry animation
+- Hologram Test Room mein asal **emote animations**
+- **Koi bhi installed app naam se kholo** (naya Android bridge) — sirf chand apps nahi, saaray
+- Galaxy icons fix (line-style), login page par purani photo ki jagah **hologram avatar**
+- Admin Panel app se hata diya — ab sirf website `/admin` par
 
-**Zain Shah — "Badshah"** · Swabi, Pakistan
-Full-stack developer & AI builder. Mission: world-class AI, har zubaan mein, har jeb ke liye free.
+### v7.0.0 — Hologram Update
+- Dark-luxury hologram UI, Phone Control in live calls (apps/YouTube/WhatsApp/torch/volume), Yaad memory system, Subah Briefing, Parhai Ustaad, Mode Rooms, Feature Galaxy, 12-category settings, 26 pages
 
-📩 Support / business: WhatsApp [+92 325 1787969](https://wa.me/923251787969)
+### v6.8.0
+- Background calls (foreground service), BYOK voice, mic takeover, screen share
 
-## 📄 License
-
-MIT © Zain Ullah Shah — see [LICENSE](LICENSE). Third-party notices: [THIRD-PARTY-NOTICES](website-v4/documentation/) in the repo docs.
+---
 
 <div align="center">
 
-**⭐ Agar BADSHAH AI pasand aaye to repo ko star zaroor karo!**
-
-Made with ❤️ in Pakistan 🇵🇰
+**Banaya gaya pyaar ke saath — Swabi, Pakistan se 🇵🇰**
+**Zain Shah (Badshah)** · MIT License
 
 </div>
