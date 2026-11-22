@@ -347,6 +347,7 @@ async function handleVideo(req, env, url) {
       return json(200, { done: false });
     } catch (e) { return json(200, { done: false }); }
   }
+  let agnesFail = '';
   if (req.method === 'POST' && akeys.length) {
     const b = await req.clone().json().catch(() => ({}));
     const pr = String(b.prompt || '').slice(0, 1000);
@@ -358,13 +359,51 @@ async function handleVideo(req, env, url) {
           const vid = d.video_id || (d.data && d.data.video_id) || d.id || d.task_id || (d.data && (d.data.id || d.data.task_id));
           if (vid) { await touchKey(env, k); const tok = 'agn:' + btoa(unescape(encodeURIComponent(JSON.stringify({ v: String(vid), k: k.id })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); return json(200, { name: tok, done: false, provider: 'agnes', model: 'agnes-video-2.5-flash' }); }
           const code = String(d.code || (d.error && d.error.code) || '');
-          if (code === 'video_queue_full') return json(429, { error: 'Agnes ki free video queue abhi full hai — thodi dair baad phir try karo.' });
-          if (code === 'insufficient_user_quota') return json(402, { error: 'Agnes account ka quota khatam hai.' });
+          if (code === 'video_queue_full' || code === 'insufficient_user_quota') { agnesFail = code; break; }
         } catch (e) {}
       }
-      return json(502, { error: 'Agnes par video start nahi hui — thodi dair baad try karo.' });
+      if (!agnesFail) agnesFail = 'start';
     }
   }
+  // v7.6: NovAI video (Zhipu CogVideoX-Flash — har generation FREE; pool provider 'novai', key Admin Panel se)
+  const nkeys = await poolKeys(env, 'novai').catch(() => []);
+  if (req.method === 'GET' && opName0.startsWith('nov:')) {
+    let job = null;
+    try { job = JSON.parse(decodeURIComponent(escape(atob(opName0.slice(4).replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) {}
+    if (!job || !job.v) return json(400, { error: 'Video token ghalat hai.' });
+    const k = nkeys.find(x => String(x.id) === String(job.k)) || nkeys[0];
+    if (!k) return json(404, { error: 'NovAI key pool mein nahi hai.' });
+    try {
+      const r = await fetchT('https://aiapi-pro.com/v1/video/generations/' + encodeURIComponent(job.v) + '?model=cogvideox-flash', { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 30000);
+      const d = await r.json().catch(() => ({}));
+      const st = String(d.status || (d.data && d.data.status) || '').toLowerCase();
+      if (st === 'failed' || st === 'error') return json(502, { error: 'NovAI par video fail ho gayi — doosra prompt try karo.' });
+      if (st === 'succeeded' || st === 'completed' || st === 'success') {
+        const vu = (d.content && d.content.video_url) || (d.data && d.data.content && d.data.content.video_url) || '';
+        const s2 = JSON.stringify(d); const m = vu ? [vu] : s2.match(/https?:[^"\\\s]+\.mp4[^"\\\s]*/i);
+        if (m) { await touchKey(env, k); return json(200, { done: true, url: m[0], provider: 'novai' }); }
+      }
+      return json(200, { done: false });
+    } catch (e) { return json(200, { done: false }); }
+  }
+  if (req.method === 'POST' && nkeys.length && (agnesFail || !akeys.length)) {
+    const b = await req.clone().json().catch(() => ({}));
+    const pr = String(b.prompt || '').slice(0, 1000);
+    if (pr) {
+      for (const k of nkeys) {
+        try {
+          const r = await fetchT('https://aiapi-pro.com/v1/video/generations', { method: 'POST', headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'cogvideox-flash', prompt: pr }) }, 45000);
+          const d = await r.json().catch(() => ({}));
+          const vid = d.id || d.task_id || (d.data && (d.data.id || d.data.task_id));
+          if (vid) { await touchKey(env, k); const tok = 'nov:' + btoa(unescape(encodeURIComponent(JSON.stringify({ v: String(vid), k: k.id })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); return json(200, { name: tok, done: false, provider: 'novai', model: 'cogvideox-flash' }); }
+        } catch (e) {}
+      }
+      return json(502, { error: 'Video start nahi hui — thodi dair baad try karo.' });
+    }
+  }
+  if (req.method === 'POST' && agnesFail === 'video_queue_full') return json(429, { error: 'Agnes ki free video queue abhi full hai — thodi dair baad phir try karo.' });
+  if (req.method === 'POST' && agnesFail === 'insufficient_user_quota') return json(402, { error: 'Agnes account ka quota khatam hai.' });
+  if (req.method === 'POST' && agnesFail) return json(502, { error: 'Agnes par video start nahi hui — thodi dair baad try karo.' });
   if (req.method === 'GET' && opName0.startsWith('rep:')) { const rv = await replicateVideo(env, req, url, ''); if (rv) return rv; }
   // v7.3: Pollinations video (owner ki keys, Supabase pool) — POST par stateless token, GET poll par ya to MP4 binary ya {done:false}
   const vkeys = [...await poolKeys(env, 'pollinations-video').catch(() => []), ...await poolKeys(env, 'pollinations-image').catch(() => [])];
@@ -592,7 +631,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'keys-add': {
         const provider = String(body.provider || '');
-        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate', 'openrouter', 'mistral', 'pollinations-image', 'pollinations-video', 'agnes'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
+        if (!['gemini', 'groq', 'elevenlabs', 'stability', 'replicate', 'openrouter', 'mistral', 'pollinations-image', 'pollinations-video', 'agnes', 'novai'].includes(provider)) return json(400, { error: 'Provider ghalat hai' });
         if (!body.key_value || String(body.key_value).length < 10) return json(400, { error: 'Key mukammal nahi lagti' });
         await sbAdmin(env, 'api_keys', { method: 'POST', body: JSON.stringify({ provider, key_value: String(body.key_value).trim(), label: String(body.label || 'key'), active: true }) });
         return json(200, { ok: true });

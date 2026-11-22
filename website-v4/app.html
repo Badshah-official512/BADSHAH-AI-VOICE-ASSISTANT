@@ -319,6 +319,12 @@
         <div class="setrow" style="cursor:default"><div class="ic"><span data-ic="cpu"></span></div><div class="tt"><b>Memory ON/OFF</b><small>Band karne se koi nayi yaad nahi banegi</small></div><div class="switch" id="swMemOn" onclick="flipSet(this,'memOn',memoryToggle)"></div></div>
         <div class="setrow" style="cursor:default"><div class="ic"><span data-ic="shield"></span></div><div class="tt"><b>Save se pehle poochna</b><small>Nayi yaad banane se pehle ijazat</small></div><div class="switch" id="swMemAsk" onclick="flipSet(this,'memAsk')"></div></div>
         <div class="card">
+          <h3><span data-ic="spark"></span> Mera Andaz — jo BADSHAH ne seekha</h3>
+          <p id="styleCardBody" style="margin-top:8px;line-height:1.7">…</p>
+          <p style="margin-top:6px">Ye andaz tumhari baaton se khud seekha jata hai — jawab isi zubaan, lehje aur maqsad ke hisab se milta hai, aur roz ek dafa yaad bhi save ho jati hai.</p>
+          <button class="btn btn-g btn-s" style="margin-top:10px" onclick="resetStyle()">Andaz reset karo</button>
+        </div>
+        <div class="card">
           <h3><span data-ic="pen"></span> Nayi yaad khud add karo</h3>
           <div class="keyfield"><input id="memNew" placeholder="Misal: Meri dukaan Swabi mein hai" autocomplete="off"><button class="btn btn-p btn-s" onclick="addMemoryManual()">Add</button></div>
           <p style="margin-top:9px">Chat mein bhi bol sakte ho: <b style="color:var(--txt)">"yaad rakho: …"</b> — BADSHAH khud save kar lega, aur agli baaton mein in yaadon ka khayal rakhega.</p>
@@ -1167,7 +1173,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src='assets/character-bust.png'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1882,6 +1888,7 @@ window.bhAutoMem=function(text){
     if(typeof saveMemory!=='function'||typeof MEMS==='undefined') return;
     if(!setFlag('memOn',true)) return;
     const t=String(text||'').replace(/\s+/g,' ').trim(); if(t.length<8||t.length>300) return;
+    if(window.bhLearnStyle) bhLearnStyle(t);
     const low=t.toLowerCase();
     const pats=[/mera naam/,/my name is/,/i live in/,/main .{2,40}reht/,/meri pasand/,/mujhe .{2,50}pasand/,/i (really )?(like|love|enjoy) /,/mera (gaon|sheher|city|mohalla)/,/meri (nokri|job)/,/mera (kaam|business|dukaan|dokan)/,/main .{2,30}(student|parhta|parhti)/,/i am an? /,/i'm an? /,/mere (walid|walida|abu|ammi|ami|bhai|behen|dost)/,/my (father|mother|brother|sister|friend|family)/,/yaad rakho/,/remember (that|this|my)/,/meri (birthday|saalgirah)/,/my birthday/,/mera (exam|paper|test|interview)/,/meri (pareshani|takleef|bimari|tabiyat)/,/main .{2,30}(udaas|pareshan|khush) (hoon|hu)/];
     if(!pats.some(p=>p.test(low))) return;
@@ -1889,6 +1896,50 @@ window.bhAutoMem=function(text){
     saveMemory(t);
   }catch(e){}
 };
+
+/* ===== Andaz Seekho (v7.6): baat-cheet ke andaz + maqsad ko seekhna, usi hisab se chalna, aur yaad rakhna ===== */
+window.__styleProf=function(){ try{ return JSON.parse(localStorage.getItem('ba_style_v1')||'null'); }catch(e){ return null; } };
+window.__styleSummary=function(P){
+  if(!P||P.n<3) return '';
+  const sc=[['Urdu script',P.ur||0],['Roman Urdu',P.ru||0],['English',P.en||0]].sort((a,b)=>b[1]-a[1]);
+  const zubaan=sc[0][1]>0?sc[0][0]:'Roman Urdu';
+  const avg=Math.round((P.chars||0)/Math.max(1,P.n));
+  const lambai=avg<40?'chhote, seedhe jawab pasand hain':(avg>120?'tafseeli jawab pasand hain':'darmiyane jawab pasand hain');
+  const tops=Object.entries(P.topics||{}).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>({coding:'Coding/Tech',study:'Parhai/Exam',business:'Business/Online kaam',islam:'Deen/Islam',mood:'Mood/Dil ki baat',ghar:'Ghar/Family'})[x[0]]||x[0]);
+  return 'Zubaan: '+zubaan+' zyada. Jawab ka andaz: '+lambai+'.'+(tops.length?(' Zyada tar maqsad: '+tops.join(', ')+'.'):'')+((P.emoji||0)>=3?' Halka emoji andaz pasand hai.':'');
+};
+window.refreshStylePrompt=function(){ const P=window.__styleProf(); const sum=window.__styleSummary(P); window.__bhStylePrompt=sum?('Andaz: '+sum):''; };
+window.bhLearnStyle=function(text){
+  try{
+    if(!setFlag('memOn',true)) return;
+    const t=String(text||''); if(t.length<3) return;
+    let P=window.__styleProf()||{n:0,ur:0,ru:0,en:0,chars:0,emoji:0,topics:{},last:''};
+    P.n++; P.chars+=t.length;
+    const low=' '+t.toLowerCase()+' ';
+    if(/[\u0600-\u06FF]/.test(t)) P.ur++;
+    if(/\b(hai|hain|mein|mera|meri|mujhe|karo|karke|nahi|acha|theek|tikay|kya|kyun|kab|kesay|wala|wali|chahiye|batao|dost|bhai|yaar|abhi|phir|bohat|bahut)\b/.test(low)) P.ru++;
+    if(/\b(the|is|are|please|thanks|thank|what|how|can you|i want|i need)\b/.test(low)) P.en++;
+    P.emoji+=(t.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu)||[]).length;
+    const TOPICS={coding:/(code|coding|function|error|bug|website|app bana|html|css|javascript|python|api|github|deploy|program)/i,study:/(exam|paper|parhai|chapter|question|sawal|jawab|math|physics|chemistry|biology|board|quiz|homework)/i,business:/(business|dukaan|shop|client|paisa|paise|money|order|sale|bech|kharid|customer|marketing|youtube|channel|video bana)/i,islam:/(namaz|allah|quran|hadith|dua|masjid|roza|islam|deen)/i,mood:/(udaas|pareshan|khush|gussa|thak gaya|akela|bore|tension|rona)/i,ghar:/(ghar|ammi|abu|walid|walida|behen|family|shaadi)/i};
+    for(const k in TOPICS){ if(TOPICS[k].test(low)){ P.topics[k]=(P.topics[k]||0)+1; P.last=k; } }
+    localStorage.setItem('ba_style_v1', JSON.stringify(P));
+    window.refreshStylePrompt();
+    const today=new Date().toDateString();
+    if(P.n>=5 && localStorage.getItem('ba_style_saved')!==today && typeof saveMemory==='function' && typeof MEMS!=='undefined'){
+      const sum=window.__styleSummary(P);
+      if(sum){ const full='Andaz: '+sum; if(!MEMS.some(m=>(m.text||'')===full)){ localStorage.setItem('ba_style_saved', today); saveMemory(full); } }
+    }
+    if(window.renderStyleCard) renderStyleCard();
+  }catch(e){}
+};
+window.resetStyle=function(){ try{ localStorage.removeItem('ba_style_v1'); localStorage.removeItem('ba_style_saved'); }catch(e){} window.__bhStylePrompt=''; if(window.renderStyleCard) renderStyleCard(); if(window.bhToast) bhToast('Andaz reset ho gaya — naye siray se seekhunga'); };
+window.renderStyleCard=function(){
+  const el=document.getElementById('styleCardBody'); if(!el) return;
+  const P=window.__styleProf(); const sum=window.__styleSummary(P);
+  if(!P||P.n<1||!sum){ el.textContent='Abhi kuch nahi seekha — jaise jaise tum baat karoge, BADSHAH tumhari zubaan, lehja aur maqsad seekhta jayega aur jawab usi andaz mein dega.'; return; }
+  el.textContent=sum+' (kul '+P.n+' messages se seekha)';
+};
+window.refreshStylePrompt();
 async function deleteMemory(id){
   if(isRealUser() && !String(id).startsWith('local-')){
     try{ await memApi('DELETE', null, id); }catch(e){}
@@ -1900,6 +1951,7 @@ async function deleteMemory(id){
 let memFilter='Sab';
 function memCatOf(t){ t=String(t||'').toLowerCase(); if(/naam|shahar|sheher|city|umar|age|gaon| rehta| rehti/.test(t)) return 'Zaat'; if(/dukaan|shop|job|naukri|website|business|kaam|client|company/.test(t)) return 'Kaam'; if(/pasand|favourite|favorite|like|shauq|hobby/.test(t)) return 'Pasand'; return 'Note'; }
 function renderMemories(){
+  if(window.renderStyleCard) renderStyleCard();
   const L=$('memList'); if(!L) return;
   document.querySelectorAll('#memCats .catchip').forEach(ch=>{ ch.classList.toggle('on', ch.textContent===memFilter); ch.onclick=()=>{ memFilter=ch.textContent; renderMemories(); }; });
   const rows=MEMS.filter(m=>memFilter==='Sab'||memCatOf(m.text)===memFilter);
