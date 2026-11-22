@@ -37,7 +37,7 @@ window.BADSHAH_CONFIG = {
   ],
   imageModels: ["gemini-3.1-flash-image", "gemini-3-pro-image"],
   imageModelLabels: { "gemini-3.1-flash-image": "Gemini 3.1 Flash Image — Fast", "gemini-3-pro-image": "Gemini 3 Pro Image — Quality" },
-  videoModels: ["agnes-video-2.5-flash"],
+  videoModels: ["cogvideox-flash"],
   moreModels: [
     { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (jo free model mile)" },
     { id: "openrouter:google/gemma-4-31b-it:free", label: "CODING — Gemma 4 (Free, sirf coding ke liye)" },

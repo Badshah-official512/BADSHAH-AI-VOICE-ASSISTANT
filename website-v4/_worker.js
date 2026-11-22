@@ -338,6 +338,34 @@ async function handleVideo(req, env, url) {
   { const g = await gate(env, 'video'); if (g) return g; }
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return json(501, { error: 'Key pool setup pending hai.' });
   const opName0 = url.searchParams.get('name') || '';
+  // v7.6b: NovAI video — Agent Computer ke raste (aiapi-pro Cloudflare ko block karta hai,
+  // is liye asal generation Codespace runner karta hai; owner ki hidayat: Agnes ki jagah NovAI)
+  if (req.method === 'GET' && opName0.startsWith('agt:')) {
+    const rows = await sbAdmin(env, 'agent_tasks?select=status,result,error&id=eq.' + encodeURIComponent(opName0.slice(4)) + '&limit=1');
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if (!row) return json(404, { error: 'Video task nahi mila.' });
+    if (row.status === 'done' && row.result && row.result.url) return json(200, { done: true, url: row.result.url, provider: 'novai' });
+    if (row.status === 'failed') return json(502, { error: 'Video nahi ban saki — ' + String(row.error || 'dobara try karo').slice(0, 200) });
+    return json(200, { done: false });
+  }
+  if (req.method === 'POST' && env.GITHUB_AGENT_TOKEN && env.AGENT_RUNNER_KEY) {
+    const vu = await agentUser(req).catch(() => null);
+    if (vu) {
+      const nk = await poolKeys(env, 'novai').catch(() => []);
+      if (nk.length) {
+        const b = await req.clone().json().catch(() => ({}));
+        const pr = String(b.prompt || '').slice(0, 550);
+        if (pr) {
+          const rows = await sbAdmin(env, 'agent_tasks', { method: 'POST', body: JSON.stringify({ firebase_uid: vu.user_id || vu.sub || '', agent: 'browser', goal: 'VIDEO::' + pr, status: 'queued' }) });
+          const row = Array.isArray(rows) ? rows[0] : rows;
+          if (row && row.id) {
+            try { const cs = await agentCs(env); if (cs && cs.found && cs.state !== 'Available') await ghApi(env, '/user/codespaces/' + cs.name + '/start', 'POST'); } catch (e) {}
+            return json(200, { name: 'agt:' + row.id, done: false, provider: 'novai' });
+          }
+        }
+      }
+    }
+  }
   // v7.3: Agnes AI video (owner ki asal video key — platform.agnes-ai.com; pool provider 'agnes')
   const akeys = await poolKeys(env, 'agnes').catch(() => []);
   if (req.method === 'GET' && opName0.startsWith('agn:')) {
@@ -884,13 +912,20 @@ async function handleAgentTasks(req, env) {
   const p = await agentUser(req); if (!p) return json(401, { error: 'Login zaroori hai.' });
   const uid = p.user_id || p.sub || '';
   const rows = await sbAdmin(env, 'agent_tasks?select=id,goal,status,result,error,created_at&firebase_uid=eq.' + encodeURIComponent(uid) + '&order=created_at.desc&limit=10');
-  return json(200, { tasks: rows || [] });
+  const tasks = (rows || []).map(r => { if (r.goal && r.goal.indexOf('VIDEO::') === 0) r.goal = '\uD83C\uDFAC Video: ' + r.goal.slice(7); return r; });
+  return json(200, { tasks });
 }
 function runnerOk(req, env) { return !!env.AGENT_RUNNER_KEY && req.headers.get('x-agent-key') === env.AGENT_RUNNER_KEY; }
 async function handleAgentQueue(req, env) {
   if (!runnerOk(req, env)) return json(403, { error: 'Runner key ghalat hai.' });
   const rows = await sbAdmin(env, 'agent_tasks?select=id,goal,firebase_uid,created_at&status=eq.queued&order=created_at.asc&limit=3');
   return json(200, { tasks: rows || [] });
+}
+async function handleAgentVideoKey(req, env) {
+  if (!runnerOk(req, env)) return json(403, { error: 'Runner key ghalat hai.' });
+  const keys = await poolKeys(env, 'novai').catch(() => []);
+  if (!keys.length) return json(404, { error: 'NovAI key pool mein nahi hai.' });
+  return json(200, { key: keys[0].key_value });
 }
 async function handleAgentReport(req, env) {
   if (!runnerOk(req, env)) return json(403, { error: 'Runner key ghalat hai.' });
@@ -1035,6 +1070,7 @@ export default {
     if (url.pathname === '/api/agent/tasks') return handleAgentTasks(req, env);
     if (url.pathname === '/api/agent/queue') return handleAgentQueue(req, env);
     if (url.pathname === '/api/agent/report') return handleAgentReport(req, env);
+    if (url.pathname === '/api/agent/video-key') return handleAgentVideoKey(req, env);
     if (url.pathname === '/api/device') return handleDeviceCmd(req, env);
     if (url.pathname === '/api/chat') return handleChat(req, env, url);
     if (url.pathname === '/api/image') return handleImage(req, env, url);
