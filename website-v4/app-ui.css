@@ -711,3 +711,25 @@ body.chat-on .msg .av{box-shadow:0 0 0 2px var(--ch-a,#2F7CF6),0 0 14px var(--ch
 @keyframes chfPulse{0%,100%{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ch-a,#2F7CF6) 35%,transparent)}50%{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ch-a,#2F7CF6) 75%,transparent),inset 0 0 40px color-mix(in srgb,var(--ch-a,#2F7CF6) 20%,transparent)}}
 #msgs[data-chf="royal"]{box-shadow:inset 0 0 0 2px rgba(245,158,11,.65),inset 0 0 0 6px rgba(253,230,138,.13),inset 0 0 36px rgba(245,158,11,.16)}
 #msgs[data-chf="mint"]{box-shadow:inset 0 0 0 2px rgba(34,255,170,.5),inset 0 0 40px rgba(34,255,170,.14)}
+
+/* v7.6 CHAT LIVING AVATAR — chat stage par zinda avatar (Muse-style): saans, soch, bolna, sunna */
+#stage .orb-host{display:none}
+#chatAvWrap{position:relative;width:104px;height:104px;margin:2px auto 4px;flex:none}
+#chatAvWrap .cavRing{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--blue),var(--purple),#22FFAA,var(--blue));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));animation:cavSpin 14s linear infinite;opacity:.85}
+#chatAvWrap .cavHalo{position:absolute;inset:-12px;border-radius:50%;background:radial-gradient(circle,rgba(124,77,255,.30),rgba(47,124,246,.12) 55%,transparent 72%);animation:cavHaloPulse 3.4s ease-in-out infinite;pointer-events:none}
+#chatAv{position:absolute;inset:7px;width:90px;height:90px;border-radius:50%;object-fit:cover;display:block;animation:cavBreath 3.4s ease-in-out infinite;box-shadow:0 8px 22px rgba(60,40,160,.35)}
+#chatAvWrap .cavDot{position:absolute;right:5px;bottom:7px;width:13px;height:13px;border-radius:50%;background:#22c55e;border:2.5px solid #fff;z-index:2;animation:cavHaloPulse 2.2s ease-in-out infinite}
+@keyframes cavSpin{to{transform:rotate(360deg)}}
+@keyframes cavBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+@keyframes cavHaloPulse{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.07)}}
+@keyframes cavNod{0%,100%{transform:rotate(0deg) translateY(0)}30%{transform:rotate(-2.4deg) translateY(1.5px)}65%{transform:rotate(2.4deg) translateY(0)}}
+@keyframes cavTalk{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-2.5px) scale(1.02)}55%{transform:translateY(1px) scale(.995)}}
+#stage[data-state="listening"] .cavRing{background:conic-gradient(from 0deg,#2F7CF6,#22d3ee,#2F7CF6);animation-duration:5s}
+#stage[data-state="listening"] #chatAv{animation:cavBreath 1.6s ease-in-out infinite}
+#stage[data-state="listening"] .cavDot{background:#2F7CF6}
+#stage[data-state="thinking"] .cavRing{animation-duration:2.2s;background:conic-gradient(from 0deg,var(--purple),#FF7AD9,var(--blue),var(--purple))}
+#stage[data-state="thinking"] #chatAv{animation:cavNod 1.15s ease-in-out infinite}
+#stage[data-state="thinking"] .cavDot{background:#FF7AD9}
+#stage[data-state="speaking"] .cavRing{background:conic-gradient(from 0deg,#22FFAA,#2F7CF6,var(--purple),#22FFAA);animation-duration:6s}
+#stage[data-state="speaking"] #chatAv{animation:cavTalk .9s ease-in-out infinite}
+#stage[data-state="speaking"] .cavDot{background:#22FFAA}

@@ -314,7 +314,7 @@ function toggleVoice(){
 /* ---------------- stage / talking portrait ---------------- */
 const STATUS={idle:'Online — sun raha hoon',listening:'Sun raha hoon…',thinking:'Soch raha hoon…',speaking:'Bol raha hoon…'};
 const LIVE={idle:'Type karo ya 🗣️ dabao — main sunta bhi hoon, bolta bhi.',listening:'Tumhari baat dhyan se sun raha hoon 👂',thinking:'Jawab tayyar ho raha hai…',speaking:'Jawab de raha hoon 💬'};
-orb.onState=s=>{ $('orbStatusTxt').textContent=STATUS[s]; $('stageLive').textContent=LIVE[s]; };
+orb.onState=s=>{ $('orbStatusTxt').textContent=STATUS[s]; $('stageLive').textContent=LIVE[s]; const _st=$('stage'); if(_st) _st.dataset.state=s; };
 const CARDS=[
   {i:'🎨',t:'Image banao',s:'Ek shandar tasveer',m:'image',p:'Raat ke waqt Karachi ki ek cinematic tasveer banao'},
   {i:'💻',t:'Website ka code',s:'HTML · CSS · JS',p:'Ek modern landing page ka HTML/CSS/JS code likho'},
