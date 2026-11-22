@@ -5,7 +5,7 @@
 'use strict';
 const detect=BadshahOrb.detectMood;
 const inp=$('input');
-const AV={get badshah(){ return window.__avImg||'assets/avatar-bust.png'; }};
+const AV={get badshah(){ return window.__avImg||'assets/avatar-face.png'; }};
 const T=(n,m)=>{ try{ if(window.BHTrack) BHTrack.event(n,m); }catch(e){} };
 const escH=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const orb=new BadshahOrb($('orbHost'),{portrait:AV[state.mode]||AV.badshah,varTarget:$('chatPanel')});

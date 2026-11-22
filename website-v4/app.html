@@ -153,6 +153,7 @@
         </div>
         <select class="model" id="modelSel" hidden></select>
       </div>
+      <div id="chatPinAv" data-state="idle"><div class="pinWrap"><div class="pinRing"></div><div class="pinHalo"></div><img id="pinAvImg" src="assets/avatar-face.png" alt="BADSHAH"><div class="pinDot"></div></div><span class="pinName">BADSHAH</span></div>
       <div id="chatPanel">
         <div class="stage" id="stage">
           <div class="orb-host" id="orbHost"></div>
@@ -984,7 +985,7 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/logo-poster.png" alt="BADSHAH AI"><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI"><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1027,7 +1028,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 const CFG = window.BADSHAH_CONFIG;
-try{ const _avId=localStorage.getItem('ba_avatar')||'asli'; const _avMap={asli:['assets/avatar-bust.png','assets/logo-poster.png'],poster:['assets/logo-poster.png','assets/logo-poster.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
+try{ const _avId=localStorage.getItem('ba_avatar')||'asli'; const _avMap={asli:['assets/avatar-face.png','assets/avatar-face.png'],poster:['assets/logo-poster.png','assets/logo-poster.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
 const $ = id => document.getElementById(id);
 const state = { user:null, mode: localStorage.getItem('ba_mode')||'badshah', plan:'free', planExpiry:null, chats: JSON.parse(localStorage.getItem('ba_chats')||'[]'), current: 0, imgMode:false, busy:false };
 if(!state.chats.length) state.chats=[{title:'New chat',msgs:[]}];
@@ -1092,7 +1093,7 @@ $('modelSel').onchange=e=>{ state.imgMode = CFG.imageModels.includes(e.target.va
 function setMode(m){
   m='badshah'; state.mode=m; localStorage.setItem('ba_mode',m);
   $('modeBadshah').classList.toggle('on',m==='badshah'); $('modeRani').classList.toggle('on',m==='rani');
-  $('whoImg').src = window.__avImg||'assets/avatar-bust.png';
+  $('whoImg').src = window.__avImg||'assets/avatar-face.png';
   $('whoName').textContent = 'BADSHAH';
 }
 $('modeBadshah').onclick=()=>setMode('badshah'); $('modeRani').onclick=()=>setMode('rani');
@@ -1124,7 +1125,7 @@ function renderMsgs(){
 }
 function addMsgEl(role, content, img){
   const w=$('msgWrap'); const d=document.createElement('div'); d.className='msg '+(role==='user'?'user':'ai');
-  const av = role==='user' ? '' : `<img class="av" src="${window.__avImg||'assets/avatar-bust.png'}" alt="">`;
+  const av = role==='user' ? '' : `<img class="av" src="${window.__avImg||'assets/avatar-face.png'}" alt="">`;
   d.innerHTML = av + `<div class="body">${img?`<img class="gen" src="${img}" alt="AI image">`:''}<div class="txt">${role==='ai'?md(content):esc(content)}</div>${role==='ai'?'<div class="acts"><button class="spk">🔊 Suno</button><button class="cpy">📋 Copy</button></div>':''}</div>`;
   const spk=d.querySelector('.spk'); if(spk) spk.onclick=()=>speak(content);
   const cpy=d.querySelector('.cpy'); if(cpy) cpy.onclick=()=>navigator.clipboard.writeText(content);
@@ -2615,7 +2616,7 @@ window.renderLook();
 
 /* ===== v7.6: AVATAR SYSTEM — 12 styles + custom photo ===== */
 window.AVATARS=[
- {id:'asli',name:'Asli Badshah',round:'assets/avatar-bust.png',hero:'assets/logo-poster.png',a:'#7C4DFF',b:'#2F7CF6'},
+ {id:'asli',name:'Asli Badshah',round:'assets/avatar-face.png',hero:'assets/avatar-face.png',a:'#7C4DFF',b:'#2F7CF6'},
  {id:'poster',name:'Poster Neon',round:'assets/logo-poster.png',hero:'assets/logo-poster.png',a:'#A855F7',b:'#EC4899'},
  {id:'poora',name:'Poora Character',round:'assets/avatar-bust.png',hero:'assets/character.png',a:'#2F7CF6',b:'#22d3ee'},
  {id:'sona',name:'Sunehra Glow',round:'assets/avatar-bust.png',hero:'assets/character-bust.png',a:'#F59E0B',b:'#FDE68A'},
@@ -2792,6 +2793,17 @@ window.setContentLang = function(l){ try{ localStorage.setItem('ba_clang', l); }
   function sync(){ try{ b.textContent=LBL[contentLang()]||LBL.en; }catch(e){} }
   b.addEventListener('click', function(){ var order=['en','ru','ur']; var cur='en'; try{ cur=contentLang(); }catch(e){} var nx=order[(order.indexOf(cur)+1)%3]; window.setContentLang(nx); sync(); if(typeof toast==='function') toast(nx==='en'?'Language: English':(nx==='ru'?'Language: Roman Urdu':'Language: Urdu')); });
   sync();
+})();
+
+/* ===== v7.7.1: Chat pinned living avatar (scroll par bhi upar) ===== */
+(function(){ var pin=document.getElementById('chatPinAv'); if(!pin) return;
+  var stage=document.getElementById('stage'), panel=document.getElementById('chatPanel');
+  function syncState(){ try{ pin.dataset.state=(stage&&stage.dataset.state)||'idle'; }catch(e){} }
+  function syncVis(){ try{ pin.style.display=(panel&&panel.classList.contains('has-msgs'))?'flex':'none'; }catch(e){} }
+  function syncImg(){ try{ var im=document.getElementById('pinAvImg'); if(im&&window.__avImg&&im.getAttribute('src')!==window.__avImg) im.src=window.__avImg; }catch(e){} }
+  if(window.MutationObserver){ if(stage) new MutationObserver(syncState).observe(stage,{attributes:true,attributeFilter:['data-state']}); if(panel) new MutationObserver(syncVis).observe(panel,{attributes:true,attributeFilter:['class']}); }
+  setInterval(function(){ syncState(); syncVis(); syncImg(); }, 1200);
+  syncState(); syncVis(); syncImg();
 })();
 applyContentLang();
 

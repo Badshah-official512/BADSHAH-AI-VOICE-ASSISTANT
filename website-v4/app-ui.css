@@ -741,3 +741,29 @@ body.chat-on .msg .av{box-shadow:0 0 0 2px var(--ch-a,#2F7CF6),0 0 14px var(--ch
 #callStage.listening #callAvatar{animation:cavBreath 1.5s ease-in-out infinite}
 /* Baqi screens: header DP, who avatar, stage busts, floating bubble — halki zinda harkat */
 img[data-avimg], #whoImg, .dp-head img, .stage.bust img, .floatbub img{animation:cavBreath 3.8s ease-in-out infinite}
+
+
+/* ===== v7.7.1 AVATAR FIX: gol zinda chehra — chat pin + call hero ===== */
+#v-chat{position:relative}
+@keyframes cavSway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+#chatAvWrap{animation:cavSway 7.5s ease-in-out infinite}
+#chatPinAv{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:200;display:none;flex-direction:column;align-items:center;pointer-events:none}
+#chatPinAv .pinWrap{position:relative;width:62px;height:62px;animation:cavSway 7.5s ease-in-out infinite}
+#chatPinAv .pinRing{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--blue),var(--purple),#22FFAA,var(--blue));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:cavSpin 12s linear infinite;opacity:.9}
+#chatPinAv .pinHalo{position:absolute;inset:-11px;border-radius:50%;background:radial-gradient(circle,rgba(124,77,255,.32),rgba(47,124,246,.10) 55%,transparent 72%);animation:cavHaloPulse 3.2s ease-in-out infinite;pointer-events:none}
+#pinAvImg{position:absolute;inset:5px;width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center 20%;display:block;animation:cavBreath 3.4s ease-in-out infinite;box-shadow:0 6px 16px rgba(60,40,160,.35)}
+#chatPinAv .pinDot{position:absolute;right:3px;bottom:4px;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid #fff;z-index:2}
+#chatPinAv .pinName{margin-top:5px;background:rgba(18,20,36,.85);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:1.4px;padding:3px 11px;border-radius:99px;box-shadow:0 4px 12px rgba(20,16,60,.3)}
+#chatPinAv[data-state="listening"] .pinRing{background:conic-gradient(from 0deg,#2F7CF6,#22d3ee,#2F7CF6);animation-duration:4.5s}
+#chatPinAv[data-state="listening"] #pinAvImg{animation:cavBreath 1.6s ease-in-out infinite}
+#chatPinAv[data-state="listening"] .pinDot{background:#2F7CF6}
+#chatPinAv[data-state="thinking"] .pinRing{background:conic-gradient(from 0deg,#7C4DFF,#ec4899,#7C4DFF);animation-duration:2s}
+#chatPinAv[data-state="thinking"] #pinAvImg{animation:cavNod 1.15s ease-in-out infinite}
+#chatPinAv[data-state="thinking"] .pinDot{background:#ec4899}
+#chatPinAv[data-state="speaking"] .pinRing{background:conic-gradient(from 0deg,#22FFAA,#2F7CF6,#7C4DFF,#22FFAA);animation-duration:5s}
+#chatPinAv[data-state="speaking"] #pinAvImg{animation:cavTalk .8s ease-in-out infinite}
+#chatPinAv[data-state="speaking"] .pinDot{background:#22FFAA}
+.callHero{height:264px}
+.callHeroRing{width:246px;height:246px}
+#callAvatar{width:218px;height:218px;max-width:72vw;border-radius:50%;object-fit:cover;object-position:center 20%;-webkit-mask-image:none;mask-image:none;border:3px solid rgba(255,255,255,.16);box-shadow:0 18px 44px rgba(20,10,60,.5)}
+#chatPanel.has-msgs .stage{display:none}
