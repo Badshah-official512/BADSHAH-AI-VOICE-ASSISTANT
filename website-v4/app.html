@@ -1257,7 +1257,10 @@ function downsampleTo16k(f, rate){
 }
 function onAudioChunk(e){
   if(!call.on || call.muted || !call.ac) return;
-  const f=downsampleTo16k(e.inputBuffer.getChannelData(0), call.ac.sampleRate);
+  const raw=downsampleTo16k(e.inputBuffer.getChannelData(0), call.ac.sampleRate);
+  /* Door se awaz: halki/dur ki awaz ko software gain se mazboot karo — soft-clip (tanh) taaki paas ki tez awaz phate nahi */
+  const f=new Float32Array(raw.length); const BOOST=2.2;
+  for(let i=0;i<raw.length;i++) f[i]=Math.tanh(raw[i]*BOOST);
   if(call.engine==='gemini'){
     if(!call.ws || call.ws.readyState!==1) return;
     const pcm=new Int16Array(f.length);
@@ -1400,6 +1403,7 @@ function connectGemini(){
       inputAudioTranscription:{}, outputAudioTranscription:{},
       tools: LIVE_TOOLS,
       contextWindowCompression:{ slidingWindow:{} },
+      realtimeInputConfig:{ automaticActivityDetection:{ disabled:false, startOfSpeechSensitivity:'START_SENSITIVITY_LOW', endOfSpeechSensitivity:'END_SENSITIVITY_LOW', prefixPaddingMs:300, silenceDurationMs:1100 } },
       sessionResumption:{ handle: call.handle||undefined } } }));
   };
   ws.onmessage=async ev=>{
