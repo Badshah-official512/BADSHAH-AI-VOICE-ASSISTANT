@@ -78,7 +78,7 @@ main{padding:22px 26px 60px;min-width:0}
   <div class="login">
     <img src="../assets/logo-poster.jpg" alt="BADSHAH AI">
     <h1>Admin Control Room 👑</h1>
-    <p>Website + app ka poora control. Password dalo.</p>
+    <p>Complete control of the website + app. Enter the password.</p>
     <input class="field" id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
     <div class="err" id="loginErr"></div>
     <button class="btn w" id="btnLogin">Login →</button>
@@ -99,7 +99,7 @@ main{padding:22px 26px 60px;min-width:0}
     <button class="nv" data-p="support">🛟 Support <span class="bd hidden" id="tkBd"></span></button>
     <button class="nv" data-p="system">🧰 System</button>
     <div class="sp"></div>
-    <button class="nv" id="btnSite">↗ Website kholo</button>
+    <button class="nv" id="btnSite">↗ Open website</button>
     <button class="nv" id="btnLogout">⎋ Logout</button>
   </nav>
   <main>
@@ -124,15 +124,15 @@ main{padding:22px 26px 60px;min-width:0}
         <div class="card"><h3>🟢 Live abhi <small id="liveSub"></small></h3><div id="liveMini"></div></div>
       </div>
       <div class="grid3" style="margin-top:14px">
-        <div class="card"><h3>🆕 Naye sign-ups <small>14 din</small></h3><div class="chart" id="chSignups"></div></div>
+        <div class="card"><h3>🆕 New sign-ups <small>14 days</small></h3><div class="chart" id="chSignups"></div></div>
         <div class="card"><h3>🔑 API keys</h3><div id="keyMini"></div></div>
-        <div class="card"><h3>🛟 Support</h3><b style="font-family:'Space Grotesk';font-size:30px" id="kTickets">–</b><p class="mut" style="margin-top:6px">open tickets</p><button class="btn g s" style="margin-top:12px" data-go="support">Inbox kholo →</button></div>
+        <div class="card"><h3>🛟 Support</h3><b style="font-family:'Space Grotesk';font-size:30px" id="kTickets">–</b><p class="mut" style="margin-top:6px">open tickets</p><button class="btn g s" style="margin-top:12px" data-go="support">Open inbox →</button></div>
       </div>
     </section>
 
     <!-- ANALYTICS -->
     <section id="p-analytics" class="hidden">
-      <div class="row" style="margin-bottom:14px"><div class="seg" id="rangeSeg"><button data-d="7">7 din</button><button data-d="14" class="on">14 din</button><button data-d="30">30 din</button><button data-d="90">90 din</button></div></div>
+      <div class="row" style="margin-bottom:14px"><div class="seg" id="rangeSeg"><button data-d="7">7 days</button><button data-d="14" class="on">14 days</button><button data-d="30">30 days</button><button data-d="90">90 days</button></div></div>
       <div class="kpis" id="anKpis"></div>
       <div class="card"><h3>📈 Traffic <small id="anSub"></small></h3><div class="chart" id="chTraffic"></div><div class="legend" id="lgTraffic"></div></div>
       <div class="grid2e" style="margin-top:14px">
@@ -144,23 +144,23 @@ main{padding:22px 26px 60px;min-width:0}
         <div class="card"><h3>🧭 Browsers</h3><div class="bars" id="bBrowsers"></div></div>
         <div class="card"><h3>🔗 Traffic sources</h3><div class="bars" id="bRefs"></div></div>
       </div>
-      <div class="card" style="margin-top:14px"><h3>🕒 Kis waqt log aate hain <small>Pakistan time</small></h3><div class="hours" id="hrs"></div><div class="hlab" id="hlab"></div></div>
+      <div class="card" style="margin-top:14px"><h3>🕒 When do people visit <small>Pakistan time</small></h3><div class="hours" id="hrs"></div><div class="hlab" id="hlab"></div></div>
       <div class="card"><h3>🔎 Google Analytics &amp; Search</h3>
-        <p class="mut" style="line-height:1.7;margin-bottom:14px">Upar ka analytics hamara apna (Supabase) hai — bina kisi cookie banner ke. Google ki gehri analysis ke liye GA4 jodo: Measurement ID neeche dalo aur site khud usay load kar legi.</p>
+        <p class="mut" style="line-height:1.7;margin-bottom:14px">The analytics above is our own (Supabase) — with no cookie banner. For deeper Google analysis, connect GA4: put the Measurement ID below and the site will load it itself.</p>
         <div class="row"><input class="in" id="gaId" placeholder="GA4 Measurement ID (misal G-XXXXXXXXXX)" style="max-width:340px"><button class="btn s" id="gaSave">Save</button>
         <a class="btn g s" href="https://analytics.google.com/" target="_blank" rel="noopener">Google Analytics ↗</a><a class="btn g s" href="https://search.google.com/search-console" target="_blank" rel="noopener">Search Console ↗</a><a class="btn g s" href="https://pagespeed.web.dev/" target="_blank" rel="noopener">PageSpeed ↗</a></div>
       </div>
     </section>
 
     <!-- LIVE -->
-    <section id="p-live" class="hidden"><div class="card"><h3>🟢 Is waqt site par kaun hai <small>har 10 second mein update</small></h3><div class="tw"><table id="tbLive"></table></div></div></section>
+    <section id="p-live" class="hidden"><div class="card"><h3>🟢 Who is on the site right now <small>updates every 10 seconds</small></h3><div class="tw"><table id="tbLive"></table></div></div></section>
 
     <!-- USERS -->
     <section id="p-users" class="hidden">
       <div class="card">
         <div class="row" style="margin-bottom:14px">
-          <div class="seg" id="uSrc"><button class="on" data-s="web">Web + App users</button><button data-s="profiles">Purani profiles</button></div>
-          <div class="seg" id="uFilter"><button class="on" data-f="all">Sab</button><button data-f="active">Active 24h</button><button data-f="new">Naye 7 din</button><button data-f="blocked">Blocked</button></div>
+          <div class="seg" id="uSrc"><button class="on" data-s="web">Web + App users</button><button data-s="profiles">Old profiles</button></div>
+          <div class="seg" id="uFilter"><button class="on" data-f="all">Sab</button><button data-f="active">Active 24h</button><button data-f="new">New · 7 days</button><button data-f="blocked">Blocked</button></div>
           <input class="in" id="uQ" placeholder="Naam ya email…" style="max-width:240px"><button class="btn s" id="uSearch">Search</button><div style="flex:1"></div><button class="btn g s" id="uCsv">⬇ CSV</button>
         </div>
         <div class="tw"><table id="tbUsers"></table></div>
@@ -169,24 +169,24 @@ main{padding:22px 26px 60px;min-width:0}
 
     <!-- WEBSITE -->
     <section id="p-website" class="hidden">
-      <div class="note" style="background:rgba(63,169,255,.07);border-color:rgba(63,169,255,.35);color:#BFF8E2">Yahan se kiya har badlav <b>seedha live site par</b> lagta hai (kuch second mein) — code dobara deploy nahi karna.</div>
+      <div class="note" style="background:rgba(63,169,255,.07);border-color:rgba(63,169,255,.35);color:#BFF8E2">Every change made here applies <b>directly to the live site</b> (within a few seconds) — no need to deploy code again.</div>
       <div class="grid2e">
         <div class="card"><h3>🏷️ Brand &amp; hero text</h3><div class="form">
           <label class="f"><span>Brand naam</span><input class="in" data-k="brand.name" placeholder="BADSHAH AI"></label>
           <label class="f"><span>Tagline</span><input class="in" data-k="brand.tagline"></label>
           <label class="f"><span>Hero heading</span><input class="in" data-k="hero.title" placeholder="Aisa AI jo sunta hai, sochta hai…"></label>
           <label class="f"><span>Hero sub-text</span><textarea class="in" data-k="hero.subtitle"></textarea></label>
-          <label class="f"><span>Main button ka text</span><input class="in" data-k="hero.cta" placeholder="Free try karo"></label>
+          <label class="f"><span>Main button text</span><input class="in" data-k="hero.cta" placeholder="Free try karo"></label>
           <label class="f"><span>Accent rang</span><input class="in" type="color" data-k="theme.accent" value="#3FA9FF" style="height:44px;padding:4px"></label>
         </div></div>
         <div class="card"><h3>📣 Top announcement bar</h3><div class="form">
-          <label class="tg"><div><b>Bar dikhao</b><small>Site ke upar sab ko nazar aayegi</small></div><input type="checkbox" class="sw" data-k="announcement.enabled" data-t="bool"></label>
+          <label class="tg"><div><b>Bar dikhao</b><small>Visible to everyone at the top of the site</small></div><input type="checkbox" class="sw" data-k="announcement.enabled" data-t="bool"></label>
           <label class="f"><span>Type</span><select class="in" data-k="announcement.type"><option value="info">ℹ️ Info (green)</option><option value="warn">⚠️ Warning (gold)</option><option value="danger">⛔ Important (red)</option></select></label>
           <label class="f"><span>Message</span><input class="in" data-k="announcement.text" placeholder="Naya feature aa gaya! 🎉"></label>
-          <div class="f2"><label class="f"><span>Link (optional)</span><input class="in" data-k="announcement.link" placeholder="https://…"></label><label class="f"><span>Link ka text</span><input class="in" data-k="announcement.linkText" placeholder="Dekho"></label></div>
+          <div class="f2"><label class="f"><span>Link (optional)</span><input class="in" data-k="announcement.link" placeholder="https://…"></label><label class="f"><span>Link text</span><input class="in" data-k="announcement.linkText" placeholder="Dekho"></label></div>
         </div>
         <h3 style="margin-top:22px">🛠️ Maintenance mode</h3><div class="form">
-          <label class="tg"><div><b>Poori site band karo</b><small>Chat, image, call sab rukk jayega</small></div><input type="checkbox" class="sw" data-k="maintenance.enabled" data-t="bool"></label>
+          <label class="tg"><div><b>Shut down the whole site</b><small>Chat, image, call sab rukk jayega</small></div><input type="checkbox" class="sw" data-k="maintenance.enabled" data-t="bool"></label>
           <label class="f"><span>Maintenance message</span><input class="in" data-k="maintenance.message" placeholder="Thodi dair mein wapas aate hain…"></label>
         </div></div>
       </div>
@@ -198,17 +198,17 @@ main{padding:22px 26px 60px;min-width:0}
         </div></div>
         <div class="card"><h3>🎛️ Features on/off <small>site + app dono</small></h3><div class="form" id="featForm"></div></div>
       </div>
-      <div class="row" style="margin-top:6px"><button class="btn" data-save>💾 Save &amp; Live karo</button><a class="btn g" href="../" target="_blank" rel="noopener">Site dekho ↗</a></div>
+      <div class="row" style="margin-top:6px"><button class="btn" data-save>💾 Save &amp; make live</button><a class="btn g" href="../" target="_blank" rel="noopener">View site ↗</a></div>
     </section>
 
     <!-- APP CONTROL -->
     <section id="p-app" class="hidden">
-      <div class="note" style="background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.35);color:#BDE8FB">Ye settings web app aur Android app dono ke liye hain. Android app <code>GET /api/config</code> se inhe padh sakti hai (public, bina login).</div>
+      <div class="note" style="background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.35);color:#BDE8FB">These settings are for both the web app and the Android app. The Android app can read them via <code>GET /api/config</code> (public, no login).</div>
       <div class="grid2e">
         <div class="card"><h3>🤖 Chat behaviour</h3><div class="form">
           <label class="f"><span>Default AI model</span><select class="in" data-k="app.defaultModel" id="mdSel"><option value="">(automatic)</option></select></label>
           <label class="f"><span>Welcome text (chat ke top par)</span><textarea class="in" data-k="app.welcome" placeholder="Kuch bhi poochho — chat, image, video…"></textarea></label>
-          <label class="f"><span>Extra system instruction (AI ki shakhsiyat)</span><textarea class="in" data-k="app.systemPrompt" rows="4" placeholder="Misal: Hamesha Roman Urdu mein jawab do. Hamare owner Zain Shah hain."></textarea></label>
+          <label class="f"><span>Extra system instruction (AI personality)</span><textarea class="in" data-k="app.systemPrompt" rows="4" placeholder="Misal: Hamesha Roman Urdu mein jawab do. Hamare owner Zain Shah hain."></textarea></label>
           <label class="f"><span>Home cards (JSON list) <small class="mut">[{"i":"🎨","t":"Image banao","s":"Tasveer","p":"prompt…"}]</small></span><textarea class="in" data-k="app.cards" data-t="json" rows="5" placeholder="[]"></textarea></label>
         </div></div>
         <div class="card"><h3>⬇ Android app (APK)</h3><div class="form">
@@ -219,26 +219,26 @@ main{padding:22px 26px 60px;min-width:0}
         </div>
         <h3 style="margin-top:22px">📜 Device commands <small>web se bheje gaye</small></h3><div class="tw" style="max-height:240px"><table id="tbCmd"></table></div></div>
       </div>
-      <div class="row" style="margin-top:14px"><button class="btn" data-save>💾 Save &amp; Live karo</button></div>
+      <div class="row" style="margin-top:14px"><button class="btn" data-save>💾 Save &amp; make live</button></div>
     </section>
 
     <!-- KEYS -->
-    <section id="p-keys" class="hidden"><div class="card"><h3>🔑 API key pool <small>users ke liye sab free chalane wali keys</small></h3>
-      <p class="mut" style="line-height:1.65;margin-bottom:14px">Ye keys sirf server use karta hai, users ko nazar nahi aati. Worker sabse kam use hui key pehle chalata hai; limit khatam ho to agli par jata hai.</p>
+    <section id="p-keys" class="hidden"><div class="card"><h3>🔑 API key pool <small>the free keys that run everything for users</small></h3>
+      <p class="mut" style="line-height:1.65;margin-bottom:14px">These keys are used only by the server — users never see them. The worker uses the least-used key first; when a limit ends, it moves to the next one.</p>
       <div class="row"><select class="in" id="keyProv" style="max-width:150px"><option value="gemini">Gemini</option><option value="groq">Groq</option><option value="elevenlabs">ElevenLabs</option><option value="stability">Stability AI (image)</option><option value="replicate">Replicate (FLUX image + MiniMax video)</option></select><input class="in" id="keyLabel" placeholder="Label" style="max-width:170px"><input class="in" id="keyVal" placeholder="Puri API key paste karo" style="flex:1;min-width:220px"><button class="btn" id="keyAdd">➕ Add</button></div>
       <div class="tw" style="margin-top:16px"><table id="tbKeys"></table></div></div></section>
 
     <!-- ANNOUNCE -->
     <section id="p-announce" class="hidden"><div class="grid2e">
       <div class="card"><h3>📣 Naya announcement</h3><div class="form"><input class="in" id="anT" placeholder="Title"><textarea class="in" id="anB" rows="4" placeholder="Message — app mein sab users ko nazar aayega"></textarea><button class="btn" id="anPub" style="justify-self:start">Publish</button></div></div>
-      <div class="card"><h3>📜 Purane announcements</h3><div class="tw"><table id="tbAnn"></table></div></div></div></section>
+      <div class="card"><h3>📜 Past announcements</h3><div class="tw"><table id="tbAnn"></table></div></div></div></section>
 
     <!-- SUPPORT -->
     <section id="p-support" class="hidden"><div class="card"><h3>🛟 Help center inbox</h3><div class="tw"><table id="tbTk"></table></div></div></section>
 
     <!-- SYSTEM -->
     <section id="p-system" class="hidden"><div class="grid2e">
-      <div class="card"><h3>🩺 System health <small id="hSub"></small></h3><div id="healthBox"></div><button class="btn g s" id="hRun" style="margin-top:12px">Dobara check karo</button></div>
+      <div class="card"><h3>🩺 System health <small id="hSub"></small></h3><div id="healthBox"></div><button class="btn g s" id="hRun" style="margin-top:12px">Check again</button></div>
       <div class="card"><h3>💾 Config backup</h3><p class="mut" style="line-height:1.65;margin-bottom:12px">Website + app ki saari settings ek JSON file mein. Import se wapas laga sakte ho.</p>
         <div class="row"><button class="btn g s" id="cfgExp">⬇ Export</button><label class="btn g s" style="cursor:pointer">⬆ Import<input type="file" id="cfgImp" accept=".json" hidden></label></div>
         <h3 style="margin-top:22px">🔐 Security</h3><p class="mut" style="line-height:1.7;font-size:13.5px">Admin password <code>_worker.js</code> ke <code>CODE_ADMIN_PASSWORD</code> mein hai. Isay badalne ke liye wahan naya password likho aur dobara deploy karo. Panel sirf password ke saath chalta hai aur search engines se chhupa hai.</p></div>
@@ -281,11 +281,11 @@ function barsChart(el,labels,data,color){
   g+='<text x="2" y="14" fill="#9DB4DD" font-size="10">'+max+'</text>';
   el.innerHTML='<svg viewBox="0 0 '+W+' '+h+'" style="height:'+h+'px">'+g+'</svg>';
 }
-function barList(el,items,fmt){ const max=Math.max(1,...items.map(i=>i.v)); el.innerHTML=items.length?items.map(i=>'<div class="bar"><span class="l">'+(fmt?fmt(i.k):esc(i.k))+'</span><span class="t"><i style="width:'+(100*i.v/max)+'%"></i></span><span class="n">'+num(i.v)+'</span></div>').join(''):'<div class="empty">Abhi data nahi</div>'; }
+function barList(el,items,fmt){ const max=Math.max(1,...items.map(i=>i.v)); el.innerHTML=items.length?items.map(i=>'<div class="bar"><span class="l">'+(fmt?fmt(i.k):esc(i.k))+'</span><span class="t"><i style="width:'+(100*i.v/max)+'%"></i></span><span class="n">'+num(i.v)+'</span></div>').join(''):'<div class="empty">No data yet</div>'; }
 function donut(el,items){ const C=['#3FA9FF','#38BDF8','#FFC94D','#FF6B9D','#A78BFA','#FF8A5B']; const tot=items.reduce((a,b)=>a+b.v,0)||1; let acc=0; const seg=items.map((i,k)=>{ const s=acc/tot*100; acc+=i.v; return C[k%6]+' '+s+'% '+(acc/tot*100)+'%'; }).join(',');
-  el.innerHTML=items.length?'<div class="ring" style="background:conic-gradient('+seg+')"></div><div class="leg">'+items.map((i,k)=>'<div><i style="background:'+C[k%6]+'"></i>'+esc(i.k)+' — <b>'+Math.round(100*i.v/tot)+'%</b> <span class="mut">('+num(i.v)+')</span></div>').join('')+'</div>':'<div class="empty">Abhi data nahi</div>'; }
+  el.innerHTML=items.length?'<div class="ring" style="background:conic-gradient('+seg+')"></div><div class="leg">'+items.map((i,k)=>'<div><i style="background:'+C[k%6]+'"></i>'+esc(i.k)+' — <b>'+Math.round(100*i.v/tot)+'%</b> <span class="mut">('+num(i.v)+')</span></div>').join('')+'</div>':'<div class="empty">No data yet</div>'; }
 const legend=(el,arr)=>{ el.innerHTML=arr.map(a=>'<span><i style="background:'+a[1]+'"></i>'+a[0]+'</span>').join(''); };
-function setMig(show){ MIGRATED=!show; const b=$('mig'); b.classList.toggle('hidden',!show); if(show) b.innerHTML='⚠️ <b>Analytics tables abhi Supabase mein nahi bani.</b> Supabase → SQL Editor kholo, <code>sql/20261118000006_analytics_control.sql</code> file ka poora text paste karke Run karo (sirf ek baar). Tab tak website normal chalti rahegi, bas analytics khaali dikhega.'; }
+function setMig(show){ MIGRATED=!show; const b=$('mig'); b.classList.toggle('hidden',!show); if(show) b.innerHTML='⚠️ <b>The analytics tables are not created in Supabase yet.</b> Open Supabase → SQL Editor, paste the full text of <code>sql/20261118000006_analytics_control.sql</code> and Run it (only once). Until then the website keeps working normally — only the analytics will show empty.'; }
 
 /* ---------- navigation ---------- */
 const TITLES={overview:'Overview',analytics:'Analytics',live:'Live users',users:'Users',website:'Website control',app:'App control',keys:'API keys',announce:'Announcements',support:'Support inbox',system:'System'};
@@ -301,15 +301,15 @@ async function loadOverview(){
   const d=await api('overview'); ov=d; setMig(!d.migrated); const a=d.analytics||{}; const dl=a.daily||[]; const today=dl[dl.length-1]||{};
   $('kActive').textContent=num(a.activeNow||0); $('liveN').textContent=num(a.activeNow||0);
   $('kVisToday').textContent=num(today.visitors||0); $('kPvToday').textContent=num(today.pageviews||0)+' page views • '+num(today.sessions||0)+' sessions';
-  $('kUsers').textContent=num(a.totalUsers||0); const n7=dl.slice(-7).reduce((s,x)=>s+(x.signups||0),0); $('kNewU').textContent='Aaj +'+(today.signups||0)+' • 7 din mein +'+n7;
+  $('kUsers').textContent=num(a.totalUsers||0); const n7=dl.slice(-7).reduce((s,x)=>s+(x.signups||0),0); $('kNewU').textContent='Aaj +'+(today.signups||0)+' • in 7 days +'+n7;
   $('kAct24').textContent=num(a.activeUsers24h||0); $('kBlocked').textContent=(a.blockedUsers||0)+' blocked';
   const labels=dl.map(x=>x.d);
   lineChart($('chOverview'),labels,[{name:'Visitors',color:'#3FA9FF',data:dl.map(x=>x.visitors)},{name:'Sessions',color:'#38BDF8',data:dl.map(x=>x.sessions)},{name:'Page views',color:'#FFC94D',data:dl.map(x=>x.pageviews)}]);
   legend($('lgOverview'),[['Visitors','#3FA9FF'],['Sessions','#38BDF8'],['Page views','#FFC94D']]);
   barsChart($('chSignups'),labels,dl.map(x=>x.signups),'#FF6B9D');
   $('liveSub').textContent=(d.live||[]).length+' dikh rahe';
-  $('liveMini').innerHTML=(d.live||[]).length?(d.live||[]).map(r=>'<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="font-size:20px">'+flag(r.country)+'</span><div style="min-width:0;flex:1"><b style="font-size:13.5px">'+esc(r.name||r.path_last||'/')+'</b><div class="mut" style="font-size:12px">'+esc(r.device||'')+' • '+esc(r.path_last||'')+'</div></div><span class="mut" style="font-size:12px">'+dur((new Date(r.last_seen)-new Date(r.first_seen))/1000)+'</span></div>').join(''):'<div class="empty">Abhi koi online nahi</div>';
-  const ks=d.keyStats||{}; $('keyMini').innerHTML=Object.keys(ks).length?Object.keys(ks).map(k=>'<div class="bar" style="grid-template-columns:90px 1fr 56px"><span class="l">'+k+'</span><span class="t"><i style="width:'+(100*ks[k].active/Math.max(1,ks[k].total))+'%"></i></span><span class="n">'+ks[k].active+'/'+ks[k].total+'</span></div>').join(''):'<div class="empty">Koi key nahi</div>';
+  $('liveMini').innerHTML=(d.live||[]).length?(d.live||[]).map(r=>'<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span style="font-size:20px">'+flag(r.country)+'</span><div style="min-width:0;flex:1"><b style="font-size:13.5px">'+esc(r.name||r.path_last||'/')+'</b><div class="mut" style="font-size:12px">'+esc(r.device||'')+' • '+esc(r.path_last||'')+'</div></div><span class="mut" style="font-size:12px">'+dur((new Date(r.last_seen)-new Date(r.first_seen))/1000)+'</span></div>').join(''):'<div class="empty">Nobody is online right now</div>';
+  const ks=d.keyStats||{}; $('keyMini').innerHTML=Object.keys(ks).length?Object.keys(ks).map(k=>'<div class="bar" style="grid-template-columns:90px 1fr 56px"><span class="l">'+k+'</span><span class="t"><i style="width:'+(100*ks[k].active/Math.max(1,ks[k].total))+'%"></i></span><span class="n">'+ks[k].active+'/'+ks[k].total+'</span></div>').join(''):'<div class="empty">No keys</div>';
   $('kTickets').textContent=d.openTickets; const bd=$('tkBd'); bd.textContent=d.openTickets; bd.classList.toggle('hidden',!d.openTickets);
   timers.push(setInterval(()=>{ if(!document.hidden) loadOverview().catch(()=>{}); },20000));
 }
@@ -317,13 +317,13 @@ async function loadOverview(){
 /* ---------- analytics ---------- */
 qa('#rangeSeg button').forEach(b=>b.onclick=()=>{ anDays=+b.dataset.d; qa('#rangeSeg button').forEach(x=>x.classList.toggle('on',x===b)); loadAnalytics(); });
 async function loadAnalytics(){
-  const d=await api('analytics',{days:anDays}); if(!d.ok){ setMig(true); toast(d.error||'Analytics nahi mila'); return; } setMig(false);
+  const d=await api('analytics',{days:anDays}); if(!d.ok){ setMig(true); toast(d.error||'Analytics not available'); return; } setMig(false);
   const t=d.totals||{}; const K=(l,v,s,c)=>'<div class="kpi" style="--c:'+c+'"><span>'+l+'</span><b>'+v+'</b><small>'+(s||'')+'</small></div>';
-  $('anKpis').innerHTML=K('👀 Visitors',num(t.visitors),'unique',' var(--g)')+K('🧭 Sessions',num(t.sessions),'visits','var(--blue)')+K('📄 Page views',num(d.pageviews),'','var(--gold)')+K('🆕 Naye visitors',num(t.newVisitors),'','var(--pink)')+K('⏱ Avg time',dur(t.avgSessionSec),'per session','var(--g)')+K('↩ Bounce rate',(t.bounceRate||0)+'%','ek page par chale gaye','var(--red)')+K('✍️ Sign-ups',num(d.signups),'naye users','var(--blue)')+K('👥 Total users',num(d.totalUsers),'','var(--gold)');
+  $('anKpis').innerHTML=K('👀 Visitors',num(t.visitors),'unique',' var(--g)')+K('🧭 Sessions',num(t.sessions),'visits','var(--blue)')+K('📄 Page views',num(d.pageviews),'','var(--gold)')+K('🆕 New visitors',num(t.newVisitors),'','var(--pink)')+K('⏱ Avg time',dur(t.avgSessionSec),'per session','var(--g)')+K('↩ Bounce rate',(t.bounceRate||0)+'%','left after one page','var(--red)')+K('✍️ Sign-ups',num(d.signups),'new users','var(--blue)')+K('👥 Total users',num(d.totalUsers),'','var(--gold)');
   const dl=d.daily||[]; $('anSub').textContent=anDays+' din';
   lineChart($('chTraffic'),dl.map(x=>x.d),[{name:'Visitors',color:'#3FA9FF',data:dl.map(x=>x.visitors)},{name:'Sessions',color:'#38BDF8',data:dl.map(x=>x.sessions)},{name:'Page views',color:'#FFC94D',data:dl.map(x=>x.pageviews)},{name:'Sign-ups',color:'#FF6B9D',data:dl.map(x=>x.signups)}],250);
   legend($('lgTraffic'),[['Visitors','#3FA9FF'],['Sessions','#38BDF8'],['Page views','#FFC94D'],['Sign-ups','#FF6B9D']]);
-  $('tbPages').innerHTML='<tr><th>Page</th><th>Views</th><th>Visitors</th></tr>'+((d.pages||[]).map(p=>'<tr><td><code>'+esc(p.path||'/')+'</code></td><td>'+num(p.views)+'</td><td>'+num(p.visitors)+'</td></tr>').join('')||'<tr><td colspan="3" class="empty">Abhi data nahi</td></tr>');
+  $('tbPages').innerHTML='<tr><th>Page</th><th>Views</th><th>Visitors</th></tr>'+((d.pages||[]).map(p=>'<tr><td><code>'+esc(p.path||'/')+'</code></td><td>'+num(p.views)+'</td><td>'+num(p.visitors)+'</td></tr>').join('')||'<tr><td colspan="3" class="empty">No data yet</td></tr>');
   barList($('bCountries'),d.countries||[],k=>flag(k)+' '+esc(k)); donut($('dDevices'),d.devices||[]); barList($('bBrowsers'),d.browsers||[]); barList($('bRefs'),d.referrers||[],k=>esc(k));
   const hrs=d.hours||[]; const mx=Math.max(1,...hrs); $('hrs').innerHTML=hrs.map((v,i)=>'<i style="height:'+Math.max(3,90*v/mx)+'px" title="'+i+':00 — '+v+' sessions"></i>').join(''); $('hlab').innerHTML=hrs.map((v,i)=>'<span>'+(i%3===0?i:'')+'</span>').join('');
   $('gaId').value=(CONFIG.ga_id||'');
@@ -334,7 +334,7 @@ $('gaSave').onclick=()=>safe(async()=>{ await ensureConfig(); CONFIG.ga_id=$('ga
 /* ---------- live ---------- */
 async function loadLive(){
   const d=await api('live'); $('liveN').textContent=d.now;
-  $('tbLive').innerHTML='<tr><th>Kahan se</th><th>Device</th><th>Page</th><th>User</th><th>Site par</th><th>Aakhri activity</th></tr>'+(d.rows.map(r=>'<tr><td>'+flag(r.country)+' '+esc(r.city||r.country||'—')+'</td><td>'+esc(r.device||'')+' · '+esc(r.browser||'')+'</td><td><code>'+esc(r.path_last||'/')+'</code></td><td>'+(r.uid?'<b>'+esc(r.name||r.email||'user')+'</b>':'<span class="mut">guest</span>')+'</td><td>'+dur((new Date(r.last_seen)-new Date(r.first_seen))/1000)+'</td><td>'+ago(r.last_seen)+'</td></tr>').join('')||'<tr><td colspan="6" class="empty">Abhi koi online nahi</td></tr>');
+  $('tbLive').innerHTML='<tr><th>From where</th><th>Device</th><th>Page</th><th>User</th><th>Time on site</th><th>Last activity</th></tr>'+(d.rows.map(r=>'<tr><td>'+flag(r.country)+' '+esc(r.city||r.country||'—')+'</td><td>'+esc(r.device||'')+' · '+esc(r.browser||'')+'</td><td><code>'+esc(r.path_last||'/')+'</code></td><td>'+(r.uid?'<b>'+esc(r.name||r.email||'user')+'</b>':'<span class="mut">guest</span>')+'</td><td>'+dur((new Date(r.last_seen)-new Date(r.first_seen))/1000)+'</td><td>'+ago(r.last_seen)+'</td></tr>').join('')||'<tr><td colspan="6" class="empty">Nobody is online right now</td></tr>');
   timers.push(setInterval(()=>{ if(!document.hidden) loadLive().catch(()=>{}); },10000));
 }
 
@@ -345,15 +345,15 @@ $('uSearch').onclick=loadUsers; $('uQ').addEventListener('keydown',e=>{ if(e.key
 let USERS=[];
 async function loadUsers(){
   if(uSrc==='profiles'){ const d=await api('users',{q:$('uQ').value.trim()}); USERS=d.rows;
-    $('tbUsers').innerHTML='<tr><th>Joined</th><th>User</th><th>Status</th><th>Action</th></tr>'+(d.rows.map(u=>'<tr><td>'+dt(u.created_at)+'</td><td>'+esc(u.display_name||'—')+'<br><small class="mut">'+esc(u.email||'')+'</small></td><td>'+(u.blocked?'<span class="pill bad">BLOCKED</span>':'<span class="pill ok">active</span>')+'</td><td><button class="btn s '+(u.blocked?'':'red')+'" onclick="blockP(\''+esc(u.firebase_uid||'')+'\','+!u.blocked+')">'+(u.blocked?'Unblock':'Block')+'</button></td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi user nahi</td></tr>'); return; }
+    $('tbUsers').innerHTML='<tr><th>Joined</th><th>User</th><th>Status</th><th>Action</th></tr>'+(d.rows.map(u=>'<tr><td>'+dt(u.created_at)+'</td><td>'+esc(u.display_name||'—')+'<br><small class="mut">'+esc(u.email||'')+'</small></td><td>'+(u.blocked?'<span class="pill bad">BLOCKED</span>':'<span class="pill ok">active</span>')+'</td><td><button class="btn s '+(u.blocked?'':'red')+'" onclick="blockP(\''+esc(u.firebase_uid||'')+'\','+!u.blocked+')">'+(u.blocked?'Unblock':'Block')+'</button></td></tr>').join('')||'<tr><td colspan="4" class="empty">No users</td></tr>'); return; }
   const d=await api('web-users',{q:$('uQ').value.trim(),filter:uFil,limit:200}); if(!d.ok){ setMig(true); $('tbUsers').innerHTML='<tr><td class="empty">'+esc(d.error)+'</td></tr>'; return; } USERS=d.rows;
-  $('tbUsers').innerHTML='<tr><th>User</th><th>Provider</th><th>Joined</th><th>Last seen</th><th>Logins</th><th>Status</th><th>Actions</th></tr>'+(d.rows.map(u=>'<tr><td><span class="av">'+esc((u.name||u.email||'?')[0].toUpperCase())+'</span><b>'+esc(u.name||'—')+'</b><br><small class="mut" style="margin-left:44px">'+esc(u.email||'')+'</small>'+(u.note?'<br><small style="margin-left:44px;color:var(--gold)">📝 '+esc(u.note)+'</small>':'')+'</td><td>'+esc((u.provider||'').replace('.com',''))+'</td><td>'+dt(u.first_seen)+'</td><td><span class="dot '+(u.online?'on':'')+'"></span>'+(u.online?'online':ago(u.last_seen))+'</td><td>'+(u.logins||0)+'</td><td>'+(u.blocked?'<span class="pill bad">BLOCKED</span>':'<span class="pill ok">active</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn s '+(u.blocked?'':'red')+'" onclick="blockW(\''+esc(u.firebase_uid)+'\','+!u.blocked+')">'+(u.blocked?'Unblock':'Block')+'</button><button class="btn g s" onclick="noteW(\''+esc(u.firebase_uid)+'\')">📝</button><button class="btn g s" onclick="delW(\''+esc(u.firebase_uid)+'\')">🗑</button></td></tr>').join('')||'<tr><td colspan="7" class="empty">Koi user nahi mila</td></tr>');
+  $('tbUsers').innerHTML='<tr><th>User</th><th>Provider</th><th>Joined</th><th>Last seen</th><th>Logins</th><th>Status</th><th>Actions</th></tr>'+(d.rows.map(u=>'<tr><td><span class="av">'+esc((u.name||u.email||'?')[0].toUpperCase())+'</span><b>'+esc(u.name||'—')+'</b><br><small class="mut" style="margin-left:44px">'+esc(u.email||'')+'</small>'+(u.note?'<br><small style="margin-left:44px;color:var(--gold)">📝 '+esc(u.note)+'</small>':'')+'</td><td>'+esc((u.provider||'').replace('.com',''))+'</td><td>'+dt(u.first_seen)+'</td><td><span class="dot '+(u.online?'on':'')+'"></span>'+(u.online?'online':ago(u.last_seen))+'</td><td>'+(u.logins||0)+'</td><td>'+(u.blocked?'<span class="pill bad">BLOCKED</span>':'<span class="pill ok">active</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn s '+(u.blocked?'':'red')+'" onclick="blockW(\''+esc(u.firebase_uid)+'\','+!u.blocked+')">'+(u.blocked?'Unblock':'Block')+'</button><button class="btn g s" onclick="noteW(\''+esc(u.firebase_uid)+'\')">📝</button><button class="btn g s" onclick="delW(\''+esc(u.firebase_uid)+'\')">🗑</button></td></tr>').join('')||'<tr><td colspan="7" class="empty">No users found</td></tr>');
 }
-window.blockW=(id,b)=>safe(async()=>{ await api('web-user-update',{firebase_uid:id,blocked:b}); toast(b?'User block ho gaya':'User unblock ho gaya'); loadUsers(); });
-window.blockP=(id,b)=>safe(async()=>{ if(!id) return toast('uid nahi'); await api('user-block',{firebase_uid:id,blocked:b}); toast(b?'Block ho gaya':'Unblock ho gaya'); loadUsers(); });
-window.noteW=id=>safe(async()=>{ const u=USERS.find(x=>x.firebase_uid===id); const n=prompt('Is user ke baare mein note:',(u&&u.note)||''); if(n===null) return; await api('web-user-update',{firebase_uid:id,note:n}); loadUsers(); });
-window.delW=id=>safe(async()=>{ if(!confirm('Ye user record delete kar dun? (Firebase account alag rehta hai)')) return; await api('web-user-delete',{firebase_uid:id}); toast('Delete ho gaya'); loadUsers(); });
-$('uCsv').onclick=()=>{ if(!USERS.length) return toast('Pehle users load karo'); const k=['name','email','provider','first_seen','last_seen','logins','blocked']; const csv=[k.join(',')].concat(USERS.map(u=>k.map(x=>'"'+String(u[x]??u.display_name??'').replace(/"/g,'""')+'"').join(','))).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='badshah-users.csv'; a.click(); };
+window.blockW=(id,b)=>safe(async()=>{ await api('web-user-update',{firebase_uid:id,blocked:b}); toast(b?'User blocked':'User unblocked'); loadUsers(); });
+window.blockP=(id,b)=>safe(async()=>{ if(!id) return toast('uid missing'); await api('user-block',{firebase_uid:id,blocked:b}); toast(b?'Blocked':'Unblocked'); loadUsers(); });
+window.noteW=id=>safe(async()=>{ const u=USERS.find(x=>x.firebase_uid===id); const n=prompt('Note about this user:',(u&&u.note)||''); if(n===null) return; await api('web-user-update',{firebase_uid:id,note:n}); loadUsers(); });
+window.delW=id=>safe(async()=>{ if(!confirm('Delete this user record? (The Firebase account stays separate)')) return; await api('web-user-delete',{firebase_uid:id}); toast('Deleted'); loadUsers(); });
+$('uCsv').onclick=()=>{ if(!USERS.length) return toast('Load the users first'); const k=['name','email','provider','first_seen','last_seen','logins','blocked']; const csv=[k.join(',')].concat(USERS.map(u=>k.map(x=>'"'+String(u[x]??u.display_name??'').replace(/"/g,'""')+'"').join(','))).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='badshah-users.csv'; a.click(); };
 
 /* ---------- config forms (website + app) ---------- */
 const FEATS=[['chat','💬 Chat','AI chat'],['image','🎨 Images','Image generation'],['video','🎬 Video','Video generation (beta)'],['call','📞 Live call','Voice call'],['voice','🔊 Voice reply','Text-to-speech'],['phoneControl','📱 Device control','Phone/PC commands']];
@@ -371,26 +371,26 @@ function collect(){
 async function loadConfig(){ await ensureConfig(); fillForms(); }
 async function loadApp(){
   await ensureConfig(); const sel=$('mdSel'); if(sel.options.length<2){ const M=[['gemini:gemini-3.8-flash','Gemini 3.8 Flash'],['gemini:gemini-3.5-flash-lite','Gemini 3.5 Flash Lite'],['gemini:gemini-3.1-pro-preview','Gemini 3.1 Pro'],['groq:openai/gpt-oss-120b','Groq GPT-OSS 120B (fast)']]; M.forEach(m=>{ const o=document.createElement('option'); o.value=m[0]; o.textContent=m[1]; sel.appendChild(o); }); }
-  fillForms(); const d=await api('commands'); $('tbCmd').innerHTML='<tr><th>Kab</th><th>Target</th><th>Command</th><th>Status</th></tr>'+(d.rows.map(c=>'<tr><td>'+ago(c.created_at)+'</td><td>'+esc(c.target)+'</td><td>'+esc(c.command)+'</td><td><span class="pill '+(c.status==='done'?'ok':'info')+'">'+esc(c.status)+'</span></td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi command nahi</td></tr>');
+  fillForms(); const d=await api('commands'); $('tbCmd').innerHTML='<tr><th>When</th><th>Target</th><th>Command</th><th>Status</th></tr>'+(d.rows.map(c=>'<tr><td>'+ago(c.created_at)+'</td><td>'+esc(c.target)+'</td><td>'+esc(c.command)+'</td><td><span class="pill '+(c.status==='done'?'ok':'info')+'">'+esc(c.status)+'</span></td></tr>').join('')||'<tr><td colspan="4" class="empty">No commands</td></tr>');
 }
-qa('[data-save]').forEach(b=>b.onclick=()=>safe(async()=>{ await ensureConfig(); const fresh=JSON.parse(JSON.stringify(CONFIG)); fillForms(); CONFIG=fresh; collect(); await api('settings-set',{config:CONFIG}); toast('✅ Save ho gaya — site par live hai'); }));
+qa('[data-save]').forEach(b=>b.onclick=()=>safe(async()=>{ await ensureConfig(); const fresh=JSON.parse(JSON.stringify(CONFIG)); fillForms(); CONFIG=fresh; collect(); await api('settings-set',{config:CONFIG}); toast('✅ Saved — live on the site'); }));
 
 /* ---------- keys ---------- */
 async function loadKeys(){
   const d=await api('keys-list');
-  $('tbKeys').innerHTML='<tr><th>Provider</th><th>Key</th><th>Label</th><th>Uses</th><th>Last used</th><th>Status</th><th></th></tr>'+(d.rows.map(r=>'<tr><td><b>'+r.provider+'</b></td><td><code>'+esc(r.key_value)+'</code></td><td>'+esc(r.label||'')+'</td><td>'+(r.use_count||0)+'</td><td>'+ago(r.last_used_at)+'</td><td>'+(r.active?'<span class="pill ok">ON</span>':'<span class="pill bad">OFF</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn g s" onclick="tgKey(\''+r.id+'\','+!r.active+')">'+(r.active?'Off':'On')+'</button><button class="btn red s" onclick="rmKey(\''+r.id+'\')">Delete</button></td></tr>').join('')||'<tr><td colspan="7" class="empty">Pool khaali hai — pehli key add karo.</td></tr>');
+  $('tbKeys').innerHTML='<tr><th>Provider</th><th>Key</th><th>Label</th><th>Uses</th><th>Last used</th><th>Status</th><th></th></tr>'+(d.rows.map(r=>'<tr><td><b>'+r.provider+'</b></td><td><code>'+esc(r.key_value)+'</code></td><td>'+esc(r.label||'')+'</td><td>'+(r.use_count||0)+'</td><td>'+ago(r.last_used_at)+'</td><td>'+(r.active?'<span class="pill ok">ON</span>':'<span class="pill bad">OFF</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn g s" onclick="tgKey(\''+r.id+'\','+!r.active+')">'+(r.active?'Off':'On')+'</button><button class="btn red s" onclick="rmKey(\''+r.id+'\')">Delete</button></td></tr>').join('')||'<tr><td colspan="7" class="empty">The pool is empty — add the first key.</td></tr>');
 }
 window.tgKey=(id,a)=>safe(async()=>{ await api('keys-toggle',{id,active:a}); loadKeys(); });
-window.rmKey=id=>safe(async()=>{ if(!confirm('Ye key delete kar dun?')) return; await api('keys-delete',{id}); loadKeys(); });
-$('keyAdd').onclick=()=>safe(async()=>{ const v=$('keyVal').value.trim(); if(v.length<10) return toast('Key mukammal paste karo'); await api('keys-add',{provider:$('keyProv').value,label:$('keyLabel').value.trim()||'key',key_value:v}); $('keyVal').value=''; $('keyLabel').value=''; toast('✅ Key add ho gayi'); loadKeys(); });
+window.rmKey=id=>safe(async()=>{ if(!confirm('Delete this key?')) return; await api('keys-delete',{id}); loadKeys(); });
+$('keyAdd').onclick=()=>safe(async()=>{ const v=$('keyVal').value.trim(); if(v.length<10) return toast('Paste the complete key'); await api('keys-add',{provider:$('keyProv').value,label:$('keyLabel').value.trim()||'key',key_value:v}); $('keyVal').value=''; $('keyLabel').value=''; toast('✅ Key add ho gayi'); loadKeys(); });
 
 /* ---------- announcements ---------- */
-async function loadAnn(){ const d=await api('announcements-list'); $('tbAnn').innerHTML='<tr><th>Kab</th><th>Title</th><th>Status</th><th></th></tr>'+(d.rows.map(a=>'<tr><td>'+dt(a.created_at)+'</td><td><b>'+esc(a.title)+'</b><br><small class="mut">'+esc((a.body||'').slice(0,80))+'</small></td><td>'+(a.active?'<span class="pill ok">live</span>':'<span class="pill bad">off</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn g s" onclick="tgAnn(\''+a.id+'\','+!a.active+')">'+(a.active?'Off':'On')+'</button><button class="btn red s" onclick="rmAnn(\''+a.id+'\')">🗑</button></td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi announcement nahi</td></tr>'); }
+async function loadAnn(){ const d=await api('announcements-list'); $('tbAnn').innerHTML='<tr><th>When</th><th>Title</th><th>Status</th><th></th></tr>'+(d.rows.map(a=>'<tr><td>'+dt(a.created_at)+'</td><td><b>'+esc(a.title)+'</b><br><small class="mut">'+esc((a.body||'').slice(0,80))+'</small></td><td>'+(a.active?'<span class="pill ok">live</span>':'<span class="pill bad">off</span>')+'</td><td class="row" style="flex-wrap:nowrap"><button class="btn g s" onclick="tgAnn(\''+a.id+'\','+!a.active+')">'+(a.active?'Off':'On')+'</button><button class="btn red s" onclick="rmAnn(\''+a.id+'\')">🗑</button></td></tr>').join('')||'<tr><td colspan="4" class="empty">No announcements</td></tr>'); }
 window.tgAnn=(id,a)=>safe(async()=>{ await api('announcement-toggle',{id,active:a}); loadAnn(); }); window.rmAnn=id=>safe(async()=>{ if(!confirm('Delete?')) return; await api('announcement-delete',{id}); loadAnn(); });
 $('anPub').onclick=()=>safe(async()=>{ if(!$('anT').value.trim()) return toast('Title likho'); await api('announce',{title:$('anT').value.trim(),body:$('anB').value.trim()}); $('anT').value=''; $('anB').value=''; toast('📣 Publish ho gaya'); loadAnn(); });
 
 /* ---------- support ---------- */
-async function loadTickets(){ const d=await api('tickets'); $('tbTk').innerHTML='<tr><th>Date</th><th>User</th><th>Subject</th><th>Message</th><th>Status</th><th>Jawab</th></tr>'+(d.rows.map(t=>'<tr><td>'+dt(t.created_at)+'</td><td>'+esc(t.user_email||'—')+'</td><td>'+esc(t.subject||'—')+'</td><td style="max-width:300px">'+esc(t.message||'')+(t.admin_reply?'<br><small style="color:var(--ok)">↳ '+esc(t.admin_reply)+'</small>':'')+'</td><td><span class="pill '+(t.status==='open'?'info':'ok')+'">'+esc(t.status)+'</span></td><td>'+(t.status==='open'?'<textarea class="in" id="rep-'+t.id+'" rows="2" placeholder="Jawab…"></textarea><button class="btn s" style="margin-top:6px" onclick="repT(\''+t.id+'\')">Bhejo</button>':'')+'</td></tr>').join('')||'<tr><td colspan="6" class="empty">Inbox khaali hai</td></tr>'); }
+async function loadTickets(){ const d=await api('tickets'); $('tbTk').innerHTML='<tr><th>Date</th><th>User</th><th>Subject</th><th>Message</th><th>Status</th><th>Jawab</th></tr>'+(d.rows.map(t=>'<tr><td>'+dt(t.created_at)+'</td><td>'+esc(t.user_email||'—')+'</td><td>'+esc(t.subject||'—')+'</td><td style="max-width:300px">'+esc(t.message||'')+(t.admin_reply?'<br><small style="color:var(--ok)">↳ '+esc(t.admin_reply)+'</small>':'')+'</td><td><span class="pill '+(t.status==='open'?'info':'ok')+'">'+esc(t.status)+'</span></td><td>'+(t.status==='open'?'<textarea class="in" id="rep-'+t.id+'" rows="2" placeholder="Jawab…"></textarea><button class="btn s" style="margin-top:6px" onclick="repT(\''+t.id+'\')">Send</button>':'')+'</td></tr>').join('')||'<tr><td colspan="6" class="empty">Inbox khaali hai</td></tr>'); }
 window.repT=id=>safe(async()=>{ const v=$('rep-'+id).value.trim(); if(!v) return; await api('ticket-reply',{id,reply:v}); toast('✅ Jawab bhej diya'); loadTickets(); });
 
 /* ---------- system ---------- */
@@ -399,7 +399,7 @@ async function runHealth(){ const d=await api('health'); const T=d.tables||{}; c
   $('healthBox').innerHTML=Object.keys(T).map(k=>'<div class="tg" style="margin-bottom:8px"><div><b>'+k+'</b><small>'+(need.includes(k)?'migration 006':'app backend')+'</small></div><span class="pill '+(T[k]?'ok':'bad')+'">'+(T[k]?'OK':'missing')+'</span></div>').join(''); const miss=need.filter(k=>!T[k]); $('hSub').textContent=miss.length?miss.length+' table baqi':'sab theek ✓'; setMig(miss.length>0); }
 $('hRun').onclick=()=>safe(runHealth);
 $('cfgExp').onclick=()=>safe(async()=>{ await ensureConfig(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(CONFIG,null,2)],{type:'application/json'})); a.download='badshah-config.json'; a.click(); });
-$('cfgImp').onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>safe(async()=>{ const c=JSON.parse(t); if(!confirm('Ye config live kar dun?')) return; await api('settings-set',{config:c}); CONFIG=c; toast('✅ Config import ho gaya'); })); };
+$('cfgImp').onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>safe(async()=>{ const c=JSON.parse(t); if(!confirm('Make this config live?')) return; await api('settings-set',{config:c}); CONFIG=c; toast('✅ Config imported'); })); };
 
 /* ---------- login ---------- */
 async function enter(){ $('loginErr').textContent=''; try{ await api('stats'); sessionStorage.setItem('ba_admin_pw',PW); $('loginView').classList.add('hidden'); $('panelView').classList.remove('hidden'); go('overview'); }catch(e){ PW=''; sessionStorage.removeItem('ba_admin_pw'); $('loginView').classList.remove('hidden'); $('panelView').classList.add('hidden'); $('loginErr').textContent=e.message; } }
