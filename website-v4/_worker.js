@@ -876,6 +876,30 @@ async function handleDost(req, env, url) {
   return json(200, { ok: true });
 }
 
+/* ---------------- /api/tools (v7.6 — free APIs, asal test 2026-11-22: sirf WORKING walay) ----------------
+   Tested working: tikwm (TikTok), lyrics.ovh, wttr.in, Wikipedia, DuckDuckGo, meme-api,
+   JokeAPI, uselessfacts, TinyURL, StreamElements TTS. Failed walay jaan kar NAHI dalay
+   (YouTube DL providers saray band/404/402, IG/FB/Twitter DL band, siputzx routes 404). */
+async function toolJson(u, ms) { const r = await fetchT(u, { headers: { 'User-Agent': 'Mozilla/5.0 (BADSHAH-AI)' } }, ms || 15000); if (!r.ok) throw new Error('upstream ' + r.status); return r.json(); }
+async function handleTools(req, env, url) {
+  const name = url.pathname.replace('/api/tools/', '');
+  const q = url.searchParams;
+  try {
+    if (name === 'tiktok') { const u = q.get('url') || ''; if (!u.includes('tiktok')) return json(400, { error: 'Paste a proper TikTok link.' }); const d = await toolJson('https://tikwm.com/api/?url=' + encodeURIComponent(u)); const v = d && d.data; if (!v || !v.play) return json(502, { error: 'No video found for this link — check the link.' }); return json(200, { ok: true, title: v.title || '', author: (v.author && v.author.nickname) || '', cover: v.cover || '', video: v.play, videoWm: v.wmplay || '', music: v.music || '', duration: v.duration || 0 }); }
+    if (name === 'lyrics-search') { const t = q.get('q') || ''; if (t.length < 2) return json(400, { error: 'Type a song name.' }); const d = await toolJson('https://api.lyrics.ovh/suggest/' + encodeURIComponent(t)); const rows = (d.data || []).slice(0, 8).map(x => ({ title: x.title, artist: (x.artist && x.artist.name) || '' })); return json(200, { ok: true, rows }); }
+    if (name === 'lyrics-get') { const a = q.get('artist') || '', t = q.get('title') || ''; const d = await toolJson('https://api.lyrics.ovh/v1/' + encodeURIComponent(a) + '/' + encodeURIComponent(t)); if (!d.lyrics) return json(404, { error: 'Lyrics not found for this song.' }); return json(200, { ok: true, lyrics: d.lyrics }); }
+    if (name === 'weather') { const city = q.get('city') || ''; if (city.length < 2) return json(400, { error: 'Type a city name.' }); const d = await toolJson('https://wttr.in/' + encodeURIComponent(city) + '?format=j1'); const c = d.current_condition && d.current_condition[0]; if (!c) return json(404, { error: 'Weather not found for this city.' }); const area = d.nearest_area && d.nearest_area[0]; return json(200, { ok: true, city: area ? area.areaName[0].value : city, country: area ? area.country[0].value : '', tempC: c.temp_C, feelsC: c.FeelsLikeC, desc: c.weatherDesc[0].value, humidity: c.humidity, windKmph: c.windspeedKmph, days: (d.weather || []).slice(0, 3).map(w => ({ date: w.date, maxC: w.maxtempC, minC: w.mintempC })) }); }
+    if (name === 'wiki') { const t = q.get('q') || ''; if (t.length < 2) return json(400, { error: 'Type a topic.' }); const d = await toolJson('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(t.replace(/ /g, '_'))); if (!d.extract) return json(404, { error: 'No article found for this topic.' }); return json(200, { ok: true, title: d.title, extract: d.extract, image: (d.thumbnail && d.thumbnail.source) || '', url: (d.content_urls && d.content_urls.desktop && d.content_urls.desktop.page) || '' }); }
+    if (name === 'ask') { const t = q.get('q') || ''; if (t.length < 2) return json(400, { error: 'Type a question.' }); const d = await toolJson('https://api.duckduckgo.com/?q=' + encodeURIComponent(t) + '&format=json&no_html=1'); return json(200, { ok: true, heading: d.Heading || '', answer: d.Answer || '', abstract: d.AbstractText || '', source: d.AbstractSource || '', url: d.AbstractURL || '' }); }
+    if (name === 'meme') { let d = await toolJson('https://meme-api.com/gimme'); if (d.nsfw) d = await toolJson('https://meme-api.com/gimme'); if (!d.url) return json(502, { error: 'No meme right now — try again.' }); return json(200, { ok: true, title: d.title, image: d.url, subreddit: d.subreddit, ups: d.ups }); }
+    if (name === 'joke') { const d = await toolJson('https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist'); if (d.error) return json(502, { error: 'No joke right now.' }); return json(200, { ok: true, setup: d.setup || '', delivery: d.delivery || '', joke: d.joke || '', category: d.category || '' }); }
+    if (name === 'fact') { const d = await toolJson('https://uselessfacts.jsph.pl/api/v2/facts/random?language=en'); if (!d.text) return json(502, { error: 'No fact right now.' }); return json(200, { ok: true, text: d.text }); }
+    if (name === 'shorten') { const u = q.get('url') || ''; if (!/^https?:\/\//.test(u)) return json(400, { error: 'Paste a proper link (starting with http).' }); const r = await fetchT('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(u), {}, 12000); const t = (await r.text()).trim(); if (!r.ok || !t.startsWith('http')) return json(502, { error: 'Could not shorten this link.' }); return json(200, { ok: true, short: t }); }
+    if (name === 'tts2') { const text = (q.get('text') || '').slice(0, 300); const voice = q.get('voice') || 'Brian'; if (text.length < 2) return json(400, { error: 'Type some text first.' }); const r = await fetchT('https://api.streamelements.com/kappa/v2/speech?voice=' + encodeURIComponent(voice) + '&text=' + encodeURIComponent(text), {}, 15000); if (!r.ok) return json(502, { error: 'Voice could not be made.' }); const buf = await r.arrayBuffer(); return new Response(buf, { status: 200, headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' } }); }
+    return json(404, { error: 'Tool not found.' });
+  } catch (e) { return json(502, { error: 'This tool is not answering right now — try again in a bit.' }); }
+}
+
 /* ---------------- /api/news (Khabrein — free RSS, v7.2) ---------------- */
 async function handleNews() {
   const feeds = [['Dawn', 'https://www.dawn.com/feeds/home'], ['BBC Urdu', 'https://www.bbc.com/urdu/index.xml'], ['Geo Urdu', 'https://urdu.geo.tv/rss/']];
@@ -951,6 +975,7 @@ export default {
     if (url.pathname === '/api/profile-sync') return handleProfileSync(req, env);
     if (url.pathname === '/api/memories') return handleMemories(req, env, url);
     if (url.pathname === '/api/news') return handleNews();
+    if (url.pathname.startsWith('/api/tools/')) return handleTools(req, env, url);
     if (url.pathname === '/api/dost') return handleDost(req, env, url);
     if (url.pathname === '/api/agent/status') return handleAgentStatus(req, env);
     if (url.pathname === '/api/agent/start') return handleAgentPower(req, env, 'start');

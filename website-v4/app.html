@@ -499,6 +499,16 @@
           <div style="display:flex;gap:8px;margin-top:8px"><select id="ttsVoice" style="flex:1;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt)"><option value="gem">BADSHAH awaaz (Gemini)</option><option value="el">BADSHAH awaaz (ElevenLabs)</option></select><button class="btn btn-p" style="width:auto;margin:0;padding:0 20px" onclick="ttsPlay()">▶ Sunao</button></div>
           <div id="ttsPlayer" style="margin-top:10px"></div>
         </div>
+        <div class="card" style="margin-top:12px"><h3>More voices (English)</h3><p>Type above, then pick a voice — powered by StreamElements.</p>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Brian')">Brian (M)</button>
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Matthew')">Matthew (M)</button>
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Joanna')">Joanna (F)</button>
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Amy')">Amy (F)</button>
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Emma')">Emma (F)</button>
+            <button class="btn btn-g" style="margin:0" onclick="sePlay('Justin')">Justin (M)</button>
+          </div>
+        </div>
         <div class="card" style="margin-top:12px"><h3>Voice Note record karo</h3><p>Record karke suno ya download karo. Notes is session ke liye hain — download karke hamesha ke liye rakh lo.</p>
           <button class="btn btn-p w" id="recBtn" onclick="recToggle()">● Record shuru</button>
           <div id="recList" style="margin-top:10px"></div>
@@ -551,6 +561,75 @@
       <div class="viewc">
         <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="globe"></span> Khabrein</div><div class="psub">Dawn, BBC Urdu, Geo — taza tareen</div></div></div>
         <div id="newsList"><p style="color:var(--mut)">Khabrein load ho rahi hain…</p></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-tikdl">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="zap"></span> TikTok Downloader</div><div class="psub">Paste a TikTok link — get the video without watermark</div></div></div>
+        <div class="card"><h3>Video link</h3>
+          <input id="tikUrl" placeholder="https://www.tiktok.com/@user/video/…" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);margin-top:8px">
+          <button class="btn btn-p w" style="margin-top:10px" onclick="tikDl()">Get video</button>
+          <div id="tikOut" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-lyrics">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="mic"></span> Lyrics</div><div class="psub">Search any song — read its full lyrics</div></div></div>
+        <div class="card"><h3>Song name</h3>
+          <input id="lyrQ" placeholder="e.g. Shape of You" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);margin-top:8px">
+          <button class="btn btn-p w" style="margin-top:10px" onclick="lyrSearch()">Search songs</button>
+          <div id="lyrOut" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-tweather">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="sun"></span> Mausam Plus</div><div class="psub">Detailed weather for any city in the world</div></div></div>
+        <div class="card"><h3>City name</h3>
+          <input id="twCity" placeholder="e.g. Swabi" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);margin-top:8px">
+          <button class="btn btn-p w" style="margin-top:10px" onclick="twLoad()">See weather</button>
+          <div id="twOut" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-wiki">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="book"></span> Maloomat</div><div class="psub">Wikipedia summary + instant answers</div></div></div>
+        <div class="card"><h3>Topic or question</h3>
+          <input id="wkQ" placeholder="e.g. Pakistan, Imran Khan, Photosynthesis…" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);margin-top:8px">
+          <button class="btn btn-p w" style="margin-top:10px" onclick="wikiLoad()">Search</button>
+          <div id="wkOut" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-funbox">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="spark"></span> Fun Box</div><div class="psub">A fresh meme, joke or fact — every tap</div></div></div>
+        <div class="card"><h3>Pick your fun</h3>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-p" style="flex:1;margin:0" onclick="funGo('meme')">😂 Meme</button>
+            <button class="btn btn-p" style="flex:1;margin:0" onclick="funGo('joke')">🤣 Joke</button>
+            <button class="btn btn-p" style="flex:1;margin:0" onclick="funGo('fact')">💡 Fact</button>
+          </div>
+          <div id="funOut" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-shortlink">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('galaxy')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="plug"></span> Link Shortener</div><div class="psub">Make any long link short (TinyURL)</div></div></div>
+        <div class="card"><h3>Long link</h3>
+          <input id="slUrl" placeholder="https://very-long-link…" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);margin-top:8px">
+          <button class="btn btn-p w" style="margin-top:10px" onclick="shortGo()">Shorten it</button>
+          <div id="slOut" style="margin-top:12px"></div>
+        </div>
       </div>
     </section>
 
@@ -1956,6 +2035,14 @@ const GALAXY=[
     ['phone','Call Chat','Live calls ki alag chat + khulasa','view:calllogs'],
     ['message','Dost Room','Doston ke saath group chat','view:dost'],
     ['cpu','Agent Computer','Mera cloud computer — web par kaam karke report deta hai','view:agent']
+  ]],
+  ['TOOLS',[
+    ['zap','TikTok Downloader','Video without watermark — link paste karo','view:tikdl'],
+    ['mic','Lyrics','Gaane ke bol — search karo, poori lyrics','view:lyrics'],
+    ['sun','Mausam Plus','Kisi bhi sheher ka tafseeli mausam','view:tweather'],
+    ['book','Maloomat','Wikipedia + fori jawab','view:wiki'],
+    ['spark','Fun Box','Meme, joke aur dilchasp facts','view:funbox'],
+    ['plug','Link Shortener','Bara link chhota karo','view:shortlink']
   ]]
 ];
 (function(){
@@ -2305,6 +2392,21 @@ window.loadNews=async function(){
   }catch(e){ L.innerHTML='<p style="color:var(--mut)">Khabrein nahi mil sakin — internet check karo.</p>'; }
 };
 (function(){ const _sv2=window.showView; if(typeof _sv2==='function'){ window.showView=function(v){ _sv2(v); if(v==='namaz') setTimeout(window.loadNamaz,80); if(v==='news') setTimeout(window.loadNews,80); }; } })();
+
+/* ===== v7.6 Tools (tested free APIs via /api/tools) ===== */
+window.tEsc=function(x){ return String(x==null?'':x).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+window.toolGet=async function(p){ const r=await fetch('/api/tools/'+p); const d=await r.json().catch(function(){ return {}; }); if(!r.ok||d.error) throw new Error(d.error||'Tool error'); return d; };
+window.toolBusy=function(id,msg){ const o=$(id); if(o) o.innerHTML='<p style="color:var(--mut)">'+msg+'</p>'; };
+window.toolErr=function(id,e){ const o=$(id); if(o) o.innerHTML='<p style="color:var(--red)">'+tEsc(e.message||e)+'</p>'; };
+window.tikDl=async function(){ const u=$('tikUrl').value.trim(); toolBusy('tikOut','Video dhoondh raha hoon…'); try{ const d=await toolGet('tiktok?url='+encodeURIComponent(u)); $('tikOut').innerHTML=(d.cover?'<img src="'+tEsc(d.cover)+'" style="width:100%;border-radius:14px" alt="">':'')+'<p style="margin-top:10px"><b>'+tEsc(d.title)+'</b></p><p style="color:var(--mut);font-size:13px">'+tEsc(d.author)+(d.duration?' • '+d.duration+'s':'')+'</p><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn btn-p" style="flex:1;text-align:center;margin:0" href="'+tEsc(d.video)+'" target="_blank" rel="noopener">⬇ Video (no watermark)</a>'+(d.videoWm?'<a class="btn btn-g" style="margin:0" href="'+tEsc(d.videoWm)+'" target="_blank" rel="noopener">Watermark wala</a>':'')+(d.music?'<a class="btn btn-g" style="margin:0" href="'+tEsc(d.music)+'" target="_blank" rel="noopener">🎵 Music</a>':'')+'</div>'; }catch(e){ toolErr('tikOut',e); } };
+window.lyrSearch=async function(){ const q=$('lyrQ').value.trim(); toolBusy('lyrOut','Gaane dhoondh raha hoon…'); try{ const d=await toolGet('lyrics-search?q='+encodeURIComponent(q)); window.__lyrRows=d.rows||[]; if(!__lyrRows.length){ $('lyrOut').innerHTML='<p style="color:var(--mut)">No songs found.</p>'; return; } $('lyrOut').innerHTML=__lyrRows.map(function(r,i){ return '<button class="btn btn-g w" style="margin:0 0 8px;text-align:left" onclick="lyrGet('+i+')">🎵 '+tEsc(r.title)+' — <span style="color:var(--mut)">'+tEsc(r.artist)+'</span></button>'; }).join(''); }catch(e){ toolErr('lyrOut',e); } };
+window.lyrGet=async function(i){ const r=(window.__lyrRows||[])[i]; if(!r) return; toolBusy('lyrOut','Lyrics la raha hoon…'); try{ const d=await toolGet('lyrics-get?artist='+encodeURIComponent(r.artist)+'&title='+encodeURIComponent(r.title)); $('lyrOut').innerHTML='<p><b>'+tEsc(r.title)+'</b> — '+tEsc(r.artist)+'</p><pre style="white-space:pre-wrap;font-family:inherit;line-height:1.75;margin-top:10px">'+tEsc(d.lyrics)+'</pre>'; }catch(e){ toolErr('lyrOut',e); } };
+window.twLoad=async function(){ const c=$('twCity').value.trim(); toolBusy('twOut','Mausam la raha hoon…'); try{ const d=await toolGet('weather?city='+encodeURIComponent(c)); $('twOut').innerHTML='<div style="text-align:center;padding:6px 0"><div style="font-size:44px;font-weight:800">'+tEsc(d.tempC)+'°C</div><div>'+tEsc(d.desc)+'</div><div style="color:var(--mut);font-size:13px">'+tEsc(d.city)+', '+tEsc(d.country)+' • Feels '+tEsc(d.feelsC)+'° • Humidity '+tEsc(d.humidity)+'% • Wind '+tEsc(d.windKmph)+' km/h</div></div>'+(d.days||[]).map(function(w){ return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)"><span>'+tEsc(w.date)+'</span><b>'+tEsc(w.minC)+'° — '+tEsc(w.maxC)+'°</b></div>'; }).join(''); }catch(e){ toolErr('twOut',e); } };
+window.wikiLoad=async function(){ const q=$('wkQ').value.trim(); toolBusy('wkOut','Dhoondh raha hoon…'); try{ let h=''; try{ const a=await toolGet('ask?q='+encodeURIComponent(q)); if(a.answer||a.abstract){ h+='<div class="card" style="background:var(--panel2);margin-bottom:10px"><b>Quick answer</b><p style="margin-top:6px;line-height:1.65">'+tEsc(a.answer||a.abstract)+'</p>'+(a.url?'<a href="'+tEsc(a.url)+'" target="_blank" rel="noopener" style="font-size:13px">Source: '+tEsc(a.source||'web')+'</a>':'')+'</div>'; } }catch(e){} const d=await toolGet('wiki?q='+encodeURIComponent(q)); h+=(d.image?'<img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px" alt="">':'')+'<p style="margin-top:10px"><b>'+tEsc(d.title)+'</b></p><p style="line-height:1.7;margin-top:6px">'+tEsc(d.extract)+'</p>'+(d.url?'<a href="'+tEsc(d.url)+'" target="_blank" rel="noopener">Read full article on Wikipedia →</a>':''); $('wkOut').innerHTML=h; }catch(e){ toolErr('wkOut',e); } };
+window.funGo=async function(k){ toolBusy('funOut','La raha hoon…'); try{ const d=await toolGet(k); if(k==='meme'){ $('funOut').innerHTML='<p><b>'+tEsc(d.title)+'</b> <span style="color:var(--mut);font-size:12.5px">r/'+tEsc(d.subreddit)+' • ⬆ '+tEsc(d.ups)+'</span></p><img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px;margin-top:8px" alt="meme">'; } else if(k==='joke'){ $('funOut').innerHTML='<p style="line-height:1.7">'+(d.joke?tEsc(d.joke):tEsc(d.setup)+'</p><p style="line-height:1.7;margin-top:8px"><b>'+tEsc(d.delivery)+'</b>')+'</p>'; } else { $('funOut').innerHTML='<p style="line-height:1.75;font-size:15.5px">💡 '+tEsc(d.text)+'</p>'; } }catch(e){ toolErr('funOut',e); } };
+window.shortGo=async function(){ const u=$('slUrl').value.trim(); toolBusy('slOut','Chhota kar raha hoon…'); try{ const d=await toolGet('shorten?url='+encodeURIComponent(u)); $('slOut').innerHTML='<p>Short link:</p><p style="margin-top:6px"><a href="'+tEsc(d.short)+'" target="_blank" rel="noopener" style="font-size:16px;font-weight:700">'+tEsc(d.short)+'</a></p><button class="btn btn-g" style="margin-top:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+tEsc(d.short)+'\');bhToast&&bhToast(\'Copy ho gaya\')">Copy link</button>'; }catch(e){ toolErr('slOut',e); } };
+window.sePlay=function(voice){ const t=($('ttsText').value||'').trim(); if(t.length<2){ if(window.bhToast) bhToast('Pehle text likho'); return; } $('ttsPlayer').innerHTML='<audio controls autoplay style="width:100%" src="/api/tools/tts2?voice='+encodeURIComponent(voice)+'&text='+encodeURIComponent(t.slice(0,300))+'"></audio>'; };
+
 /* ===== v7.2 Phase 4 Batch 3: Hisaab, Reminder, Focus, Voice, CV, Call Logs ===== */
 function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 /* --- Hisaab --- */
