@@ -533,8 +533,7 @@ class MainActivity : ComponentActivity() {
                 o.put("mic", g(Manifest.permission.RECORD_AUDIO))
                 o.put("camera", g(Manifest.permission.CAMERA))
                 o.put("contacts", g(Manifest.permission.READ_CONTACTS))
-                o.put("callLog", g(Manifest.permission.READ_CALL_LOG))
-                o.put("phone", g(Manifest.permission.READ_PHONE_STATE))
+                o.put("call", g(Manifest.permission.CALL_PHONE))
                 o.put("location", g(Manifest.permission.ACCESS_FINE_LOCATION) || g(Manifest.permission.ACCESS_COARSE_LOCATION))
                 o.put("media", if (Build.VERSION.SDK_INT >= 33) g(Manifest.permission.READ_MEDIA_IMAGES) else g(Manifest.permission.READ_EXTERNAL_STORAGE))
                 o.put("bluetooth", if (Build.VERSION.SDK_INT >= 31) g(Manifest.permission.BLUETOOTH_CONNECT) else true)
@@ -549,8 +548,7 @@ class MainActivity : ComponentActivity() {
             // v7.3: saari runtime permissions ek saath mango (sirf user ke button dabane par)
             val list = mutableListOf(
                 Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA,
-                Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG,
-                Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE,
                 Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
             if (Build.VERSION.SDK_INT >= 33) { list += Manifest.permission.POST_NOTIFICATIONS; list += Manifest.permission.READ_MEDIA_IMAGES; list += Manifest.permission.READ_MEDIA_VIDEO; list += Manifest.permission.READ_MEDIA_AUDIO }
@@ -567,7 +565,7 @@ class MainActivity : ComponentActivity() {
                 "mic" -> listOf(Manifest.permission.RECORD_AUDIO)
                 "camera" -> listOf(Manifest.permission.CAMERA)
                 "contacts" -> listOf(Manifest.permission.READ_CONTACTS)
-                "call" -> listOf(Manifest.permission.READ_CALL_LOG, Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE)
+                "call" -> listOf(Manifest.permission.CALL_PHONE)
                 "location" -> listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 "media" -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.READ_MEDIA_AUDIO) else listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
                 "bluetooth" -> if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_CONNECT) else listOf("android.permission.BLUETOOTH")

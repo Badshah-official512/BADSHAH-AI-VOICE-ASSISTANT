@@ -2452,15 +2452,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 /* ===== v7.3 Phase 5: Permissions page + Report + Dost Room ===== */
 const PERM_ROWS=[
- ['mic','mic','Microphone','Voice call aur voice input ke liye'],
- ['camera','camera','Camera','Camera Share (call mein) ke liye'],
- ['contacts','user','Contacts','Commands mein contacts dhoondhne ke liye'],
- ['callLog','phone','Call Log + Phone','Call history aur dial madad ke liye'],
- ['location','globe','Location','Mausam aur jagah wale jawabon ke liye'],
- ['media','image','Photos / Media','Gallery aur media access ke liye'],
- ['bluetooth','plug','Bluetooth','Devices se connection ke liye'],
- ['calendar','doc','Calendar','Events aur reminders ke liye'],
- ['notifications','star','Notifications','Announcements aur replies ke liye']];
+ ['mic','mic','Microphone','For voice calls and voice input'],
+ ['camera','camera','Camera','For Camera Share during calls'],
+ ['contacts','user','Contacts','For finding contacts in your commands'],
+ ['call','phone','Phone Calls','For dialling numbers by voice'],
+ ['location','globe','Location','For weather and place-based answers'],
+ ['media','image','Photos / Media','For gallery and media access'],
+ ['bluetooth','plug','Bluetooth','For connecting devices'],
+ ['calendar','doc','Calendar','For events and reminders'],
+ ['notifications','star','Notifications','For announcements and replies']];
 window.refreshPerms=function(){ const L=$('permsList'); if(!L) return;
   const B=window.BadshahBridge;
   if(!B || !B.permStatus){ L.innerHTML='<div class="card"><b>Website par ho</b><p style="color:var(--mut);font-size:13.5px;margin-top:5px;line-height:1.6">Permissions ka status sirf Android app mein nazar aata hai. APK install karo, phir yahan har permission ka ON/OFF dikhega.</p></div>'; return; }
@@ -2503,7 +2503,7 @@ const PT_STEPS=[
  {k:'mic', ic:'🎤', t:'May I listen to your voice?', x:'The microphone is needed for voice calls and voice commands. Without it, calls cannot work.'},
  {k:'camera', ic:'📷', t:'May I use the camera?', x:'For Camera Share during calls \u2014 so I can see what you show me and answer about it. The camera only opens when you tap the button.'},
  {k:'contacts', ic:'👥', t:'May I see your contacts?', x:'Needed for commands like "Call Ahmed". Your contacts never leave your phone.'},
- {k:'call', ic:'📞', t:'Permission for calls and call history?', x:'For dialling numbers by voice and showing your call history.'},
+ {k:'call', ic:'📞', t:'May I make calls for you?', x:'For dialling numbers by voice when you say "Call Ahmed".'},
  {k:'location', ic:'📍', t:'May I use your location?', x:'For correct answers about weather, prayer times and nearby places.'},
  {k:'media', ic:'🖼\uFE0F', t:'Permission for photos and media?', x:'For picking a photo from your gallery to attach in chat, and for showing your media.'},
  {k:'bluetooth', ic:'🎧', t:'Bluetooth permission?', x:'For connecting headphones and other devices.'},

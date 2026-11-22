@@ -19,13 +19,13 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />  <!-- dusri apps ke upar floating orb (user Settings se grant karta hai) -->
 
-    <!-- v7.3 FULL permission set (owner order 2026-11-21: "saray permission dalo, aik bi nahi rahna chahiya").
-         SMS wali permissions (READ_SMS / SEND_SMS) jaan kar NAHI dali — v6.2 mein inhi ki wajah se Play Protect ne
-         install BLOCK kar diya tha. BODY_SENSORS bhi nahi — koi health feature maujood hi nahi. Baqi sab shamil hai. -->
+    <!-- v7.5.1 PLAY-PROTECT SAFE set (owner order 2026-11-22): users ke phones par Play Protect install block kar raha tha.
+         Google ki restricted "SMS / Call Log" group wali permissions (READ_CALL_LOG), READ_PHONE_STATE aur
+         PACKAGE_USAGE_STATS HATA di gayein — in ka koi asal feature istemal hi nahi karta tha (call-log feature asal mein
+         AI call ki apni transcript hai, phone ki history nahi). Baqi wohi permissions jo asal features ke liye chahiye:
+         apps kholna (bridge), calls (CALL_PHONE), typing (Accessibility), camera, contacts (naam se call), location, media, calendar. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -39,7 +39,6 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
 
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
