@@ -144,6 +144,7 @@ async function groqAnswer(env, model, q) {
       body: JSON.stringify({ model, messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] })
     }, 25000).catch(() => null);
     if (!r) return null;
+    if (r.status === 429 && !k.__rt) { k.__rt = 1; await new Promise(res => setTimeout(res, 1800)); return oaiAnswerRetry(env, provider, baseUrl, model, q, k); }
     if (r.ok) {
       const d = await r.json();
       await touchKey(env, k);
@@ -170,6 +171,16 @@ async function oaiAnswer(env, provider, baseUrl, model, q) {
     }
     if (r.status !== 401 && r.status !== 429) return null;
   }
+  return null;
+}
+
+async function oaiAnswerRetry(env, provider, baseUrl, model, q, k) {
+  const r = await fetchT(baseUrl + '/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] })
+  }, 25000).catch(() => null);
+  if (r && r.ok) { const d = await r.json(); await touchKey(env, k); return ((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || ''); }
   return null;
 }
 async function workersAiAnswer(env, q) {
@@ -218,8 +229,9 @@ async function handleChat(req, env, url) {
 
   if (provider === 'openrouter') {
     const model = url.searchParams.get('model') || 'openrouter/free';
-    const text = await oaiAnswer(env, 'openrouter', 'https://openrouter.ai/api/v1', model, q);
+    let text = await oaiAnswer(env, 'openrouter', 'https://openrouter.ai/api/v1', model, q);
     if (text !== null) return json(200, { text, provider: 'openrouter', model });
+    if (model !== 'openrouter/free') { text = await oaiAnswer(env, 'openrouter', 'https://openrouter.ai/api/v1', 'openrouter/free', q); if (text !== null) return json(200, { text, provider: 'openrouter', model: 'openrouter/free', note: 'free_router_fallback' }); }
     return json(502, { error: 'OpenRouter abhi jawab nahi de raha — Admin Panel mein key check karo, ya thodi dair baad try karo.' });
   }
 
@@ -374,7 +386,7 @@ async function handleVideo(req, env, url) {
     const k = nkeys.find(x => String(x.id) === String(job.k)) || nkeys[0];
     if (!k) return json(404, { error: 'NovAI key pool mein nahi hai.' });
     try {
-      const r = await fetchT('https://aiapi-pro.com/v1/video/generations/' + encodeURIComponent(job.v) + '?model=cogvideox-flash', { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 30000);
+      const r = await fetchT('https://aiapi-pro.com/v1/video/generations/' + encodeURIComponent(job.v) + '?model=cogvideox-flash', { headers: { 'Authorization': 'Bearer ' + k.key_value, 'User-Agent': 'Mozilla/5.0 (Linux; Android 13; BADSHAH AI) AppleWebKit/537.36' } }, 30000);
       const d = await r.json().catch(() => ({}));
       const st = String(d.status || (d.data && d.data.status) || '').toLowerCase();
       if (st === 'failed' || st === 'error') return json(502, { error: 'NovAI par video fail ho gayi — doosra prompt try karo.' });
@@ -392,7 +404,7 @@ async function handleVideo(req, env, url) {
     if (pr) {
       for (const k of nkeys) {
         try {
-          const r = await fetchT('https://aiapi-pro.com/v1/video/generations', { method: 'POST', headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'cogvideox-flash', prompt: pr }) }, 45000);
+          const r = await fetchT('https://aiapi-pro.com/v1/video/generations', { method: 'POST', headers: { 'Authorization': 'Bearer ' + k.key_value, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (Linux; Android 13; BADSHAH AI) AppleWebKit/537.36' }, body: JSON.stringify({ model: 'cogvideox-flash', prompt: pr }) }, 45000);
           const d = await r.json().catch(() => ({}));
           const vid = d.id || d.task_id || (d.data && (d.data.id || d.data.task_id));
           if (vid) { await touchKey(env, k); const tok = 'nov:' + btoa(unescape(encodeURIComponent(JSON.stringify({ v: String(vid), k: k.id })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); return json(200, { name: tok, done: false, provider: 'novai', model: 'cogvideox-flash' }); }
