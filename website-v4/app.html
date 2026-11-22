@@ -587,7 +587,7 @@
     <section class="view" id="v-perms">
       <div class="viewc">
         <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="shield"></span> Permissions</div><div class="psub">Kaunsi ijazat mili hui hai — sab yahan se control karo</div></div></div>
-        <div class="card" style="margin-bottom:12px"><b>Sab permissions ek saath</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">Neeche wala button dabane par Android ek ek karke saari permissions mangega — jo chaho do, jo na chaho mana kar do. Baghair ijazat ke koi feature nahi chalta.</p><button class="btn btn-p" style="margin-top:10px" onclick="permsAskAll()">Saari permissions mango</button><button class="btn btn-g" style="margin-top:8px" onclick="refreshPerms()">Status dobara check karo</button><button class="btn btn-g" style="margin-top:8px" onclick="startPermTour(true)">Sawal wala tour chalao (ek ek karke)</button></div>
+        <div class="card" style="margin-bottom:12px"><b>All permissions together</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">The button below makes Android ask for all permissions one by one — allow what you want, deny what you do not. No feature works without its permission.</p><button class="btn btn-p" style="margin-top:10px" onclick="permsAskAll()">Ask all permissions</button><button class="btn btn-g" style="margin-top:8px" onclick="refreshPerms()">Check status again</button><button class="btn btn-g" style="margin-top:8px" onclick="startPermTour(true)">Start the question tour (one by one)</button></div>
         <div id="permsList"></div>
         <div class="card"><b>Note — SMS permissions</b><p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:5px">SMS parhne/bhejne wali permissions jaan kar nahi dali gayi: in ki wajah se Google Play Protect app ki install rok deta hai (pehle azmaya hua hai). Is ke ilawa har kaam ki permission app mein shamil hai.</p></div>
       </div>
@@ -842,14 +842,14 @@
 <div id="rgbFrame"></div>
 <div id="permTour" class="hidden">
   <div class="pt-card">
-    <div class="pt-top"><b id="ptCount">Sawal 1 / 12</b><button class="pt-x" onclick="permTourClose()">✕</button></div>
+    <div class="pt-top"><b id="ptCount">Question 1 / 12</b><button class="pt-x" onclick="permTourClose()">✕</button></div>
     <div class="pt-bar"><i id="ptBarFill"></i></div>
     <div class="pt-ic" id="ptIcon">🎤</div>
-    <h3 id="ptTitle">Sawal</h3>
+    <h3 id="ptTitle">Question</h3>
     <p id="ptText"></p>
-    <button class="btn btn-p" id="ptYes">Haan, ijazat do</button>
-    <button class="btn btn-g" id="ptNo" style="margin-top:8px">Abhi nahi</button>
-    <p class="pt-note">Ye sawal sirf app mein aate hain — website par nahi. Har ijazat tum jab chaho Android Settings se wapas le sakte ho.</p>
+    <button class="btn btn-p" id="ptYes">Yes, allow</button>
+    <button class="btn btn-g" id="ptNo" style="margin-top:8px">Not now</button>
+    <p class="pt-note">These questions appear only in the app — never on the website. You can take back any permission at any time from Android Settings.</p>
   </div>
 </div>
 <!-- ================= CALL ================= -->
@@ -2468,7 +2468,7 @@ window.refreshPerms=function(){ const L=$('permsList'); if(!L) return;
   const a11y=B.a11yStatus?B.a11yStatus():'off'; const ov=B.overlayStatus?B.overlayStatus():'off';
   let h=PERM_ROWS.map(r=>'<div class="card" style="margin-bottom:9px;display:flex;gap:11px;align-items:center"><div class="ic" style="width:41px;height:41px;border-radius:12px;background:#EAF1FE;display:flex;align-items:center;justify-content:center;color:var(--blue);flex:none"><span data-ic="'+r[1]+'"></span></div><div style="flex:1"><b>'+r[2]+'</b><div style="color:var(--mut);font-size:12.5px">'+r[3]+'</div></div><b style="color:'+(s[r[0]]?'var(--green)':'#E5484D')+'">'+(s[r[0]]?'ON ✓':'OFF')+'</b></div>').join('');
   h+='<div class="card" style="margin-bottom:9px;display:flex;gap:11px;align-items:center"><div style="flex:1"><b>Accessibility Control</b><div style="color:var(--mut);font-size:12.5px">Type / tap / scroll / screen parhna — Floating Dost page se ON karo</div></div><b style="color:'+(a11y==='on'?'var(--green)':'#E5484D')+'">'+(a11y==='on'?'ON ✓':'OFF')+'</b></div>';
-  h+='<div class="card" style="display:flex;gap:11px;align-items:center"><div style="flex:1"><b>Floating Bubble (dusri apps ke upar)</b><div style="color:var(--mut);font-size:12.5px">Call ke doran character bubble — Floating Dost page se ijazat do</div></div><b style="color:'+(ov==='on'?'var(--green)':'#E5484D')+'">'+(ov==='on'?'ON ✓':'OFF')+'</b></div>';
+  h+='<div class="card" style="display:flex;gap:11px;align-items:center"><div style="flex:1"><b>Floating Bubble (above other apps)</b><div style="color:var(--mut);font-size:12.5px">Character bubble during a call — grant permission from the Floating Dost page</div></div><b style="color:'+(ov==='on'?'var(--green)':'#E5484D')+'">'+(ov==='on'?'ON ✓':'OFF')+'</b></div>';
   L.innerHTML=h; fillIcons(); };
 window.permsAskAll=function(){ const B=window.BadshahBridge; if(B && B.requestAllPerms){ B.requestAllPerms(); setTimeout(window.refreshPerms, 1500); } else bhToast('Ye sirf Android app mein hota hai'); };
 (function(){ const b=$('btnRepSend'); if(!b) return; b.onclick=async()=>{ $('repErr').textContent='';
@@ -2500,18 +2500,18 @@ window.dostSend=async function(){ const inp=$('dostInput'); const text=(inp.valu
 
 /* ===== v7.3: Login ke baad SAWAL-TOUR — ek ek karke saari permissions (sirf APP mein) ===== */
 const PT_STEPS=[
- {k:'mic', ic:'🎤', t:'Kya main tumhari awaaz sun sakoon?', x:'Voice call aur voice commands ke liye microphone chahiye. Baghair is ke call nahi ho sakti.'},
- {k:'camera', ic:'📷', t:'Camera ki ijazat doge?', x:'Call ke doran Camera Share ke liye — taake tum jo dikhao, main dekh kar jawab doon. Camera sirf tumhare dabane par khulta hai.'},
- {k:'contacts', ic:'👥', t:'Contacts dekh sakoon?', x:'"Ahmed ko call karo" jaise commands ke liye contacts chahiye. Contacts phone se bahar nahi jate.'},
- {k:'call', ic:'📞', t:'Call lagane aur history ki ijazat?', x:'Voice se number dial karne aur call history dikhane ke liye.'},
- {k:'location', ic:'📍', t:'Location ki ijazat doge?', x:'Mausam, namaz ke auqaat aur qareebi jagahon ke sahi jawabon ke liye.'},
- {k:'media', ic:'🖼️', t:'Photos aur media ki ijazat?', x:'Gallery se photo chun kar chat mein lagane aur media dikhane ke liye.'},
- {k:'bluetooth', ic:'🎧', t:'Bluetooth ki ijazat?', x:'Headphones aur doosre devices se jodne ke liye.'},
- {k:'calendar', ic:'📅', t:'Calendar dekh sakoon?', x:'Tumhare events aur mulaqaton ki yaad dehani ke liye.'},
- {k:'notifications', ic:'🔔', t:'Notifications bhejoon?', x:'Zaroori khabrein, reminders aur replies waqt par pohanchane ke liye.'},
- {k:'a11y', ic:'🖐️', t:'Phone control ki ijazat doge?', x:'Accessibility se main tumhare kehne par type, tap, scroll aur screen parh sakta hoon. Ye Android ki Settings se ON hota hai — aur wahi se kabhi bhi band. AGAR phone \'App was denied access\' kahe to ghabrana nahi: pehle Settings → Apps → BADSHAH AI → upar teen dots (⋮) → \'Allow restricted settings\' ON karo, phir wapas aakar Accessibility on kar do. Ye Android ki hifazat hai — website se install hone wali har app ke saath aisa hota hai.'},
- {k:'overlay', ic:'💬', t:'Floating character ki ijazat?', x:'Call ke doran chhota character doosri apps ke upar dikhe — taake app band karke bhi baat chalti rahe.'},
- {k:'battery', ic:'🔋', t:'Battery ki bandish khatam karoon?', x:'Background mein call na kate, is ke liye battery restrictions hatani hongi (TECNO par ye khaas zaroori hai).'}];
+ {k:'mic', ic:'🎤', t:'May I listen to your voice?', x:'The microphone is needed for voice calls and voice commands. Without it, calls cannot work.'},
+ {k:'camera', ic:'📷', t:'May I use the camera?', x:'For Camera Share during calls \u2014 so I can see what you show me and answer about it. The camera only opens when you tap the button.'},
+ {k:'contacts', ic:'👥', t:'May I see your contacts?', x:'Needed for commands like "Call Ahmed". Your contacts never leave your phone.'},
+ {k:'call', ic:'📞', t:'Permission for calls and call history?', x:'For dialling numbers by voice and showing your call history.'},
+ {k:'location', ic:'📍', t:'May I use your location?', x:'For correct answers about weather, prayer times and nearby places.'},
+ {k:'media', ic:'🖼\uFE0F', t:'Permission for photos and media?', x:'For picking a photo from your gallery to attach in chat, and for showing your media.'},
+ {k:'bluetooth', ic:'🎧', t:'Bluetooth permission?', x:'For connecting headphones and other devices.'},
+ {k:'calendar', ic:'📅', t:'May I see your calendar?', x:'For reminders about your events and appointments.'},
+ {k:'notifications', ic:'🔔', t:'May I send notifications?', x:'So important news, reminders and replies reach you on time.'},
+ {k:'a11y', ic:'🖐\uFE0F', t:'May I control the phone for you?', x:'With Accessibility, I can type, tap, scroll and read the screen when you ask. It is turned ON from Android Settings \u2014 and can be turned off there any time. If your phone says "App was denied access", do not worry: first go to Settings \u2192 Apps \u2192 BADSHAH AI \u2192 the three dots (\u22EE) at the top \u2192 turn ON "Allow restricted settings", then come back and enable Accessibility. This is an Android safety rule \u2014 it happens with every app installed from outside the Play Store.'},
+ {k:'overlay', ic:'💬', t:'Floating character permission?', x:'So a small character can float above other apps during a call \u2014 the conversation keeps going even when you leave the app.'},
+ {k:'battery', ic:'🔋', t:'May I remove battery limits?', x:'So calls do not get cut in the background, battery restrictions need to be lifted (especially important on TECNO phones).'}];
 let __ptIdx=0;
 function ptGranted(k){ const B=window.BadshahBridge; if(!B) return true;
   try{ if(k==='a11y') return B.a11yStatus && B.a11yStatus()==='on';
@@ -2525,14 +2525,14 @@ function ptAsk(k){ const B=window.BadshahBridge; if(!B) return;
   if(B.requestPerm) B.requestPerm(k); }
 function ptShow(){ const B=window.BadshahBridge; if(!B || !B.requestPerm){ permTourClose(); return; }
   while(__ptIdx<PT_STEPS.length && ptGranted(PT_STEPS[__ptIdx].k)) __ptIdx++;
-  if(__ptIdx>=PT_STEPS.length){ $('ptIcon').textContent='🎉'; $('ptTitle').textContent='Sab tayyar hai!'; $('ptText').textContent='Saari ijazatein mukammal — ab BADSHAH AI poori taqat se kaam karega.'; $('ptCount').textContent='Mukammal ✔'; $('ptBarFill').style.width='100%'; $('ptYes').textContent='Shuru karo'; $('ptNo').textContent='Band karo'; return; }
+  if(__ptIdx>=PT_STEPS.length){ $('ptIcon').textContent='🎉'; $('ptTitle').textContent='Everything is ready!'; $('ptText').textContent='All permissions are complete — now BADSHAH AI will work at full power.'; $('ptCount').textContent='Complete ✔'; $('ptBarFill').style.width='100%'; $('ptYes').textContent="Let's go"; $('ptNo').textContent='Close'; return; }
   const st=PT_STEPS[__ptIdx];
-  $('ptCount').textContent='Sawal '+(__ptIdx+1)+' / '+PT_STEPS.length;
+  $('ptCount').textContent='Question '+(__ptIdx+1)+' / '+PT_STEPS.length;
   $('ptBarFill').style.width=Math.round(__ptIdx/PT_STEPS.length*100)+'%';
   $('ptIcon').textContent=st.ic; $('ptTitle').textContent=st.t; $('ptText').textContent=st.x;
-  $('ptYes').textContent='Haan, ijazat do'; $('ptNo').textContent='Abhi nahi'; }
+  $('ptYes').textContent='Yes, allow'; $('ptNo').textContent='Not now'; }
 window.startPermTour=function(force){ const B=window.BadshahBridge;
-  if(!B || !B.requestPerm){ if(force) bhToast('Sawal-tour sirf Android app mein chalta hai'); return; }
+  if(!B || !B.requestPerm){ if(force) bhToast('The permission tour only runs in the Android app'); return; }
   __ptIdx=0; $('permTour').classList.remove('hidden'); ptShow(); };
 window.permTourClose=function(){ $('permTour').classList.add('hidden'); try{ localStorage.setItem('ba_perm_tour','seen'); }catch(e){} };
 document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo'); if(!y) return;
