@@ -338,7 +338,7 @@ async function handleVideo(req, env, url) {
       let r = await fetchT('https://apihub.agnes-ai.com/agnesapi?video_id=' + encodeURIComponent(job.v) + '&model_name=agnes-video-2.5-flash', { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 30000);
       if (r.status === 404) r = await fetchT('https://apihub.agnes-ai.com/v1/agnesapi?video_id=' + encodeURIComponent(job.v) + '&model_name=agnes-video-2.5-flash', { headers: { 'Authorization': 'Bearer ' + k.key_value } }, 30000);
       const d = await r.json().catch(() => ({}));
-      const st = String(d.status || (d.data && d.data.status) || '').toLowerCase();
+      const st = String(d.status || d.task_status || (d.data && d.data.status) || '').toLowerCase();
       if (st === 'failed') return json(502, { error: 'Agnes par video fail ho gayi — doosra prompt try karo.' });
       if (st === 'completed' || st === 'succeeded' || st === 'success') {
         const s = JSON.stringify(d); const m = s.match(/https?:[^"\\\s]+\.mp4[^"\\\s]*/i) || s.match(/https?:[^"\\\s]+/i);

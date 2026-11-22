@@ -40,7 +40,7 @@ window.BADSHAH_CONFIG = {
   videoModels: ["agnes-video-2.5-flash"],
   moreModels: [
     { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (jo free model mile)" },
-    { id: "openrouter:cohere/north-mini-code:free", label: "CODING — Cohere North Mini Code (Free, sirf coding ke liye)" },
+    { id: "openrouter:google/gemma-4-31b-it:free", label: "CODING — Gemma 4 (Free, sirf coding ke liye)" },
     { id: "mistral:mistral-small-latest", label: "Mistral Small — Free Tier" }
   ],
   groqModels: [
