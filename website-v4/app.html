@@ -879,7 +879,7 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><img id="callPhoto" src="assets/poster-call.jpg" alt="BADSHAH AI"><canvas id="callWave"></canvas><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callAvWrap"><div class="callAvRing"></div><img id="callAvatar" src="assets/character-bust.png" alt="BADSHAH AI"></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">TAYYAR</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>YAADEIN</b><span id="cpMem">—</span></div><div class="cpanel"><b>AWAAZ</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1089,7 +1089,7 @@ const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
 function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
-function callUI(){ $('callPhoto').src='assets/poster-call.jpg'; $('callName').textContent='BADSHAH'; }
+function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src='assets/character-bust.png'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
   const s=$('callVoice'); if(!s) return; s.innerHTML='';
@@ -2567,6 +2567,27 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
     }
   }
   requestAnimationFrame(frame);
+})();
+
+/* ===== v7.5: Call screen — Stonic-style state chip + panels (asli halat se) ===== */
+(function(){
+  const chip=$('callStateChip'); if(!chip) return;
+  let lastS='', filled=false;
+  function setChip(s, txt){ if(lastS===s) return; lastS=s; chip.dataset.s=s; chip.textContent=txt; }
+  setInterval(()=>{
+    let on=false; try{ on=!!(typeof call!=='undefined'&&call.on); }catch(e){}
+    const st=$('callStage');
+    if(!on){ filled=false; setChip('idle','TAYYAR'); return; }
+    if(!filled){ filled=true;
+      const m=$('cpMem'); if(m) m.textContent=(typeof MEMS!=='undefined'?MEMS.length:0)+' yaadein';
+      const v=$('cpVoice'); if(v){ try{ v.textContent=selVoice()||'Charon'; }catch(e){} }
+      const ec=$('callEngineChip'); if(ec){ try{ ec.textContent=(call.engine==='eleven')?'ELEVENLABS':'GEMINI LIVE'; }catch(e){} }
+      const a=$('cpAgent'); if(a&&typeof agFetch==='function'){ agFetch('/api/agent/status').then(s=>{ a.textContent=(s&&s.codespace&&s.codespace.found)?(s.codespace.state==='Available'?'Chalu hai':'Band hai'):'—'; }).catch(()=>{ a.textContent='—'; }); }
+    }
+    if(st&&st.classList.contains('speaking')) setChip('speaking','BOL RAHA HAI');
+    else if(st&&st.classList.contains('listening')) setChip('listening','SUN RAHA HAI');
+    else setChip('idle','TAYYAR — BOLO');
+  },350);
 })();
 
 /* ===== v7.3 Phase 3: call se image/video banao ===== */
