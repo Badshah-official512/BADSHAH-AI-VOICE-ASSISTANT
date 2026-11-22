@@ -767,3 +767,14 @@ img[data-avimg], #whoImg, .dp-head img, .stage.bust img, .floatbub img{animation
 .callHeroRing{width:246px;height:246px}
 #callAvatar{width:218px;height:218px;max-width:72vw;border-radius:50%;object-fit:cover;object-position:center 20%;-webkit-mask-image:none;mask-image:none;border:3px solid rgba(255,255,255,.16);box-shadow:0 18px 44px rgba(20,10,60,.5)}
 #chatPanel.has-msgs .stage{display:none}
+
+
+/* ===== ZINDA VIDEO AVATAR ===== */
+.avvid{display:none}
+body.av-zinda .avvid{display:block}
+body.av-zinda #pinAvImg,body.av-zinda #chatAv,body.av-zinda #callAvatar{display:none}
+#pinAvVid{position:absolute;inset:5px;width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 6px 16px rgba(60,40,160,.35)}
+#chatAvVid{position:absolute;inset:7px;width:90px;height:90px;border-radius:50%;object-fit:cover;box-shadow:0 8px 22px rgba(60,40,160,.35)}
+#callAvVid{position:relative;z-index:2;width:218px;height:218px;max-width:72vw;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid rgba(255,255,255,.16);box-shadow:0 18px 44px rgba(20,10,60,.5);animation:cavBreath 3.6s ease-in-out infinite}
+#callStage.speaking #callAvVid{animation:cavTalk .85s ease-in-out infinite}
+#callStage.listening #callAvVid{animation:cavBreath 1.5s ease-in-out infinite}

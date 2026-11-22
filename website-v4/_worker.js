@@ -557,7 +557,7 @@ async function handleTts(req, env) {
     const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice, {
       method: 'POST',
       headers: { 'xi-api-key': k.key_value, 'Content-Type': 'application/json', 'accept': 'audio/mpeg' },
-      body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.45, similarity_boost: 0.8 } })
+      body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.6, similarity_boost: 0.8 } })
     });
     if (r.ok) { if (!userKey) { try { await touchKey(env, k); } catch (e) {} } return new Response(r.body, { status: 200, headers: { 'content-type': 'audio/mpeg', 'cache-control': 'no-store', ...SECURITY_HEADERS } }); }
     if (r.status !== 401 && r.status !== 429) return json(502, { error: 'ElevenLabs error ' + r.status });

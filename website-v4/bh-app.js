@@ -288,7 +288,7 @@ window.speak=function(text){
         a.onended=done; a.onerror=done; await a.play(); return;
       }
     }catch(e){}
-    try{ const u=new SpeechSynthesisUtterance(clean); const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/ur|hi/i.test(v.lang))||vs[0]; if(v) u.voice=v; u.onend=done; u.onerror=done; speechSynthesis.cancel(); speechSynthesis.speak(u); jit=setInterval(()=>orb.say(Math.random()<.35?' ':'ae'),95); }catch(e){ done(); }
+    try{ const u=new SpeechSynthesisUtterance(clean); const vs=speechSynthesis.getVoices(); const v=vs.find(v=>/ur|hi/i.test(v.lang))||vs[0]; if(v) u.voice=v; u.rate=0.92; u.pitch=1; u.onend=done; u.onerror=done; speechSynthesis.cancel(); speechSynthesis.speak(u); jit=setInterval(()=>orb.say(Math.random()<.35?' ':'ae'),95); }catch(e){ done(); }
   });
 };
 function stopSpeak(){ try{ if(curAudio){ curAudio.pause(); curAudio=null; } speechSynthesis.cancel(); }catch(e){} speakingNow=false; orb.useLevel(null); }
