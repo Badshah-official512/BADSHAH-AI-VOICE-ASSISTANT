@@ -76,7 +76,7 @@
   </div>
   <div class="scrim" id="scrim"></div>
   <aside id="sidebar">
-    <div class="brand"><img src="assets/logo-poster.png" alt="BADSHAH AI" style="object-fit:cover;border-radius:12px"><div><b data-brand>BADSHAH AI</b><small>Assistant • 100% free</small></div></div>
+    <div class="brand"><img src="assets/logo-poster.png" alt="BADSHAH AI" style="object-fit:cover;border-radius:12px"><div><b data-brand>BADSHAH AI</b><small>Assistant • 100% free</small></div><button id="btnLangTop" type="button" title="Language / Zubaan" style="margin-left:auto;background:var(--panel2,#eef0ff);border:1px solid var(--line,#e3e6f5);color:var(--ink);border-radius:99px;padding:6px 11px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">🌐 EN</button></div>
     <button class="new-chat" id="btnNewChat"><span>＋</span> New chat</button>
     <div class="side-search"><input id="chatSearch" placeholder="Chats mein dhundo…" autocomplete="off"></div>
     <div class="chat-list" id="chatList"></div>
@@ -960,36 +960,36 @@
 <!-- ================= CALL ================= -->
 <div id="callView" class="hidden">
   <div id="keyBox" class="key-box hidden">
-    <h3>Voice call ke liye apni key dalo</h3>
-    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Chat hamari keys par chalti hai, lekin <b style="color:#fff">voice call ke liye tumhari apni Gemini key lazmi hai</b> — key sirf tumhare phone mein rehti hai, hamare server par kabhi nahi jati.</p>
+    <h3>Enter your key for voice calls</h3>
+    <p style="color:var(--mut);font-size:14.5px;line-height:1.65">Chat runs on our keys, but <b style="color:#fff">voice calls need your own Gemini key</b> — your key stays only on your phone and never goes to our server.</p>
     <ol>
-      <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> kholo — account banao / sign in karo</li>
-      <li>"Create API key" par click karo — key bilkul free hai</li>
-      <li>Key copy karke neeche paste kar do</li>
+      <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> — create an account / sign in</li>
+      <li>Click "Create API key" — the key is completely free</li>
+      <li>Copy the key and paste it below</li>
     </ol>
-    <input class="field" id="gemKey" type="password" placeholder="Apni Gemini API key yahan paste karo"><button type="button" class="tag" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:2px 0" onclick="toggleKeyVis('gemKey',this)">Dikhao</button>
-    <p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:14px"><b style="color:#fff">ElevenLabs key (optional):</b> ElevenLabs wali awaz ke liye — <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">elevenlabs.io</a> se free account bana kar key lo. Na dalo to bhi Gemini wali call chalegi.</p>
-    <input class="field" id="elKey" type="password" placeholder="ElevenLabs key (optional)"><button type="button" class="tag" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:2px 0" onclick="toggleKeyVis('elKey',this)">Dikhao</button>
+    <input class="field" id="gemKey" type="password" placeholder="Paste your Gemini API key here"><button type="button" class="tag" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:2px 0" onclick="toggleKeyVis('gemKey',this)">Show</button>
+    <p style="color:var(--mut);font-size:13.5px;line-height:1.6;margin-top:14px"><b style="color:#fff">ElevenLabs key (optional):</b> For the ElevenLabs voice — make a free account at <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">elevenlabs.io</a> and get a key. Without it, the Gemini call still works.</p>
+    <input class="field" id="elKey" type="password" placeholder="ElevenLabs key (optional)"><button type="button" class="tag" style="background:none;border:none;color:var(--blue);cursor:pointer;padding:2px 0" onclick="toggleKeyVis('elKey',this)">Show</button>
     <div class="err" id="keyErr"></div>
     <button class="btn btn-p" id="btnKeySave">Save &amp; Start Call</button>
     <button class="btn btn-g" id="btnKeyCancel">Cancel</button>
   </div>
   <div id="callMediaBox" class="key-box hidden">
-    <h3 id="cmTitle">Image banao</h3>
-    <p style="color:var(--mut);font-size:14px;line-height:1.6">Call roke baghair yahin banta hai — jo bolo ge waisa hi banega. Jo aakhri baat tum ne kahi thi wo neeche likh di hai, chaho to badal lo.</p>
-    <input class="field" id="cmPrompt" placeholder="Kya banana hai?">
+    <h3 id="cmTitle">Make an Image</h3>
+    <p style="color:var(--mut);font-size:14px;line-height:1.6">It is made right here without stopping the call — exactly what you describe. Your last spoken words are written below; edit them if you like.</p>
+    <input class="field" id="cmPrompt" placeholder="What should I make?">
     <div id="cmResult" style="margin-top:12px"></div>
-    <button class="btn btn-p" id="cmGo">Banao</button>
-    <button class="btn btn-g" id="cmBack">Wapas call par</button>
+    <button class="btn btn-p" id="cmGo">Create</button>
+    <button class="btn btn-g" id="cmBack">Back to call</button>
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/logo-poster.png" alt="BADSHAH AI"><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">TAYYAR</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>YAADEIN</b><span id="cpMem">—</span></div><div class="cpanel"><b>AWAAZ</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/logo-poster.png" alt="BADSHAH AI"><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <p id="callCaption"></p>
-    <div class="ctlhint">Ye dabao — call mein foran chalega • side par slide karo, aur bhi hain ›</div>
+    <div class="ctlhint">Tap one — it runs right in the call • slide sideways for more ›</div>
     <div class="ctlrow" id="ctlRow">
       <button class="ctlchip" onclick="ctlSay('WhatsApp kholo')"><span data-ic="message"></span> WhatsApp</button>
       <button class="ctlchip" onclick="ctlSay('Torch on karo')"><span data-ic="zap"></span> Torch</button>
@@ -1200,7 +1200,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp (by number), whatsapp_by_name (by saved contact name), set_torch, volume_control, end_call (when the user asks to end the call, say a short goodbye and use it at once), and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src=window.__avHero||'assets/logo-poster.png'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1281,7 +1281,7 @@ async function toggleScreen(){
     if(window.BadshahBridge && BadshahBridge.stopScreenShare){ try{ BadshahBridge.stopScreenShare(); }catch(e){} }
     if(webScreenTimer){ clearInterval(webScreenTimer); webScreenTimer=null; }
     if(webScreenStream){ webScreenStream.getTracks().forEach(t=>t.stop()); webScreenStream=null; }
-    callStatus('Screen band ho gayi'); return;
+    callStatus('Screen share stopped'); return;
   }
   if(window.BadshahBridge && BadshahBridge.startScreenShare){
     try{ BadshahBridge.startScreenShare(); call.screenOn=true; if(b) b.classList.add('on'); callStatus('Screen share ho rahi hai — Gemini dekh raha hai'); bhScreenHint(); }catch(e){ callStatus('Screen share nahi ho saki'); }
@@ -1295,10 +1295,10 @@ async function toggleScreen(){
       webScreenTimer=setInterval(()=>{ if(!webScreenStream) return; const vw=vid.videoWidth||1280; const sc=Math.min(1,640/vw); cv.width=Math.max(2,Math.round(vw*sc)); cv.height=Math.max(2,Math.round((vid.videoHeight||720)*sc)); cv.getContext('2d').drawImage(vid,0,0,cv.width,cv.height); bhSendFrame(cv.toDataURL('image/jpeg',0.55).split(',')[1]); },1000);
       webScreenStream.getVideoTracks()[0].onended=()=>{ if(call.screenOn) toggleScreen(); };
       call.screenOn=true; if(b) b.classList.add('on'); callStatus('Screen share ho rahi hai — Gemini dekh raha hai'); bhScreenHint();
-    }catch(e){ callStatus('Screen share cancel ho gayi'); }
+    }catch(e){ callStatus('Screen share cancelled'); }
     return;
   }
-  callStatus('Is device par screen share nahi hai');
+  callStatus('Screen share is not available on this device');
 }
 /* ----- Camera share (v7.2 #45) ----- */
 let camStream=null, camTimer=null;
@@ -1309,10 +1309,10 @@ async function toggleCam(){
     call.camOn=false; if(b) b.classList.remove('on');
     if(camTimer){ clearInterval(camTimer); camTimer=null; }
     if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
-    callStatus('Camera band ho gaya'); return;
+    callStatus('Camera off'); return;
   }
-  if(call.engine!=='gemini'){ callStatus('Camera share sirf Gemini Live mein chalta hai'); return; }
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ callStatus('Is device par camera nahi mila'); return; }
+  if(call.engine!=='gemini'){ callStatus('Camera share works in Gemini Live only'); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ callStatus('No camera found on this device'); return; }
   try{
     try{ camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}); }
     catch(e1){ camStream=await navigator.mediaDevices.getUserMedia({video:true,audio:false}); }
@@ -1320,8 +1320,8 @@ async function toggleCam(){
     const cv=document.createElement('canvas');
     camTimer=setInterval(()=>{ if(!camStream) return; const vw=vid.videoWidth||640; const sc=Math.min(1,640/vw); cv.width=Math.max(2,Math.round(vw*sc)); cv.height=Math.max(2,Math.round((vid.videoHeight||480)*sc)); cv.getContext('2d').drawImage(vid,0,0,cv.width,cv.height); if(call.camOn && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({realtimeInput:{video:{mimeType:'image/jpeg',data:cv.toDataURL('image/jpeg',0.55).split(',')[1]}}})); }catch(e){} } },1000);
     camStream.getVideoTracks()[0].onended=()=>{ if(call.camOn) toggleCam(); };
-    call.camOn=true; if(b) b.classList.add('on'); callStatus('Camera on hai — Gemini dekh raha hai'); bhCamHint();
-  }catch(e){ callStatus('Camera ki ijazat nahi mili'); }
+    call.camOn=true; if(b) b.classList.add('on'); callStatus('Camera on — Gemini can see'); bhCamHint();
+  }catch(e){ callStatus('Camera permission not granted'); }
 }
 async function getLiveKey(){
   // BYOK: voice call sirf user ki apni Gemini key par — owner pool chat ke liye hai.
@@ -1334,14 +1334,14 @@ async function ensureAudio(){
   await bhMicTakeover();
   try{ call.stream=await gum(); }
   catch(e){
-    if(e && e.name==='NotAllowedError'){ callStatus('Mic ki ijazat nahi mili'); return false; }
+    if(e && e.name==='NotAllowedError'){ callStatus('Microphone permission not granted'); return false; }
     for(let i=0;i<3 && !call.stream;i++){
-      callStatus('Mic liya ja raha hai…');
+      callStatus('Taking the mic…');
       await bhMicTakeover();
       await new Promise(r=>setTimeout(r,500+i*400));
       try{ call.stream=await gum(); }catch(e2){}
     }
-    if(!call.stream){ callStatus('Mic nahi mila'); return false; }
+    if(!call.stream){ callStatus('Microphone not found'); return false; }
   }
   const AC=window.AudioContext||window.webkitAudioContext;
   call.ac=new AC();
@@ -1397,12 +1397,12 @@ async function startEngine(){
     if(!await ensureAudio()) return;
     call.retries=0; connectGemini();
   } else {
-    if(!localStorage.getItem('ba_el_key')){ setEngine('gemini',false); callStatus('ElevenLabs key nahi hai — Gemini par call chal rahi hai'); return startEngine(); }
+    if(!localStorage.getItem('ba_el_key')){ setEngine('gemini',false); callStatus('No ElevenLabs key — call running on Gemini'); return startEngine(); }
     if(!await ensureAudio()) return;
     call.elHist=[]; call.elBuf=[]; call.elSpeech=false; call.elBusy=true;
-    callStatus('ElevenLabs mode — greeting bhej raha hoon…');
+    callStatus('ElevenLabs mode — sending greeting…');
     try{ await elSpeak('Assalam o Alaikum! Main BADSHAH hoon. Bolo dost, kya kar sakta hoon tumhare liye?'); }catch(e){}
-    call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — bolo, main sun raha hoon');
+    call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — speak, I am listening');
   }
 }
 /* ----- Phone Control: Gemini Live function calling ----- */
@@ -1419,7 +1419,9 @@ const LIVE_TOOLS=[{functionDeclarations:[
   {name:'go_home',description:'Go to the Android home screen (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
   {name:'read_screen',description:'Read the visible text on the current phone screen so you can answer questions about what is on it (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
   {name:'agent_task',description:'Give a task to the user cloud Agent Computer: web searching, research, opening websites, reading pages, any computer work. Use during the call when the user asks you to search the web, find information, research a topic or do computer work. The computer takes 1-3 minutes; afterwards use agent_result to report what it found.',parameters:{type:'OBJECT',properties:{task:{type:'STRING',description:'The work to do, in the user own words, e.g. "Search: best budget phones in Pakistan 2026" or "Open dawn.com and read the top headlines"'}},required:['task']}},
-  {name:'agent_result',description:'Check the latest Agent Computer task and report its result to the user. Use when the user asks what the computer found, or whether the work is done.',parameters:{type:'OBJECT',properties:{}}}
+  {name:'agent_result',description:'Check the latest Agent Computer task and report its result to the user. Use when the user asks what the computer found, or whether the work is done.',parameters:{type:'OBJECT',properties:{}}},
+  {name:'whatsapp_by_name',description:'Open a WhatsApp chat with a SAVED CONTACT BY NAME and the message typed, ready for the user to press send. Finds the number from the phone contacts. Use when the user gives a person name instead of a number, e.g. "Ahmed ko WhatsApp par ye bhejo".',parameters:{type:'OBJECT',properties:{contact:{type:'STRING',description:'Contact name exactly as the user says it'},message:{type:'STRING',description:'The message to type'}},required:['contact','message']}},
+  {name:'end_call',description:'End this voice call immediately. Use right away when the user asks to end, cut, hang up or stop the call, e.g. "bas ab call kaat do", "call band karo", "end the call", "hang up", "bas khatam karo". Say a short goodbye and use this tool — do not ask for confirmation.',parameters:{type:'OBJECT',properties:{}}}
 ]}];
 function a11yCall(method, args, okMsg){
   const B=window.BadshahBridge;
@@ -1444,6 +1446,16 @@ async function execPhoneTool(name,a){
     return 'App kholna sirf Android app mein hota hai — website par nahi'; }
   if(name==='open_youtube'){ if(bridgeDo('openYouTube',a.query)) return 'YouTube par "'+a.query+'" laga diya hai'; window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(a.query||''),'_blank'); return 'YouTube website khol di hai'; }
   if(name==='open_whatsapp'){ if(B&&B.openWhatsApp){ try{ B.openWhatsApp(String(a.number||''),String(a.message||'')); return 'WhatsApp chat message type karke tayyar hai — user ko send dabana hai'; }catch(e){} } window.open('https://wa.me/'+String(a.number||'').replace(/\D/g,'')+'?text='+encodeURIComponent(a.message||''),'_blank'); return 'WhatsApp web khol diya hai'; }
+  if(name==='whatsapp_by_name'){ const cn=String(a.contact||'').trim(); const msg=String(a.message||'');
+    if(!B||!B.findContact) return 'Contact dhoondhna sirf Android app mein hota hai — website par nahi';
+    let r=''; try{ r=B.findContact(cn); }catch(e){}
+    if(!r) return '"'+cn+'" naam ka contact phone mein nahi mila — number bata do to us par bhej deta hoon';
+    let c={}; try{ c=JSON.parse(r); }catch(e){}
+    let num=String(c.number||'').replace(/[\s\-\(\)]/g,''); if(num.charAt(0)==='+') num=num.slice(1); if(num.charAt(0)==='0') num='92'+num.slice(1);
+    if(!num) return 'Contact mila lekin us ke paas number nahi hai';
+    if(B.openWhatsApp){ try{ B.openWhatsApp(num,msg); return (c.name||cn)+' ki WhatsApp chat khol di hai, message type kar diya hai — user ko send dabana hai'; }catch(e){} }
+    return 'Contact mila: '+(c.name||cn)+' '+num+', lekin WhatsApp nahi khul saka'; }
+  if(name==='end_call'){ devMark('endcall'); setTimeout(()=>{ try{ if(call.on) closeCall(); }catch(e){} }, 2400); return 'Call khatam ho rahi hai — ek chhota sa Allah Hafiz keh kar tool ka jawab khatam karo'; }
   if(name==='set_torch'){ if(B&&B.setTorch){ try{ B.setTorch(a.on?'on':'off'); return 'Torch '+(a.on?'on':'off')+' kar di hai'; }catch(e){} } return 'Torch sirf naye Android app (v7) mein chalta hai'; }
   if(name==='volume_control'){ if(B&&B.adjustVolume){ try{ B.adjustVolume(a.direction==='down'?'down':'up'); return 'Volume '+(a.direction==='down'?'kam':'barha')+' diya hai'; }catch(e){} } return 'Volume sirf naye Android app (v7) mein chalta hai'; }
   if(name==='agent_task'){ const task=String(a.task||'').trim(); if(task.length<3) return 'Task samajh nahi aya — user se dobara poochho'; if(typeof agFetch!=='function') return 'Agent Computer abhi tayyar nahi hai'; const st=await agFetch('/api/agent/status'); if(st&&st.configured===false) return 'Agent Computer ka setup abhi baqi hai — owner ko batana hoga'; let note=''; if(!(st&&st.codespace&&st.codespace.state==='Available')){ await agFetch('/api/agent/start',{method:'POST'}); note=' Computer band tha, chala diya hai — tayyar hone mein 1-2 minute lagenge.'; } const r=await agFetch('/api/agent/task',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:task})}); if(r&&r.ok) return 'Task Agent Computer ko bhej diya hai: "'+task+'".'+note+' Thodi dair mein ho jayega — jab user pooche to agent_result se dekh kar batana.'; return 'Task nahi bheja ja saka: '+((r&&r.error)||'shayad login nahi hai'); }
@@ -1460,6 +1472,8 @@ async function execPhoneTool(name,a){
 function devKeyOf(name, a){ a=a||{};
   if(name==='open_app') return 'open:'+String(a.app||'').toLowerCase().replace(/\s+/g,'');
   if(name==='open_whatsapp') return 'wa:'+String(a.number||'').replace(/\D/g,'');
+  if(name==='whatsapp_by_name') return 'wabn:'+String(a.contact||'').toLowerCase().slice(0,20);
+  if(name==='end_call') return 'endcall';
   if(name==='set_torch') return 'torch:'+(a.on?'on':'off');
   if(name==='volume_control') return 'vol:'+(a.direction==='down'?'down':'up');
   if(name==='open_youtube') return 'yt:'+String(a.query||'').toLowerCase().slice(0,20);
@@ -1479,8 +1493,16 @@ function txCandidates(text){ const raw=String(text||'').toLowerCase(); const fla
   if(/^\s*(back|peeche)\s*(jao|dabao|karo)?\s*$/.test(raw)) out.push('a11y:a11yBack:');
   if(/^\s*(home|home jao|ghar jao)\s*$/.test(raw)) out.push('a11y:a11yHome:');
   return out; }
+function isEndCallText(t){ const s=' '+String(t||'').toLowerCase().replace(/[.,!?\u061F\u06D4]+/g,' ')+' ';
+  if(/hang\s?up/.test(s)) return true;
+  if(/\bend (the )?call\b/.test(s)) return true;
+  if(/\bcall\b[^.]{0,18}\b(kaat|kat|band|khatam|khatm|rok|cut)\b/.test(s)) return true;
+  if(/\b(kaat|kat|band|khatam)\s*(do|karo|kar do)\b/.test(s) && /\bcall\b/.test(s)) return true;
+  if(s.indexOf('\u06A9\u0627\u0644')>=0 && /(\u06A9\u0627\u0679|\u0628\u0646\u062F|\u062E\u062A\u0645)/.test(s)) return true;
+  return false; }
 function txFallback(text){ try{
   if(!call.on || !text || String(text).trim().length<4) return false;
+  if(isEndCallText(text)){ if(devDone('endcall')) return true; devMark('endcall'); callStatus('Ending the call…'); const cs=$('ctlStatus'); if(cs) cs.textContent='✓ Call ended'; setTimeout(()=>{ try{ if(call.on) closeCall(); }catch(e){} }, 900); return true; }
   const cands=txCandidates(text);
   for(const k of cands){ if(devDone(k)) return true; }
   if(cands.indexOf('wa:')>=0 && call._doneKeys){ for(const k in call._doneKeys){ if(k.indexOf('wa:')===0 && (Date.now()-call._doneKeys[k]<6000)) return true; } }
@@ -1524,7 +1546,7 @@ function connectGemini(){
   };
   ws.onmessage=async ev=>{
     let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
-    if(data.setupComplete){ callStatus('Gemini Live — bolo, main sun raha hoon'); call.retries=0;
+    if(data.setupComplete){ callStatus('Gemini Live — speak, I am listening'); call.retries=0;
       if(!call.greeted){ call.greeted=true; try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help.)'}]}],turnComplete:true}})); }catch(e){} }
     }
     if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) call.handle=data.sessionResumptionUpdate.newHandle;
@@ -1540,18 +1562,18 @@ function connectGemini(){
         if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; }
         if(sc.inputTranscription&&sc.inputTranscription.text){ callStatus('Tum: '+sc.inputTranscription.text); }
       }
-      if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); if(window.bhAutoMem) bhAutoMem(call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — bolo, main sun raha hoon'); },600); }
+      if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); if(window.bhAutoMem) bhAutoMem(call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — speak, I am listening'); },600); }
     }
     if(data.goAway){ try{ws.close()}catch(e){} }
   };
   ws.onclose=()=>{ if(call.ws!==ws) return; call.ws=null; if(call.on&&call.engine==='gemini') scheduleReconnect(); };
-  ws.onerror=()=>{ callStatus('Connection masla — dobara try ho raha hai…'); };
+  ws.onerror=()=>{ callStatus('Connection issue — retrying…'); };
 }
 function scheduleReconnect(){
   if(!call.on||call.engine!=='gemini') return;
   if(call.rcT) return; // ek waqt mein sirf EK reconnect — do sockets kabhi nahi
-  if(call.retries>=12){ callStatus('Connection bar bar cut raha hai — thodi dair baad try karo.'); return; }
-  call.retries++; callStatus('Dobara connect ho raha hai…');
+  if(call.retries>=12){ callStatus('Connection keeps dropping — please try again in a bit.'); return; }
+  call.retries++; callStatus('Reconnecting…');
   call.rcT=setTimeout(()=>{ call.rcT=null; if(call.on&&call.engine==='gemini') connectGemini(); }, Math.min(800*call.retries,4000));
 }
 function playPcm(b64){
@@ -1582,28 +1604,28 @@ async function elTurn(samples){
   if(!call.on) return;
   call.elBusy=true;
   try{
-    callStatus('Awaaz text ban rahi hai…');
+    callStatus('Listening…');
     const wav=wavFromSamples(samples,16000);
     const sr=await fetch('/api/stt',{method:'POST',headers:{'Content-Type':'audio/wav'},body:wav});
     const sd=await sr.json().catch(()=>({}));
     const text=(sd.text||'').trim();
-    if(!text){ call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — bolo, main sun raha hoon'); return; }
-    $('callCaption').textContent='Tum: '+text;
+    if(!text){ call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — speak, I am listening'); return; }
+    $('callCaption').textContent='You: '+text;
     logLine('Tum', text);
-    if(txFallback(text)){ call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — bolo, main sun raha hoon'); return; }
-    callStatus('Soch raha hoon…');
+    if(txFallback(text)){ call.elBusy=false; if(call.on) callStatus('ElevenLabs Live — speak, I am listening'); return; }
+    callStatus('Thinking…');
     call.elHist.push('User: '+text); if(call.elHist.length>8) call.elHist=call.elHist.slice(-8);
     const q='Voice call par ho. Pichli baatein:\n'+call.elHist.join('\n')+'\nAb User ki is baat ka jawab do — chhota, natural, boli hui zubaan mein (1-3 jumle), usi language aur script mein jo User ne use ki:\n'+text;
     const cr=await fetch(CFG.apiUrl+'?provider=groq&q='+encodeURIComponent(q));
     const cd=await cr.json().catch(()=>({}));
-    const reply=(cd.text||'').trim()||'Sorry dost, samajh nahi aaya — dobara bolo?';
+    const reply=(cd.text||'').trim()||'Sorry, I did not catch that — please say it again.';
     call.elHist.push('BADSHAH: '+reply);
     logLine('BADSHAH', reply);
     $('callCaption').textContent=reply;
     await elSpeak(reply);
-  }catch(e){ callStatus('Masla aaya — dobara bolo'); }
+  }catch(e){ callStatus('Something went wrong — say it again'); }
   call.elBusy=false;
-  if(call.on&&call.engine==='eleven') callStatus('ElevenLabs Live — bolo, main sun raha hoon');
+  if(call.on&&call.engine==='eleven') callStatus('ElevenLabs Live — speak, I am listening');
 }
 async function elSpeak(text){
   const r=await fetch(CFG.ttsUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:'elevenlabs',voice:selVoice(),text:String(text).slice(0,600),userKey:localStorage.getItem('ba_el_key')||undefined})});
@@ -2765,6 +2787,12 @@ function contentLang(){ try{ return localStorage.getItem('ba_clang') || 'en'; }c
 function renderHelp(){ const box = document.getElementById('helpList'); if(!box) return; const qa = HELP_QA[contentLang()] || HELP_QA.en; box.innerHTML = qa.map(function(p){ return '<details class="acc"><summary>' + p[0] + '</summary><p>' + p[1] + '</p></details>'; }).join(''); }
 function applyContentLang(){ const L = I18N_TXT[contentLang()] || I18N_TXT.en; document.querySelectorAll('[data-i18n]').forEach(function(el){ const k = el.getAttribute('data-i18n'); if(L[k]) el.textContent = L[k]; }); renderHelp(); document.querySelectorAll('.clang-btn').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-cl') === contentLang()); }); const dir = contentLang() === 'ur' ? 'rtl' : 'ltr'; ['v-terms','v-help','v-agent'].forEach(function(id){ const v = document.getElementById(id); if(v) v.setAttribute('dir', dir); }); }
 window.setContentLang = function(l){ try{ localStorage.setItem('ba_clang', l); }catch(e){} applyContentLang(); };
+(function(){ var b=document.getElementById('btnLangTop'); if(!b) return;
+  var LBL={en:'🌐 EN', ru:'🌐 Roman', ur:'🌐 اردو'};
+  function sync(){ try{ b.textContent=LBL[contentLang()]||LBL.en; }catch(e){} }
+  b.addEventListener('click', function(){ var order=['en','ru','ur']; var cur='en'; try{ cur=contentLang(); }catch(e){} var nx=order[(order.indexOf(cur)+1)%3]; window.setContentLang(nx); sync(); if(typeof toast==='function') toast(nx==='en'?'Language: English':(nx==='ru'?'Language: Roman Urdu':'Language: Urdu')); });
+  sync();
+})();
 applyContentLang();
 
 /* ===== v7.4: AGENT COMPUTER ===== */
@@ -2929,22 +2957,22 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
   setInterval(()=>{
     let on=false; try{ on=!!(typeof call!=='undefined'&&call.on); }catch(e){}
     const st=$('callStage');
-    if(!on){ filled=false; setChip('idle','TAYYAR'); return; }
+    if(!on){ filled=false; setChip('idle','READY'); return; }
     if(!filled){ filled=true;
-      const m=$('cpMem'); if(m) m.textContent=(typeof MEMS!=='undefined'?MEMS.length:0)+' yaadein';
+      const m=$('cpMem'); if(m) m.textContent=(typeof MEMS!=='undefined'?MEMS.length:0)+' memories';
       const v=$('cpVoice'); if(v){ try{ v.textContent=selVoice()||'Charon'; }catch(e){} }
       const ec=$('callEngineChip'); if(ec){ try{ ec.textContent=(call.engine==='eleven')?'ELEVENLABS':'GEMINI LIVE'; }catch(e){} }
-      const a=$('cpAgent'); if(a&&typeof agFetch==='function'){ agFetch('/api/agent/status').then(s=>{ a.textContent=(s&&s.codespace&&s.codespace.found)?(s.codespace.state==='Available'?'Chalu hai':'Band hai'):'—'; }).catch(()=>{ a.textContent='—'; }); }
+      const a=$('cpAgent'); if(a&&typeof agFetch==='function'){ agFetch('/api/agent/status').then(s=>{ a.textContent=(s&&s.codespace&&s.codespace.found)?(s.codespace.state==='Available'?'ON':'OFF'):'—'; }).catch(()=>{ a.textContent='—'; }); }
     }
-    if(st&&st.classList.contains('speaking')) setChip('speaking','BOL RAHA HAI');
-    else if(st&&st.classList.contains('listening')) setChip('listening','SUN RAHA HAI');
-    else setChip('idle','TAYYAR — BOLO');
+    if(st&&st.classList.contains('speaking')) setChip('speaking','SPEAKING');
+    else if(st&&st.classList.contains('listening')) setChip('listening','LISTENING');
+    else setChip('idle','READY — SPEAK');
   },350);
 })();
 
 /* ===== v7.3 Phase 3: call se image/video banao ===== */
 async function bhTok(){ try{ if(window.firebase && firebase.auth){ const u=firebase.auth().currentUser; if(u) return await u.getIdToken(); } }catch(e){} return ''; }
-window.callMedia=function(kind){ window.__cmKind=kind; $('cmTitle').textContent = kind==='video' ? 'Video banao' : 'Image banao';
+window.callMedia=function(kind){ window.__cmKind=kind; $('cmTitle').textContent = kind==='video' ? 'Make a Video' : 'Make an Image';
   $('cmPrompt').value = (typeof call!=='undefined' && call._lastIn) ? call._lastIn : '';
   $('cmResult').innerHTML=''; $('callMain').classList.add('hidden'); $('keyBox').classList.add('hidden'); $('callMediaBox').classList.remove('hidden'); };
 window.cmBackFn=function(){ $('callMediaBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); };

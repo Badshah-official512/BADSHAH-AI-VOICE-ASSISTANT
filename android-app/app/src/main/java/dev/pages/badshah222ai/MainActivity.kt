@@ -26,6 +26,7 @@ import android.app.role.RoleManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.ContactsContract
 import android.provider.MediaStore
 import android.provider.Settings
 import android.view.WindowInsets
@@ -406,6 +407,32 @@ class MainActivity : ComponentActivity() {
                     catch (e2: Exception) { Toast.makeText(this@MainActivity, "WhatsApp nahi khul saka", Toast.LENGTH_SHORT).show() }
                 }
             }
+        }
+
+        @JavascriptInterface
+        fun findContact(query: String): String {
+            // v7.7: WhatsApp by NAME — phone contacts mein naam dhoondh kar best match ka {name, number} JSON.
+            // READ_CONTACTS pehle se manifest mein hai (call-by-name feature). Permission na ho to "" wapas.
+            return try {
+                if (checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) return ""
+                val q = query.trim().lowercase()
+                if (q.length < 2) return ""
+                val proj = arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER)
+                var bestName = ""; var bestNum = ""; var bestScore = 0; var scanned = 0
+                contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, proj, null, null, null)?.use { cur ->
+                    val ni = cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                    val pi = cur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                    while (cur.moveToNext() && scanned < 4000) {
+                        scanned++
+                        val nm = (if (ni >= 0) cur.getString(ni) else null) ?: continue
+                        val num = (if (pi >= 0) cur.getString(pi) else null) ?: continue
+                        val low = nm.lowercase()
+                        val score = when { low == q -> 3; low.startsWith(q) -> 2; low.contains(q) -> 1; else -> 0 }
+                        if (score > bestScore) { bestScore = score; bestName = nm; bestNum = num; if (score == 3) break }
+                    }
+                }
+                if (bestScore <= 0) "" else org.json.JSONObject().put("name", bestName).put("number", bestNum).toString()
+            } catch (e: Exception) { "" }
         }
 
         @JavascriptInterface
