@@ -138,6 +138,7 @@ function buildPrompt(text){
   return p.slice(-12000);
 }
 async function authHeaders(){ const t=await idToken(); return t?{'Authorization':'Bearer '+t}:{}; }
+window.authHeaders=authHeaders;
 async function callChat(text){
   const model=$('modelSel').value; let q='?model=gemini-3.8-flash&provider=gemini';
   if(model.startsWith('groq:')) q='?provider=groq&model='+encodeURIComponent(model.slice(5));
