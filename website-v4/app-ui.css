@@ -733,3 +733,11 @@ body.chat-on .msg .av{box-shadow:0 0 0 2px var(--ch-a,#2F7CF6),0 0 14px var(--ch
 #stage[data-state="speaking"] .cavRing{background:conic-gradient(from 0deg,#22FFAA,#2F7CF6,var(--purple),#22FFAA);animation-duration:6s}
 #stage[data-state="speaking"] #chatAv{animation:cavTalk .9s ease-in-out infinite}
 #stage[data-state="speaking"] .cavDot{background:#22FFAA}
+
+/* v7.6 LIVING AVATAR EVERYWHERE — call hero + har screen ke avatar spots zinda */
+/* Call: khamosh = saans, bol raha = talk motion, sun raha = tez saans */
+#callAvatar{animation:cavBreath 3.6s ease-in-out infinite}
+#callStage.speaking #callAvatar{animation:cavTalk .85s ease-in-out infinite}
+#callStage.listening #callAvatar{animation:cavBreath 1.5s ease-in-out infinite}
+/* Baqi screens: header DP, who avatar, stage busts, floating bubble — halki zinda harkat */
+img[data-avimg], #whoImg, .dp-head img, .stage.bust img, .floatbub img{animation:cavBreath 3.8s ease-in-out infinite}
