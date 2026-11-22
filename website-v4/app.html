@@ -964,12 +964,11 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callAvWrap"><div class="callAvRing"></div><img id="callAvatar" src="assets/character-bust.png" alt="BADSHAH AI"></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">TAYYAR</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>YAADEIN</b><span id="cpMem">—</span></div><div class="cpanel"><b>AWAAZ</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/character-bust.png" alt="BADSHAH AI"><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">TAYYAR</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>YAADEIN</b><span id="cpMem">—</span></div><div class="cpanel"><b>AWAAZ</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <p id="callCaption"></p>
-    <div id="callChatBox" title="Call Chat — ye baatein alag save hoti hain"></div>
     <div class="ctlhint">Ye dabao — call mein foran chalega • side par slide karo, aur bhi hain ›</div>
     <div class="ctlrow" id="ctlRow">
       <button class="ctlchip" onclick="ctlSay('WhatsApp kholo')"><span data-ic="message"></span> WhatsApp</button>
@@ -980,6 +979,7 @@
     </div>
     <p id="ctlStatus" style="font-size:12px;color:var(--green);min-height:16px;margin-top:6px;text-align:center"></p>
     <div class="call-ctl">
+      <div class="eng-row"><button class="eng" type="button" id="btnCallChat" style="background:rgba(124,77,255,.22);border-color:rgba(124,77,255,.65);color:#EDE9FF">💬 Call Chat — baatein, code, prompts</button></div>
       <div class="eng-row"><button class="eng" type="button" onclick="callMedia('image')">🖼️ Image banao</button><button class="eng" type="button" onclick="callMedia('video')">🎬 Video banao</button></div>
       <div class="eng-row"><button id="engGem" class="eng on" type="button">Gemini Live</button><button id="engEl" class="eng" type="button">ElevenLabs</button></div>
       <select id="callVoice" class="voice-sel" aria-label="Voice chuno"></select>
@@ -991,6 +991,11 @@
       <button class="cbtn end" id="btnEnd" title="End call"><span data-ic="phone"></span></button>
       <button class="cbtn" id="btnSpk" title="Speaker"><span data-ic="speaker"></span></button>
     </div>
+  </div>
+  <div id="callChatPanel" class="hidden">
+    <div class="ccp-head"><div><b>💬 Call Chat</b><span>Call ki saari baatein yahan bari dikhti hain — lamba code, prompt, jawab sab. Kisi bhi jawab ko copy bhi kar sakte ho.</span></div><button class="ccp-x" id="btnCallChatX" type="button">✕</button></div>
+    <div id="callChatBox" title="Call Chat — ye baatein alag save hoti hain"></div>
+    <div class="ccp-foot"><button class="eng" type="button" id="btnCopyCallChat">📋 Saari chat copy karo</button><button class="eng" type="button" id="btnCallChatImg">🖼️ Image banao</button><button class="eng" type="button" id="btnCallChatVid">🎬 Video banao</button></div>
   </div>
 </div>
 
@@ -1470,8 +1475,8 @@ async function runPhoneTool(fc, ws){
   const cs=$('ctlStatus'); if(cs) cs.textContent='✓ '+fc.name+' — '+String(result).slice(0,90);
   try{ ws.send(JSON.stringify({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:{result:String(result)}}]}})); }catch(e){}
 }
-function logLine(w,t){ if(!t) return; if(!window.__callLog) window.__callLog=[]; const L=window.__callLog; const s=String(t).trim().slice(0,300); if(!s) return; if(L.length&&L[L.length-1].who===w&&L[L.length-1].text===s) return; L.push({who:w,text:s}); if(L.length>60) L.splice(0,L.length-60);
-  try{ const box=$('callChatBox'); if(box){ const d=document.createElement('div'); d.className='ccb '+(w==='Tum'?'me':'ai'); d.textContent=s; box.appendChild(d); while(box.children.length>40) box.removeChild(box.firstChild); box.scrollTop=box.scrollHeight; } }catch(e){} }
+function logLine(w,t){ if(!t) return; if(!window.__callLog) window.__callLog=[]; const L=window.__callLog; const s=String(t).trim().slice(0,2000); if(!s) return; if(L.length&&L[L.length-1].who===w&&L[L.length-1].text===s) return; L.push({who:w,text:s}); if(L.length>60) L.splice(0,L.length-60);
+  try{ const box=$('callChatBox'); if(box){ const d=document.createElement('div'); d.className='ccb '+(w==='Tum'?'me':'ai'); const sp=document.createElement('span'); sp.textContent=s; d.appendChild(sp); if(w!=='Tum'){ const cb=document.createElement('button'); cb.className='cpbtn'; cb.type='button'; cb.textContent='📋 Copy'; cb.onclick=()=>{ try{ navigator.clipboard&&navigator.clipboard.writeText(s); if(window.bhToast) bhToast('Copy ho gaya ✓'); }catch(e){} }; d.appendChild(cb); } box.appendChild(d); while(box.children.length>80) box.removeChild(box.firstChild); box.scrollTop=box.scrollHeight; } }catch(e){} }
 function connectGemini(){
   const key=call.key; if(!key) return;
   if(call.ws){ try{ const old=call.ws; old.onclose=null; old.onmessage=null; old.onerror=null; old.close(); }catch(e){} call.ws=null; }
@@ -2458,6 +2463,13 @@ window.twLoad=async function(){ const c=$('twCity').value.trim(); toolBusy('twOu
 window.wikiLoad=async function(){ const q=$('wkQ').value.trim(); toolBusy('wkOut','Dhoondh raha hoon…'); try{ let h=''; try{ const a=await toolGet('ask?q='+encodeURIComponent(q)); if(a.answer||a.abstract){ h+='<div class="card" style="background:var(--panel2);margin-bottom:10px"><b>Quick answer</b><p style="margin-top:6px;line-height:1.65">'+tEsc(a.answer||a.abstract)+'</p>'+(a.url?'<a href="'+tEsc(a.url)+'" target="_blank" rel="noopener" style="font-size:13px">Source: '+tEsc(a.source||'web')+'</a>':'')+'</div>'; } }catch(e){} const d=await toolGet('wiki?q='+encodeURIComponent(q)); h+=(d.image?'<img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px" alt="">':'')+'<p style="margin-top:10px"><b>'+tEsc(d.title)+'</b></p><p style="line-height:1.7;margin-top:6px">'+tEsc(d.extract)+'</p>'+(d.url?'<a href="'+tEsc(d.url)+'" target="_blank" rel="noopener">Read full article on Wikipedia →</a>':''); $('wkOut').innerHTML=h; }catch(e){ toolErr('wkOut',e); } };
 window.funGo=async function(k){ toolBusy('funOut','La raha hoon…'); try{ const d=await toolGet(k); if(k==='meme'){ $('funOut').innerHTML='<p><b>'+tEsc(d.title)+'</b> <span style="color:var(--mut);font-size:12.5px">r/'+tEsc(d.subreddit)+' • ⬆ '+tEsc(d.ups)+'</span></p><img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px;margin-top:8px" alt="meme">'; } else if(k==='joke'){ $('funOut').innerHTML='<p style="line-height:1.7">'+(d.joke?tEsc(d.joke):tEsc(d.setup)+'</p><p style="line-height:1.7;margin-top:8px"><b>'+tEsc(d.delivery)+'</b>')+'</p>'; } else { $('funOut').innerHTML='<p style="line-height:1.75;font-size:15.5px">💡 '+tEsc(d.text)+'</p>'; } }catch(e){ toolErr('funOut',e); } };
 window.shortGo=async function(){ const u=$('slUrl').value.trim(); toolBusy('slOut','Chhota kar raha hoon…'); try{ const d=await toolGet('shorten?url='+encodeURIComponent(u)); $('slOut').innerHTML='<p>Short link:</p><p style="margin-top:6px"><a href="'+tEsc(d.short)+'" target="_blank" rel="noopener" style="font-size:16px;font-weight:700">'+tEsc(d.short)+'</a></p><button class="btn btn-g" style="margin-top:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+tEsc(d.short)+'\');bhToast&&bhToast(\'Copy ho gaya\')">Copy link</button>'; }catch(e){ toolErr('slOut',e); } };
+window.openCallChat=function(){ const p=$('callChatPanel'); if(p){ p.classList.remove('hidden'); const b=$('callChatBox'); if(b) b.scrollTop=b.scrollHeight; } };
+window.closeCallChat=function(){ const p=$('callChatPanel'); if(p) p.classList.add('hidden'); };
+(function(){ const b=$('btnCallChat'); if(b) b.onclick=window.openCallChat; const x=$('btnCallChatX'); if(x) x.onclick=window.closeCallChat;
+  const cp=$('btnCopyCallChat'); if(cp) cp.onclick=function(){ const L=window.__callLog||[]; if(!L.length){ if(window.bhToast) bhToast('Abhi koi baat nahi'); return; } const t=L.map(m=>(m.who==='Tum'?'Tum: ':'BADSHAH: ')+m.text).join('\n'); try{ navigator.clipboard&&navigator.clipboard.writeText(t); if(window.bhToast) bhToast('Saari call chat copy ho gayi ✓'); }catch(e){} };
+  const im=$('btnCallChatImg'); if(im) im.onclick=function(){ window.closeCallChat(); if(window.callMedia) callMedia('image'); };
+  const vd=$('btnCallChatVid'); if(vd) vd.onclick=function(){ window.closeCallChat(); if(window.callMedia) callMedia('video'); };
+})();
 window.sePlay=function(voice){ const t=($('ttsText').value||'').trim(); if(t.length<2){ if(window.bhToast) bhToast('Pehle text likho'); return; } $('ttsPlayer').innerHTML='<audio controls autoplay style="width:100%" src="https://api.streamelements.com/kappa/v2/speech?voice='+encodeURIComponent(voice)+'&text='+encodeURIComponent(t.slice(0,300))+'"></audio>'; };
 
 /* ===== v7.2 Phase 4 Batch 3: Hisaab, Reminder, Focus, Voice, CV, Call Logs ===== */
@@ -2696,28 +2708,39 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
 (function(){ const old=window.__bhOnLogin; window.__bhOnLogin=function(u){ if(old) old(u);
   setTimeout(()=>{ try{ if(window.BadshahBridge && window.BadshahBridge.requestPerm && localStorage.getItem('ba_perm_tour')!=='seen') startPermTour(false); }catch(e){} }, 1200); }; })();
 
-/* ===== v7.3.1: Poster + VOICE WAVE — awaaz ke saath nachti lehren (lyrics style) ===== */
+/* ===== v7.6: Professional VOICE WAVE — mirrored, smooth, state colors ===== */
 (function(){
   const cv=document.getElementById('callWave'); if(!cv) return; const ctx=cv.getContext('2d');
   let W=0,H=0;
-  function size(){ const r=cv.getBoundingClientRect(); W=cv.width=Math.max(200,Math.round(r.width||300)); H=cv.height=Math.max(30,Math.round(r.height||56)); }
+  function size(){ const r=cv.getBoundingClientRect(); W=cv.width=Math.max(200,Math.round(r.width||300)); H=cv.height=Math.max(30,Math.round(r.height||64)); }
   size(); addEventListener('resize',size);
-  const bars=26, data=new Uint8Array(64);
+  const bars=44, half=bars/2, data=new Uint8Array(128), sm=new Array(bars).fill(0);
   function bar(x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect){ ctx.roundRect(x,y,w,h,r); } else { ctx.rect(x,y,w,h); } ctx.fill(); }
+  let tick=0;
   function frame(){
     requestAnimationFrame(frame);
     if(typeof call==='undefined'||!call.on){ if(W) ctx.clearRect(0,0,W,H); return; }
     if(!W) size();
-    const st=$('callStage'); const speaking=st&&st.classList.contains('speaking');
+    tick++;
+    const st=$('callStage'); const speaking=st&&st.classList.contains('speaking'); const listening=st&&st.classList.contains('listening');
     let an=(speaking&&call.outAn)?call.outAn:(call.analyser||call.outAn);
-    if(an){ try{ an.getByteFrequencyData(data); }catch(e){} }
+    let live=false;
+    if(an){ try{ an.getByteFrequencyData(data); for(let i=0;i<24;i++){ if(data[i]>14){ live=true; break; } } }catch(e){} }
     ctx.clearRect(0,0,W,H);
     const bw=W/bars;
     for(let i=0;i<bars;i++){
-      const v=an? data[Math.floor(i*1.6)]/255 : 0;
-      const h=Math.max(3, v*(H-6));
-      const x=i*bw+bw*0.22, w=bw*0.56, y=(H-h)/2;
-      const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#A3E635');
+      const dC=Math.abs(i-half+0.5)/half; // 0 center → 1 edges
+      const fi=Math.floor((1-dC)*26)+2;
+      let v=an? (data[fi]/255) : 0;
+      if(!live) v=0.17+0.10*Math.sin(tick/16 - dC*5); // idle shimmer — visual kabhi dead nahi lagta
+      v=Math.max(0.05, v*(1-dC*0.35));
+      sm[i]+= (v-sm[i])*0.35;
+      const h=Math.max(3, sm[i]*(H-6));
+      const x=i*bw+bw*0.24, w=bw*0.52, y=(H-h)/2;
+      const g=ctx.createLinearGradient(0,y,0,y+h);
+      if(speaking){ g.addColorStop(0,'#22ffaa'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#7C4DFF'); }
+      else if(listening){ g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#22d3ee'); }
+      else { g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#A3E635'); }
       ctx.fillStyle=g; bar(x,y,w,h,3);
     }
   }
