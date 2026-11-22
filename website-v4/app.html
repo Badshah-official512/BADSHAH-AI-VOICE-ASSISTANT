@@ -999,6 +999,7 @@
     <p id="ctlStatus" style="font-size:12px;color:var(--green);min-height:16px;margin-top:6px;text-align:center"></p>
     <div class="call-ctl">
       <div class="eng-row"><button class="eng" type="button" id="btnCallChat" style="background:rgba(124,77,255,.22);border-color:rgba(124,77,255,.65);color:#EDE9FF">💬 Call Chat — baatein, code, prompts</button></div>
+      <div class="eng-row"><button class="eng" type="button" id="btnAgentCall">🖥️ Agent Computer: …</button></div>
       <div class="eng-row"><button class="eng" type="button" onclick="callMedia('image')">🖼️ Image banao</button><button class="eng" type="button" onclick="callMedia('video')">🎬 Video banao</button></div>
       <div class="eng-row"><button id="engGem" class="eng on" type="button">Gemini Live</button><button id="engEl" class="eng" type="button">ElevenLabs</button></div>
       <select id="callVoice" class="voice-sel" aria-label="Voice chuno"></select>
@@ -1198,7 +1199,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src=window.__avHero||'assets/character-bust.png'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1415,7 +1416,9 @@ const LIVE_TOOLS=[{functionDeclarations:[
   {name:'scroll_screen',description:'Scroll the current app screen down or up (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{direction:{type:'STRING',enum:['down','up']}},required:['direction']}},
   {name:'press_back',description:'Press the Android Back button (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
   {name:'go_home',description:'Go to the Android home screen (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
-  {name:'read_screen',description:'Read the visible text on the current phone screen so you can answer questions about what is on it (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}}
+  {name:'read_screen',description:'Read the visible text on the current phone screen so you can answer questions about what is on it (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
+  {name:'agent_task',description:'Give a task to the user cloud Agent Computer: web searching, research, opening websites, reading pages, any computer work. Use during the call when the user asks you to search the web, find information, research a topic or do computer work. The computer takes 1-3 minutes; afterwards use agent_result to report what it found.',parameters:{type:'OBJECT',properties:{task:{type:'STRING',description:'The work to do, in the user own words, e.g. "Search: best budget phones in Pakistan 2026" or "Open dawn.com and read the top headlines"'}},required:['task']}},
+  {name:'agent_result',description:'Check the latest Agent Computer task and report its result to the user. Use when the user asks what the computer found, or whether the work is done.',parameters:{type:'OBJECT',properties:{}}}
 ]}];
 function a11yCall(method, args, okMsg){
   const B=window.BadshahBridge;
@@ -1431,7 +1434,7 @@ function a11yCall(method, args, okMsg){
     return 'Ye kaam nahi ho saka';
   }catch(e){ return 'Ye kaam nahi ho saka'; }
 }
-function execPhoneTool(name,a){
+async function execPhoneTool(name,a){
   const B=window.BadshahBridge;
   if(name==='open_app'){ const key=String(a.app||'').toLowerCase().replace(/\s+/g,''); const pkg=(window.APP_PKGS&&APP_PKGS[key]);
     if(pkg && bridgeDo('openApp',pkg)) return a.app+' khol diya hai';
@@ -1442,6 +1445,8 @@ function execPhoneTool(name,a){
   if(name==='open_whatsapp'){ if(B&&B.openWhatsApp){ try{ B.openWhatsApp(String(a.number||''),String(a.message||'')); return 'WhatsApp chat message type karke tayyar hai — user ko send dabana hai'; }catch(e){} } window.open('https://wa.me/'+String(a.number||'').replace(/\D/g,'')+'?text='+encodeURIComponent(a.message||''),'_blank'); return 'WhatsApp web khol diya hai'; }
   if(name==='set_torch'){ if(B&&B.setTorch){ try{ B.setTorch(a.on?'on':'off'); return 'Torch '+(a.on?'on':'off')+' kar di hai'; }catch(e){} } return 'Torch sirf naye Android app (v7) mein chalta hai'; }
   if(name==='volume_control'){ if(B&&B.adjustVolume){ try{ B.adjustVolume(a.direction==='down'?'down':'up'); return 'Volume '+(a.direction==='down'?'kam':'barha')+' diya hai'; }catch(e){} } return 'Volume sirf naye Android app (v7) mein chalta hai'; }
+  if(name==='agent_task'){ const task=String(a.task||'').trim(); if(task.length<3) return 'Task samajh nahi aya — user se dobara poochho'; if(typeof agFetch!=='function') return 'Agent Computer abhi tayyar nahi hai'; const st=await agFetch('/api/agent/status'); if(st&&st.configured===false) return 'Agent Computer ka setup abhi baqi hai — owner ko batana hoga'; let note=''; if(!(st&&st.codespace&&st.codespace.state==='Available')){ await agFetch('/api/agent/start',{method:'POST'}); note=' Computer band tha, chala diya hai — tayyar hone mein 1-2 minute lagenge.'; } const r=await agFetch('/api/agent/task',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:task})}); if(r&&r.ok) return 'Task Agent Computer ko bhej diya hai: "'+task+'".'+note+' Thodi dair mein ho jayega — jab user pooche to agent_result se dekh kar batana.'; return 'Task nahi bheja ja saka: '+((r&&r.error)||'shayad login nahi hai'); }
+  if(name==='agent_result'){ if(typeof agFetch!=='function') return 'Agent Computer abhi tayyar nahi hai'; const t=await agFetch('/api/agent/tasks'); const L=(t&&t.tasks)||[]; if(!L.length) return 'Abhi tak koi task nahi diya gaya'; const x=L[0]; if(x.status==='done'){ const r=x.result||{}; return 'Task ho gaya: "'+x.goal+'". '+(r.title?('Mila: '+r.title+'. '):'')+String(r.text||'').slice(0,1100); } if(x.status==='failed') return 'Task fail ho gaya: '+(x.error||'computer par masla aya'); return 'Computer abhi kaam kar raha hai ("'+x.goal+'") — thoda intezaar karo, phir dobara poochna'; }
   if(name==='type_text'){ return a11yCall('a11yType',[String(a.text||'')], 'Type kar diya hai'); }
   if(name==='tap_on_screen'){ return a11yCall('a11yTap',[String(a.text||'')], 'Dabaa diya hai'); }
   if(name==='scroll_screen'){ return a11yCall('a11yScroll',[a.direction==='up'?'up':'down'], 'Scroll kar diya hai'); }
@@ -1489,9 +1494,9 @@ function txFeed(text){ _txLast=text; if(_txTimer) clearTimeout(_txTimer); _txTim
 window.__bhTxFallback=txFallback;
 async function runPhoneTool(fc, ws){
   let result='';
-  const dk=devKeyOf(fc.name, fc.args||{});
+  const dk=(fc.name.indexOf('agent_')===0)?('agent:'+Date.now()+':'+Math.random()):devKeyOf(fc.name, fc.args||{});
   if(devDone(dk)){ result='Pehle hi ho gaya hai'; }
-  else { try{ result=execPhoneTool(fc.name, fc.args||{}); }catch(e){ result='Error: '+((e&&e.message)||'failed'); } devMark(dk); }
+  else { try{ result=await execPhoneTool(fc.name, fc.args||{}); }catch(e){ result='Error: '+((e&&e.message)||'failed'); } devMark(dk); }
   const cs=$('ctlStatus'); if(cs) cs.textContent='✓ '+fc.name+' — '+String(result).slice(0,90);
   try{ ws.send(JSON.stringify({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:{result:String(result)}}]}})); }catch(e){}
 }
@@ -2623,6 +2628,13 @@ window.renderAvatars=function(){
 window.applyAvatar();
 window.renderAvatars();
 
+/* ===== v7.6: Call par Agent Computer on/off ===== */
+window.agentCallRefresh=async function(){ const b=$('btnAgentCall'); if(!b||typeof agFetch!=='function') return; const s=await agFetch('/api/agent/status'); let on=false; if(s&&s.codespace&&s.codespace.found){ on=s.codespace.state==='Available'; b.textContent='🖥️ Agent Computer: '+(on?'🟢 Chalu hai — band karne ke liye dabao':'⚪ Band hai — chalane ke liye dabao'); } else if(s&&s.configured===false){ b.textContent='🖥️ Agent Computer: setup baqi'; } else { b.textContent='🖥️ Agent Computer: —'; } b.dataset.on=on?'1':''; };
+(function(){ const b=$('btnAgentCall'); if(!b) return;
+  b.onclick=async()=>{ if(typeof agFetch!=='function') return; if(b.dataset.on){ b.textContent='🖥️ Band ho raha hai…'; await agFetch('/api/agent/stop',{method:'POST'}); if(window.bhToast) bhToast('Agent Computer band ho gaya'); } else { b.textContent='🖥️ Chal raha hai…'; await agFetch('/api/agent/start',{method:'POST'}); if(window.bhToast) bhToast('Agent Computer chal raha hai — 1-2 minute mein tayyar'); } setTimeout(window.agentCallRefresh, 2500); };
+  setInterval(()=>{ const v=$('callView'); if(v&&!v.classList.contains('hidden')) window.agentCallRefresh(); }, 20000);
+})();
+
 window.openCallChat=function(){ const p=$('callChatPanel'); if(p){ p.classList.remove('hidden'); const b=$('callChatBox'); if(b) b.scrollTop=b.scrollHeight; } };
 window.closeCallChat=function(){ const p=$('callChatPanel'); if(p) p.classList.add('hidden'); };
 (function(){ const b=$('btnCallChat'); if(b) b.onclick=window.openCallChat; const x=$('btnCallChatX'); if(x) x.onclick=window.closeCallChat;
@@ -2755,7 +2767,7 @@ window.setContentLang = function(l){ try{ localStorage.setItem('ba_clang', l); }
 applyContentLang();
 
 /* ===== v7.4: AGENT COMPUTER ===== */
-async function agFetch(path, opts){ try{ const r=await fetch(path, Object.assign({headers: await authHeaders()}, opts||{})); return await r.json().catch(()=>({})); }catch(e){ return {}; } }
+async function agFetch(path, opts){ opts=opts||{}; const h=Object.assign({}, await authHeaders(), opts.headers||{}); try{ const r=await fetch(path, Object.assign({}, opts, {headers:h})); return await r.json().catch(()=>({})); }catch(e){ return {}; } }
 async function agLoad(){
   const st=$('agStat'); if(!st) return;
   const s=await agFetch('/api/agent/status');
