@@ -39,7 +39,8 @@ window.BADSHAH_CONFIG = {
   imageModelLabels: { "gemini-3.1-flash-image": "Gemini 3.1 Flash Image — Fast", "gemini-3-pro-image": "Gemini 3 Pro Image — Quality" },
   videoModels: ["agnes-video-2.5-flash"],
   moreModels: [
-    { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (DeepSeek/Qwen/Gemma)" },
+    { id: "openrouter:openrouter/free", label: "OpenRouter Free — Auto (jo free model mile)" },
+    { id: "openrouter:cohere/north-mini-code:free", label: "CODING — Cohere North Mini Code (Free, sirf coding ke liye)" },
     { id: "mistral:mistral-small-latest", label: "Mistral Small — Free Tier" }
   ],
   groqModels: [
