@@ -778,3 +778,17 @@ body.av-zinda #pinAvImg,body.av-zinda #chatAv,body.av-zinda #callAvatar{display:
 #callAvVid{position:relative;z-index:2;width:218px;height:218px;max-width:72vw;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid rgba(255,255,255,.16);box-shadow:0 18px 44px rgba(20,10,60,.5);animation:cavBreath 3.6s ease-in-out infinite}
 #callStage.speaking #callAvVid{animation:cavTalk .85s ease-in-out infinite}
 #callStage.listening #callAvVid{animation:cavBreath 1.5s ease-in-out infinite}
+
+
+/* ===== HERO CHARACTER (user design) ===== */
+#callChar{display:none}
+body.av-hero #callChar{display:block;position:relative;z-index:2;height:min(46vh,430px);width:auto;max-width:88%;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(80,40,200,.45));animation:cavBreath 3.6s ease-in-out infinite}
+body.av-hero #callAvatar,body.av-hero #callAvVid{display:none}
+body.av-hero #callStage{background-image:linear-gradient(180deg,rgba(10,6,28,.16),rgba(10,6,28,.40)),url('assets/call-bg.jpg');background-size:cover;background-position:center 28%}
+#callStage.speaking #callChar{animation:cavTalk .85s ease-in-out infinite}
+#callStage.listening #callChar{animation:cavBreath 1.5s ease-in-out infinite}
+body.av-hero .callHero{min-height:min(50vh,470px);justify-content:flex-end;padding-bottom:4px}
+body.av-hero .callShadow{display:none}
+body.av-hero #chatAvWrap{width:150px;height:174px;border-radius:80px 80px 26px 26px}
+body.av-hero #chatAvWrap::after{display:none}
+body.av-hero #chatAv{inset:auto;left:50%;bottom:0;transform:translateX(-50%);width:136px;height:160px;border-radius:0;object-fit:contain;box-shadow:none}

@@ -985,7 +985,8 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI"><video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI"><img id="callChar" src="assets/char-full.webp" alt="BADSHAH">
+        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1028,7 +1029,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 const CFG = window.BADSHAH_CONFIG;
-try{ const _avId=localStorage.getItem('ba_avatar')||'zinda'; const _avMap={zinda:['assets/avatar-face.png','assets/avatar-face.png'],cartoon:['assets/av3d-idle.jpg','assets/av3d-idle.jpg'],crown:['assets/av3d-crown.jpg','assets/av3d-crown.jpg'],headset:['assets/av3d-headset.jpg','assets/av3d-headset.jpg'],shades:['assets/av3d-shades.jpg','assets/av3d-shades.jpg'],asli:['assets/avatar-face.png','assets/avatar-face.png'],poster:['assets/logo-poster.png','assets/logo-poster.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
+try{ const _avId=localStorage.getItem('ba_avatar')||'hero'; const _avMap={hero:['assets/char-face.jpg','assets/char-half.webp'],zinda:['assets/avatar-face.png','assets/avatar-face.png'],cartoon:['assets/av3d-idle.jpg','assets/av3d-idle.jpg'],crown:['assets/av3d-crown.jpg','assets/av3d-crown.jpg'],headset:['assets/av3d-headset.jpg','assets/av3d-headset.jpg'],shades:['assets/av3d-shades.jpg','assets/av3d-shades.jpg'],asli:['assets/avatar-face.png','assets/avatar-face.png'],poster:['assets/logo-poster.png','assets/logo-poster.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
 const $ = id => document.getElementById(id);
 const state = { user:null, mode: localStorage.getItem('ba_mode')||'badshah', plan:'free', planExpiry:null, chats: JSON.parse(localStorage.getItem('ba_chats')||'[]'), current: 0, imgMode:false, busy:false };
 if(!state.chats.length) state.chats=[{title:'New chat',msgs:[]}];
@@ -2616,6 +2617,7 @@ window.renderLook();
 
 /* ===== v7.6: AVATAR SYSTEM — 12 styles + custom photo ===== */
 window.AVATARS=[
+ {id:'hero',name:'Badshah Hero',round:'assets/char-face.jpg',hero:'assets/char-half.webp',a:'#7C4DFF',b:'#B06CFF'},
  {id:'zinda',name:'Zinda Video',round:'assets/avatar-face.png',hero:'assets/avatar-face.png',a:'#7C4DFF',b:'#22FFAA'},
  {id:'cartoon',name:'3D Badshah',round:'assets/av3d-idle.jpg',hero:'assets/av3d-idle.jpg',a:'#7C4DFF',b:'#2F7CF6'},
  {id:'crown',name:'3D Taaj Wala',round:'assets/av3d-crown.jpg',hero:'assets/av3d-crown.jpg',a:'#F59E0B',b:'#FDE68A'},
@@ -2634,18 +2636,19 @@ window.AVATARS=[
  {id:'midnight',name:'Aadhi Raat',round:'assets/avatar-bust.png',hero:'assets/character-bust.png',a:'#64748B',b:'#334155'},
  {id:'rainbow',name:'Rainbow',round:'assets/avatar-bust.png',hero:'assets/character-bust.png',a:'#f43f5e',b:'#22d3ee'}
 ];
-window.avGet=function(){ const id=localStorage.getItem('ba_avatar')||'zinda'; if(id==='custom'){ const c=localStorage.getItem('ba_avatar_custom'); if(c) return {id:'custom',name:'Meri Photo',round:c,hero:c,a:'#2F7CF6',b:'#7C4DFF'}; } return AVATARS.find(x=>x.id===id)||AVATARS[0]; };
-window.__avExpr=function(state,scope){ try{ var id=localStorage.getItem('ba_avatar')||'cartoon'; if(id!=='cartoon') return; var map={idle:'assets/av3d-idle.jpg',listening:'assets/av3d-listen.jpg',thinking:'assets/av3d-think.jpg',speaking:'assets/av3d-talk.jpg'}; var src=map[state]||map.idle; var keys=(scope==='call')?['callAvatar']:['pinAvImg','chatAv']; keys.forEach(function(k){ var el=document.getElementById(k); if(el&&el.getAttribute('src')!==src) el.setAttribute('src',src); }); }catch(e){} };
+window.avGet=function(){ const id=localStorage.getItem('ba_avatar')||'hero'; if(id==='custom'){ const c=localStorage.getItem('ba_avatar_custom'); if(c) return {id:'custom',name:'Meri Photo',round:c,hero:c,a:'#2F7CF6',b:'#7C4DFF'}; } return AVATARS.find(x=>x.id===id)||AVATARS[0]; };
+window.__avExpr=function(state,scope){ try{ var id=localStorage.getItem('ba_avatar')||'hero'; if(id!=='cartoon') return; var map={idle:'assets/av3d-idle.jpg',listening:'assets/av3d-listen.jpg',thinking:'assets/av3d-think.jpg',speaking:'assets/av3d-talk.jpg'}; var src=map[state]||map.idle; var keys=(scope==='call')?['callAvatar']:['pinAvImg','chatAv']; keys.forEach(function(k){ var el=document.getElementById(k); if(el&&el.getAttribute('src')!==src) el.setAttribute('src',src); }); }catch(e){} };
 setInterval(function(){ try{ var cv=document.getElementById('callView'); if(!cv||cv.classList.contains('hidden')) return; var st=document.getElementById('callStage'); var s2='idle'; if(st&&st.classList.contains('speaking')) s2='speaking'; else if(st&&st.classList.contains('listening')) s2='listening'; window.__avExpr(s2,'call'); if(window.__avVid) window.__avVid(s2,'call'); }catch(e){} }, 700);
-window.__avVid=function(state,scope){ try{ if((localStorage.getItem('ba_avatar')||'zinda')!=='zinda') return; var fmt='mp4'; try{ var probe=document.createElement('video'); if(probe.canPlayType('video/webm; codecs="vp9"')) fmt='webm'; }catch(e){}
+window.__avVid=function(state,scope){ try{ if((localStorage.getItem('ba_avatar')||'hero')!=='zinda') return; var fmt='mp4'; try{ var probe=document.createElement('video'); if(probe.canPlayType('video/webm; codecs="vp9"')) fmt='webm'; }catch(e){}
   function drive(vid, st){ if(!vid) return; var want=(st==='speaking')?'assets/avz-talk.'+fmt:'assets/avz-idle.'+fmt; if(vid.getAttribute('data-cur')!==want){ vid.setAttribute('data-cur', want); vid.src=want; } var pr=vid.play(); if(pr&&pr.catch) pr.catch(function(){}); }
   if(scope==='call'){ drive(document.getElementById('callAvVid'), state); } else { drive(document.getElementById('pinAvVid'), state); drive(document.getElementById('chatAvVid'), state); }
 }catch(e){} };
 window.applyAvatar=function(){
   const A=avGet(); window.__avImg=A.round; window.__avHero=A.hero;
-  try{ document.body.classList.toggle('av-zinda', A.id==='zinda'); if(A.id!=='zinda'){ document.querySelectorAll('.avvid').forEach(function(v){ try{ v.pause(); }catch(e){} }); } if(window.__avVid) window.__avVid('idle','chat'); }catch(e){}
+  try{ document.body.classList.toggle('av-zinda', A.id==='zinda'); document.body.classList.toggle('av-hero', A.id==='hero'); if(A.id!=='zinda'){ document.querySelectorAll('.avvid').forEach(function(v){ try{ v.pause(); }catch(e){} }); } if(window.__avVid) window.__avVid('idle','chat'); }catch(e){}
   document.querySelectorAll('img').forEach(im=>{ const src=im.getAttribute('src')||''; if(im.id==='callAvatar') return; if(im.hasAttribute('data-avimg')||src.endsWith('avatar-bust.png')||im.id==='whoImg'){ im.setAttribute('data-avimg','1'); im.src=A.round; } });
   const ca=$('callAvatar'); if(ca) ca.src=A.hero;
+  const _st=$('chatAv'); if(_st) _st.src=A.hero;
   const cv=$('callView'); if(cv) cv.style.setProperty('--av-a', A.a);
 };
 window.pickAvatar=function(id){ localStorage.setItem('ba_avatar', id); window.applyAvatar(); window.renderAvatars(); if(window.bhToast) bhToast('Avatar lag gaya ✓'); };
@@ -2812,7 +2815,7 @@ window.setContentLang = function(l){ try{ localStorage.setItem('ba_clang', l); }
   var stage=document.getElementById('stage'), panel=document.getElementById('chatPanel');
   function syncState(){ try{ pin.dataset.state=(stage&&stage.dataset.state)||'idle'; if(window.__avExpr) window.__avExpr(pin.dataset.state,'chat'); if(window.__avVid) window.__avVid(pin.dataset.state,'chat'); }catch(e){} }
   function syncVis(){ try{ var cv=document.getElementById('callView'); var callOpen=cv&&!cv.classList.contains('hidden'); pin.style.display=(panel&&panel.classList.contains('has-msgs')&&!callOpen)?'flex':'none'; }catch(e){} }
-  function syncImg(){ try{ if((localStorage.getItem('ba_avatar')||'cartoon')==='cartoon') return; var im=document.getElementById('pinAvImg'); if(im&&window.__avImg&&im.getAttribute('src')!==window.__avImg) im.src=window.__avImg; }catch(e){} }
+  function syncImg(){ try{ if((localStorage.getItem('ba_avatar')||'hero')==='cartoon') return; var im=document.getElementById('pinAvImg'); if(im&&window.__avImg&&im.getAttribute('src')!==window.__avImg) im.src=window.__avImg; }catch(e){} }
   if(window.MutationObserver){ if(stage) new MutationObserver(syncState).observe(stage,{attributes:true,attributeFilter:['data-state']}); if(panel) new MutationObserver(syncVis).observe(panel,{attributes:true,attributeFilter:['class']}); }
   setInterval(function(){ syncState(); syncVis(); syncImg(); }, 1200);
   syncState(); syncVis(); syncImg();
