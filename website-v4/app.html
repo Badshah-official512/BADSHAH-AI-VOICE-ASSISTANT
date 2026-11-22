@@ -2622,7 +2622,7 @@ window.asstRequest=function(){ if(window.BadshahBridge && BadshahBridge.requestA
 (function(){ const _sv4=window.showView; if(typeof _sv4==='function'){ window.showView=function(v){ _sv4(v); if(v==='set-perf'){ setTimeout(()=>{ window.fillDevice(); window.asstRefresh(); },80); } if(v==='set-lock'){ setTimeout(()=>window.lockToggle(setFlag('lock',false), true),80); } }; } })();
 /* v7.3: app khulne par RGB roshni ka welcome chakar (call par ho to rehta hai) */
 window.addEventListener('load',()=>{ setTimeout(()=>{ const rf=$('rgbFrame'); if(!rf) return; rf.classList.add('on'); setTimeout(()=>{ if(!(typeof call!=='undefined'&&call.on)) rf.classList.remove('on'); },2600); },350); });
-window.__bhOnLogin=function(){ fillAccount(); fillKeysPage(); updateGreet(); loadMemories(); };
+(function(){ const _prevLogin=window.__bhOnLogin; window.__bhOnLogin=function(){ if(_prevLogin) try{ _prevLogin(); }catch(e){} fillAccount(); fillKeysPage(); updateGreet(); loadMemories(); }; })();
 /* ---- setting switches init (sab definitions ke baad) ---- */
 initSwitch('swMemOn','memOn',true,memoryToggle);
 initSwitch('swMemAsk','memAsk',false,null);
