@@ -791,6 +791,23 @@
     </section>
 
     <!-- ===== SETTINGS DETAIL: LANGUAGE ===== -->
+    <section class="view" id="v-set-look">
+      <div class="viewc">
+        <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="palette"></span> Themes &amp; Frames</div><div class="psub">Har theme mein upar tumhara avatar — apne style mein sajao</div></div></div>
+        <p class="looksec">🖼️ Screen Frame — poori app ke kinare</p>
+        <div class="lookgrid" id="lookFrames"></div>
+        <p class="looksec">📞 Call Theme — call screen ke rang</p>
+        <div class="lookgrid" id="lookCallThemes"></div>
+        <p class="looksec">🔲 Call Frame — call stage ka kinara</p>
+        <div class="lookgrid" id="lookCallFrames"></div>
+        <p class="looksec">💬 Chat Theme — chat ke rang</p>
+        <div class="lookgrid" id="lookChatThemes"></div>
+        <p class="looksec">🔲 Chat Frame — chat box ka kinara</p>
+        <div class="lookgrid" id="lookChatFrames"></div>
+        <p style="margin-top:16px;color:var(--mut);font-size:13px;line-height:1.6">Jo pasand aye dabao — foran lag jayega aur yaad bhi reh jayega. Call wale rang call screen par avatar ke gird ghumti ring, roshni aur awaaz ki lehron mein dikhte hain.</p>
+      </div>
+    </section>
+
     <section class="view" id="v-set-lang">
       <div class="viewc">
         <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="globe"></span> Language &amp; Region</div><div class="psub">Zubaan tumhari, jawab usi mein</div></div></div>
@@ -925,6 +942,7 @@
 <div id="blockedView" class="hidden"><div><img src="assets/logo-poster.jpg" alt=""><h2>Account block hai</h2><p>Admin ne aapka account block kiya hai. Madad ke liye WhatsApp ya email karo.</p><a class="btn btn-p" href="https://wa.me/923251787969" target="_blank" rel="noopener">WhatsApp</a></div></div>
 
 <div id="rgbFrame"></div>
+<div id="appFrame"></div>
 <div id="permTour" class="hidden">
   <div class="pt-card">
     <div class="pt-top"><b id="ptCount">Question 1 / 12</b><button class="pt-x" onclick="permTourClose()">✕</button></div>
@@ -1767,6 +1785,7 @@ const CATS=[
   ['ghost','Avatar / Hologram','Avatar on/off, motion, test room','set-avatar','avatar hologram zinda motion'],
   ['cpu','Memory & Personalization','Yaadein, instructions, control','memory','memory yaad personalization instructions'],
   ['palette','Chat & Appearance','Theme, rang, likhai ka size','set-appear','theme rang appearance font size contrast'],
+  ['palette','Themes & Frames','Screen frame, call theme/frame, chat look — har jagah avatar','set-look','themes frames look avatar lighting call chat screen frame'],
   ['sun','Notifications & Wellbeing','Subah ki briefing aur sukoon','briefing','notification briefing subah reminder'],
   ['shield','Privacy & Data','Export, delete, privacy policy','set-privacy','privacy data export delete policy'],
   ['globe','Language & Region','Jawab ki zubaan, mic ki zubaan','set-lang','language zubaan urdu english pashto'],
@@ -2463,6 +2482,107 @@ window.twLoad=async function(){ const c=$('twCity').value.trim(); toolBusy('twOu
 window.wikiLoad=async function(){ const q=$('wkQ').value.trim(); toolBusy('wkOut','Dhoondh raha hoon…'); try{ let h=''; try{ const a=await toolGet('ask?q='+encodeURIComponent(q)); if(a.answer||a.abstract){ h+='<div class="card" style="background:var(--panel2);margin-bottom:10px"><b>Quick answer</b><p style="margin-top:6px;line-height:1.65">'+tEsc(a.answer||a.abstract)+'</p>'+(a.url?'<a href="'+tEsc(a.url)+'" target="_blank" rel="noopener" style="font-size:13px">Source: '+tEsc(a.source||'web')+'</a>':'')+'</div>'; } }catch(e){} const d=await toolGet('wiki?q='+encodeURIComponent(q)); h+=(d.image?'<img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px" alt="">':'')+'<p style="margin-top:10px"><b>'+tEsc(d.title)+'</b></p><p style="line-height:1.7;margin-top:6px">'+tEsc(d.extract)+'</p>'+(d.url?'<a href="'+tEsc(d.url)+'" target="_blank" rel="noopener">Read full article on Wikipedia →</a>':''); $('wkOut').innerHTML=h; }catch(e){ toolErr('wkOut',e); } };
 window.funGo=async function(k){ toolBusy('funOut','La raha hoon…'); try{ const d=await toolGet(k); if(k==='meme'){ $('funOut').innerHTML='<p><b>'+tEsc(d.title)+'</b> <span style="color:var(--mut);font-size:12.5px">r/'+tEsc(d.subreddit)+' • ⬆ '+tEsc(d.ups)+'</span></p><img src="'+tEsc(d.image)+'" style="width:100%;border-radius:14px;margin-top:8px" alt="meme">'; } else if(k==='joke'){ $('funOut').innerHTML='<p style="line-height:1.7">'+(d.joke?tEsc(d.joke):tEsc(d.setup)+'</p><p style="line-height:1.7;margin-top:8px"><b>'+tEsc(d.delivery)+'</b>')+'</p>'; } else { $('funOut').innerHTML='<p style="line-height:1.75;font-size:15.5px">💡 '+tEsc(d.text)+'</p>'; } }catch(e){ toolErr('funOut',e); } };
 window.shortGo=async function(){ const u=$('slUrl').value.trim(); toolBusy('slOut','Chhota kar raha hoon…'); try{ const d=await toolGet('shorten?url='+encodeURIComponent(u)); $('slOut').innerHTML='<p>Short link:</p><p style="margin-top:6px"><a href="'+tEsc(d.short)+'" target="_blank" rel="noopener" style="font-size:16px;font-weight:700">'+tEsc(d.short)+'</a></p><button class="btn btn-g" style="margin-top:10px" onclick="navigator.clipboard&&navigator.clipboard.writeText(\''+tEsc(d.short)+'\');bhToast&&bhToast(\'Copy ho gaya\')">Copy link</button>'; }catch(e){ toolErr('slOut',e); } };
+/* ===== v7.6: THEMES & FRAMES — har theme mein upar avatar, alag style ===== */
+window.LOOK={
+ frames:[
+  {id:'off',name:'Band — koi frame nahi',a:'#9aa4b2',b:'#9aa4b2'},
+  {id:'neonmor',name:'Neon Mor',a:'#7C4DFF',b:'#2F7CF6',anim:'flow'},
+  {id:'samandar',name:'Samandari Neela',a:'#0EA5E9',b:'#2563EB'},
+  {id:'aag',name:'Aag Surkh',a:'#EF4444',b:'#F97316',anim:'pulse'},
+  {id:'bijli',name:'Sabz Bijli',a:'#22ffaa',b:'#A3E635',anim:'flow'},
+  {id:'sona',name:'Sunehra Shahana',a:'#F59E0B',b:'#FDE68A'},
+  {id:'gulabi',name:'Gulabi Neon',a:'#EC4899',b:'#A855F7',anim:'flow'},
+  {id:'barf',name:'Barf Neela',a:'#22d3ee',b:'#7DD3FC',anim:'pulse'},
+  {id:'rainbow',name:'Rainbow Flow',a:'#f43f5e',b:'#22d3ee',anim:'rainbow'},
+  {id:'guroob',name:'Guroob — Sunset',a:'#F97316',b:'#DB2777'},
+  {id:'zumurrud',name:'Zumurrud — Emerald',a:'#10B981',b:'#34D399'},
+  {id:'midnight',name:'Aadhi Raat',a:'#64748B',b:'#334155',anim:'pulse'},
+  {id:'gulab',name:'Gulab — Rose',a:'#F43F5E',b:'#FB7185'}
+ ],
+ callThemes:[
+  {id:'badshah',name:'Badshah Mor',a:'#7C4DFF',b:'#2F7CF6',c:'#22ffaa'},
+  {id:'samandar',name:'Samandar',a:'#0EA5E9',b:'#2563EB',c:'#22d3ee'},
+  {id:'aag',name:'Aag',a:'#EF4444',b:'#F97316',c:'#FDE68A'},
+  {id:'jangal',name:'Jangal Sabz',a:'#16A34A',b:'#65A30D',c:'#A3E635'},
+  {id:'sona',name:'Shahana Sona',a:'#F59E0B',b:'#D97706',c:'#FDE68A'},
+  {id:'gulabi',name:'Gulabi Neon',a:'#EC4899',b:'#A855F7',c:'#F0ABFC'},
+  {id:'barf',name:'Barf Thanda',a:'#22d3ee',b:'#38BDF8',c:'#E0F2FE'},
+  {id:'guroob',name:'Guroob',a:'#F97316',b:'#DB2777',c:'#FBBF24'},
+  {id:'midnight',name:'Aadhi Raat',a:'#475569',b:'#1E293B',c:'#94A3B8'},
+  {id:'zumurrud',name:'Zumurrud',a:'#10B981',b:'#059669',c:'#6EE7B7'},
+  {id:'gulab',name:'Gulab',a:'#F43F5E',b:'#E11D48',c:'#FDA4AF'},
+  {id:'cyber',name:'Cyber Peela',a:'#EAB308',b:'#84CC16',c:'#FEF08A'}
+ ],
+ callFrames:[
+  {id:'neon',name:'Neon Line',a:'#7C4DFF',b:'#2F7CF6'},
+  {id:'double',name:'Double Ring',a:'#2F7CF6',b:'#7C4DFF'},
+  {id:'dashed',name:'Tech Dashed',a:'#38BDF8',b:'#38BDF8'},
+  {id:'beam',name:'Power Beam',a:'#A855F7',b:'#EC4899'},
+  {id:'aura',name:'Soft Aura',a:'#818CF8',b:'#818CF8'},
+  {id:'sharp',name:'Sharp Edge',a:'#E2E8F0',b:'#E2E8F0'},
+  {id:'rainbow',name:'Rainbow Edge',a:'#f43f5e',b:'#22d3ee'},
+  {id:'pulse',name:'Pulse Glow',a:'#22ffaa',b:'#22ffaa'},
+  {id:'glass',name:'Glass Shine',a:'#BAE6FD',b:'#BAE6FD'},
+  {id:'fire',name:'Fire Edge',a:'#F97316',b:'#EF4444'},
+  {id:'ice',name:'Ice Edge',a:'#A5F3FC',b:'#22d3ee'},
+  {id:'gold',name:'Gold Royal',a:'#F59E0B',b:'#FDE68A'}
+ ],
+ chatThemes:[
+  {id:'off',name:'Default Halka',a:'#EAF1FE',b:'#D8E5FD'},
+  {id:'neela',name:'Neela Bharosa',a:'#2F7CF6',b:'#7C4DFF'},
+  {id:'mor',name:'Mor Magic',a:'#7C4DFF',b:'#EC4899'},
+  {id:'samandar',name:'Samandar',a:'#0EA5E9',b:'#22d3ee'},
+  {id:'sabz',name:'Sabz Taza',a:'#16A34A',b:'#22ffaa'},
+  {id:'aag',name:'Aag Josh',a:'#EF4444',b:'#F97316'},
+  {id:'sona',name:'Sona',a:'#D97706',b:'#F59E0B'},
+  {id:'gulabi',name:'Gulabi',a:'#EC4899',b:'#F472B6'},
+  {id:'zumurrud',name:'Zumurrud',a:'#059669',b:'#34D399'},
+  {id:'midnight',name:'Aadhi Raat',a:'#334155',b:'#64748B'}
+ ],
+ chatFrames:[
+  {id:'off',name:'Band — koi frame nahi',a:'#9aa4b2',b:'#9aa4b2'},
+  {id:'neon',name:'Neon Line',a:'#2F7CF6',b:'#7C4DFF'},
+  {id:'glow',name:'Soft Glow',a:'#818CF8',b:'#818CF8'},
+  {id:'double',name:'Double Line',a:'#38BDF8',b:'#38BDF8'},
+  {id:'dashed',name:'Tech Dashed',a:'#64748B',b:'#64748B'},
+  {id:'beam',name:'Power Beam',a:'#A855F7',b:'#EC4899'},
+  {id:'glass',name:'Glass Shine',a:'#BAE6FD',b:'#BAE6FD'},
+  {id:'pulse',name:'Pulse',a:'#22ffaa',b:'#22ffaa'},
+  {id:'royal',name:'Gold Royal',a:'#F59E0B',b:'#FDE68A'},
+  {id:'mint',name:'Mint Fresh',a:'#22ffaa',b:'#6EE7B7'}
+ ]
+};
+function lkHexA(hex, al){ const h=String(hex||'#7C4DFF').replace('#',''); if(h.length<6) return 'rgba(124,77,255,'+al+')'; const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return 'rgba('+r+','+g+','+b+','+al+')'; }
+function lkGet(kind, list){ const id=localStorage.getItem('ba_look_'+kind); return list.find(x=>x.id===id)||list[0]; }
+window.applyLook=function(){
+  const F=lkGet('frame', LOOK.frames); const fr=$('appFrame');
+  if(fr){ if(F.id==='off'){ fr.className=''; fr.style.opacity='0'; } else { fr.className='on'+(F.anim?(' af-'+F.anim):''); fr.style.opacity=''; fr.style.setProperty('--fr-a', F.a); fr.style.setProperty('--fr-b', F.b); fr.style.setProperty('--fr-glow', lkHexA(F.a, .35)); } }
+  const CT=lkGet('calltheme', LOOK.callThemes); const cv=$('callView');
+  window.__ctA=CT.a; window.__ctB=CT.b; window.__ctC=CT.c;
+  if(cv){ cv.style.setProperty('--ct-a', CT.a); cv.style.setProperty('--ct-b', CT.b); cv.style.setProperty('--ct-c', CT.c); }
+  const CF=lkGet('callframe', LOOK.callFrames); const st=$('callStage'); if(st){ if(CF.id==='neon') st.removeAttribute('data-cf'); else st.setAttribute('data-cf', CF.id); }
+  const HT=lkGet('chattheme', LOOK.chatThemes);
+  if(HT.id==='off'){ document.body.classList.remove('chat-on'); } else { document.body.classList.add('chat-on'); document.body.style.setProperty('--ch-a', HT.a); document.body.style.setProperty('--ch-b', HT.b); }
+  const HF=lkGet('chatframe', LOOK.chatFrames); const ms=$('msgs'); if(ms){ if(HF.id==='off') ms.removeAttribute('data-chf'); else ms.setAttribute('data-chf', HF.id); }
+};
+window.pickLook=function(kind, id){ localStorage.setItem('ba_look_'+kind, id); window.applyLook(); window.renderLook(); if(window.bhToast) bhToast('Look lag gaya ✓'); };
+window.renderLook=function(){
+  function fill(elId, list, kind, frameStyle){
+    const box=$(elId); if(!box) return; const cur=localStorage.getItem('ba_look_'+kind)||list[0].id;
+    box.innerHTML='';
+    list.forEach(it=>{ const b=document.createElement('button'); b.className='lookcard'+(it.id===cur?' on':'');
+      b.innerHTML='<span class="'+(frameStyle?'lk-fr ':'')+'lk-av" style="--a:'+it.a+';--b:'+(it.b||it.a)+'"><img src="assets/character-bust.png" alt=""></span><b>'+it.name+'</b>';
+      b.onclick=()=>pickLook(kind, it.id); box.appendChild(b); });
+  }
+  fill('lookFrames', LOOK.frames, 'frame', true);
+  fill('lookCallThemes', LOOK.callThemes, 'calltheme', false);
+  fill('lookCallFrames', LOOK.callFrames, 'callframe', true);
+  fill('lookChatThemes', LOOK.chatThemes, 'chattheme', false);
+  fill('lookChatFrames', LOOK.chatFrames, 'chatframe', true);
+};
+window.applyLook();
+window.renderLook();
+
 window.openCallChat=function(){ const p=$('callChatPanel'); if(p){ p.classList.remove('hidden'); const b=$('callChatBox'); if(b) b.scrollTop=b.scrollHeight; } };
 window.closeCallChat=function(){ const p=$('callChatPanel'); if(p) p.classList.add('hidden'); };
 (function(){ const b=$('btnCallChat'); if(b) b.onclick=window.openCallChat; const x=$('btnCallChatX'); if(x) x.onclick=window.closeCallChat;
@@ -2723,6 +2843,7 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
     if(!W) size();
     tick++;
     const st=$('callStage'); const speaking=st&&st.classList.contains('speaking'); const listening=st&&st.classList.contains('listening');
+    const cA=window.__ctA||'#7C4DFF', cB=window.__ctB||'#2F7CF6', cC=window.__ctC||'#22ffaa';
     let an=(speaking&&call.outAn)?call.outAn:(call.analyser||call.outAn);
     let live=false;
     if(an){ try{ an.getByteFrequencyData(data); for(let i=0;i<24;i++){ if(data[i]>14){ live=true; break; } } }catch(e){} }
@@ -2738,9 +2859,9 @@ document.addEventListener('DOMContentLoaded',()=>{ const y=$('ptYes'), n=$('ptNo
       const h=Math.max(3, sm[i]*(H-6));
       const x=i*bw+bw*0.24, w=bw*0.52, y=(H-h)/2;
       const g=ctx.createLinearGradient(0,y,0,y+h);
-      if(speaking){ g.addColorStop(0,'#22ffaa'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#7C4DFF'); }
-      else if(listening){ g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#22d3ee'); }
-      else { g.addColorStop(0,'#7C4DFF'); g.addColorStop(0.55,'#2F7CF6'); g.addColorStop(1,'#A3E635'); }
+      if(speaking){ g.addColorStop(0,cC); g.addColorStop(0.55,cB); g.addColorStop(1,cA); }
+      else if(listening){ g.addColorStop(0,cA); g.addColorStop(0.55,cB); g.addColorStop(1,cC); }
+      else { g.addColorStop(0,cA); g.addColorStop(0.55,cB); g.addColorStop(1,cC); }
       ctx.fillStyle=g; bar(x,y,w,h,3);
     }
   }
