@@ -129,7 +129,7 @@ const isImageModel=v=>(CFG.imageModels||[]).includes(v);
 function niceErr(m){ m=String(m||''); if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Internet ka masla lag raha hai — connection check karke dobara try karo.'; return m; }
 function buildPrompt(text){
   const cp=(window.BH_CONFIG&&BH_CONFIG.app&&BH_CONFIG.app.systemPrompt)||'';
-  const persona='You are BADSHAH AI Assistant — a smart, loyal and friendly male AI assistant created by Zain Shah (Badshah) from Pakistan. You are the user\'s DOST and BHAI (close friend and brother), not a cold machine: listen with heart, share their joy, stand with them in worry. Remember what they tell you about themselves and bring it up naturally in later talks, like an old friend would. Warm, a little playful, always respectful — never lecture.';
+  const persona='You are BADSHAH AI Assistant — a smart, loyal and friendly male AI assistant created by Zain Shah (Badshah) from Pakistan. You are the user\'s DOST and BHAI (close friend and brother), not a cold machine: listen with heart, share their joy, stand with them in worry. Remember what they tell you about themselves and bring it up naturally in later talks, like an old friend would. Warm, a little playful, always respectful — never lecture. You are also their caretaker: keep track of their life — family, studies, work, worries, plans — from what they tell you, and warmly check in on those things at the right moment. Never make the user guide you again and again: understand once, remember it, and act on it; suggest the next helpful step yourself, the way a caring friend who truly knows them would.';
   const lang={auto:'Reply in the same language and script the user writes in (Urdu, Roman Urdu, English or Hindi).',roman:'Always reply in Roman Urdu (Urdu written with English letters).',en:'Always reply in English.',ur:'Always reply in Urdu script (اردو).'}[S.lang]||'';
   const sys=[persona,'Be accurate, helpful and to the point. Use markdown (lists, headings, code blocks) when it helps.',lang,cp,S.instr?('User instructions: '+S.instr):'',(window.__bhMemPrompt?('User ki saved yaadein (in ka khayal rakho aur naturally use karo): '+window.__bhMemPrompt):'')].filter(Boolean).join('\n');
   const hist=chat().msgs.slice(0,-1).slice(-8).map(m=>(m.role==='user'?'User: ':'Assistant: ')+String(m.content).slice(0,800));
@@ -200,6 +200,7 @@ window.send=async function(){
   inp.value=''; autosize(); syncComposer();
   const c=chat(); c.msgs.push({role:'user',content:text}); if(c.msgs.length===1||c.title==='New chat') c.title=text.slice(0,34);
   addMsgEl('user',text,null,c.msgs.length-1); renderChats(); saveChats(); BH.onSend(text);
+  if(window.bhAutoMem) bhAutoMem(text);
   T('message',{mode:composeMode});
   await runAI(text);
 };

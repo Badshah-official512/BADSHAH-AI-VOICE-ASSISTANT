@@ -1088,7 +1088,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
 function callStatus(t){ $('callStatus').textContent=t; }
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. You can control the user phone with tools: open_app, open_youtube, open_whatsapp, set_torch, volume_control, and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ $('callPhoto').src='assets/poster-call.jpg'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1420,7 +1420,7 @@ function connectGemini(){
         if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; }
         if(sc.inputTranscription&&sc.inputTranscription.text){ callStatus('Tum: '+sc.inputTranscription.text); }
       }
-      if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — bolo, main sun raha hoon'); },600); }
+      if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); if(window.bhAutoMem) bhAutoMem(call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — bolo, main sun raha hoon'); },600); }
     }
     if(data.goAway){ try{ws.close()}catch(e){} }
   };
@@ -1793,6 +1793,19 @@ async function saveMemory(text){
   }
   const a=memLocal(); const item={id:'local-'+Date.now(), text, kind:'note', created_at:new Date().toISOString()}; a.unshift(item); memLocalSave(a); MEMS=a; refreshMemPrompt(); renderMemories(); return true;
 }
+/* Dil-wala auto-yaad: user apne baare mein kuch bataye to khud memory ban jaye — bar bar batana na pare */
+window.bhAutoMem=function(text){
+  try{
+    if(typeof saveMemory!=='function'||typeof MEMS==='undefined') return;
+    if(!setFlag('memOn',true)) return;
+    const t=String(text||'').replace(/\s+/g,' ').trim(); if(t.length<8||t.length>300) return;
+    const low=t.toLowerCase();
+    const pats=[/mera naam/,/my name is/,/i live in/,/main .{2,40}reht/,/meri pasand/,/mujhe .{2,50}pasand/,/i (really )?(like|love|enjoy) /,/mera (gaon|sheher|city|mohalla)/,/meri (nokri|job)/,/mera (kaam|business|dukaan|dokan)/,/main .{2,30}(student|parhta|parhti)/,/i am an? /,/i'm an? /,/mere (walid|walida|abu|ammi|ami|bhai|behen|dost)/,/my (father|mother|brother|sister|friend|family)/,/yaad rakho/,/remember (that|this|my)/,/meri (birthday|saalgirah)/,/my birthday/,/mera (exam|paper|test|interview)/,/meri (pareshani|takleef|bimari|tabiyat)/,/main .{2,30}(udaas|pareshan|khush) (hoon|hu)/];
+    if(!pats.some(p=>p.test(low))) return;
+    if(MEMS.some(m=>(m.text||'').toLowerCase()===low)) return;
+    saveMemory(t);
+  }catch(e){}
+};
 async function deleteMemory(id){
   if(isRealUser() && !String(id).startsWith('local-')){
     try{ await memApi('DELETE', null, id); }catch(e){}
