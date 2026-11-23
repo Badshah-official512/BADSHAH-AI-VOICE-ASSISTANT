@@ -126,22 +126,27 @@ class FloatingOrbService : Service() {
 }
 
 /**
- * v7.5 agentic orb: character photo inside a rotating neon arc-ring
- * (purple / blue / green), a breathing halo behind it, and a pulsing
- * green LIVE dot — the same visual language as the call screen.
+ * v7.7.3 approved circle look (user design): poster CENTRE-CUT photo inside a
+ * neon ring, a thick GOLD ARCH over the top, and three tilted ORBIT rings
+ * (gold / teal / purple) whose glowing dots travel around the face — high-class
+ * neon bloom, the same visual language as the call screen. The orbits turn
+ * slowly on the existing 40 ms tick; a breathing halo pulses behind it all.
  */
 class AgenticOrbView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
     private val d = ctx.resources.displayMetrics.density
     private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val ringBase = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = 3f * d; color = Color.argb(80, 160, 170, 255)
+    private val archGlow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; color = Color.argb(90, 245, 197, 66)
     }
-    private val arcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = 3.4f * d; strokeCap = Paint.Cap.ROUND
+    private val archPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; color = Color.rgb(242, 193, 78)
     }
+    private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; color = Color.argb(225, 150, 100, 255)
+    }
+    private val orbitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = 0xFF171130.toInt() }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val dotRing = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.WHITE }
     private val rect = RectF()
     private val clip = Path()
     private var startAt = System.currentTimeMillis()
@@ -153,19 +158,54 @@ class AgenticOrbView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
     override fun onDetachedFromWindow() { stopAnim(); super.onDetachedFromWindow() }
     fun stopAnim() { animOn = false; handler.removeCallbacks(tick) }
 
+    // tilt (deg), period ms, direction, colour, dot phase offset
+    private data class Orbit(val tilt: Float, val period: Long, val dir: Float, val color: Int, val phase: Double)
+    private val orbits = listOf(
+        Orbit(-18f, 9000L, 1f, Color.rgb(245, 197, 66), 0.0),
+        Orbit(48f, 13000L, -1f, Color.rgb(45, 226, 198), 2.1),
+        Orbit(96f, 17000L, 1f, Color.rgb(168, 120, 255), 4.2),
+    )
+
+    private fun drawOrbit(canvas: Canvas, cx: Float, cy: Float, rx: Float, ry: Float, o: Orbit, now: Long) {
+        val elapsed = (now - startAt).toDouble()
+        val tiltNow = o.tilt + (elapsed % 60000.0) / 60000.0 * 360.0 * 0.25 // slow precession
+        canvas.save()
+        canvas.translate(cx, cy)
+        canvas.rotate(tiltNow.toFloat())
+        orbitPaint.color = o.color; orbitPaint.alpha = 205; orbitPaint.strokeWidth = 1.4f * d
+        rect.set(-rx, -ry, rx, ry)
+        canvas.drawOval(rect, orbitPaint)
+        // glowing dot travelling on the ellipse
+        val th = o.phase + o.dir * (elapsed % o.period.toDouble()) / o.period.toDouble() * 2 * Math.PI
+        val dx = (rx * cos(th)).toFloat(); val dy = (ry * sin(th)).toFloat()
+        dotPaint.color = o.color; dotPaint.alpha = 80
+        canvas.drawCircle(dx, dy, 4.6f * d, dotPaint)
+        dotPaint.alpha = 255
+        canvas.drawCircle(dx, dy, 2.1f * d, dotPaint)
+        canvas.restore()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat(); val h = height.toFloat()
         val cx = w / 2f; val cy = h / 2f
         val now = System.currentTimeMillis()
         val pulse = (sin((now % 2400) / 2400.0 * 2 * Math.PI).toFloat() + 1f) / 2f // 0..1 breathing
-        val faceR = min(w, h) / 2f - 9f * d
+        val faceR = min(w, h) / 2f - 14f * d
 
         // breathing halo
         haloPaint.color = Color.argb((36 + pulse * 46).toInt(), 139, 61, 255)
-        canvas.drawCircle(cx, cy, faceR + 5f * d + pulse * 3.5f * d, haloPaint)
+        canvas.drawCircle(cx, cy, faceR + 6f * d + pulse * 3.5f * d, haloPaint)
 
-        // face: photo (circle-cropped) or dark disc
+        // gold arch (behind the face, over the top)
+        val archR = faceR + 5.5f * d
+        rect.set(cx - archR, cy - archR, cx + archR, cy + archR)
+        archGlow.strokeWidth = 8.5f * d
+        canvas.drawArc(rect, 170f, 200f, false, archGlow)
+        archPaint.strokeWidth = 4.6f * d
+        canvas.drawArc(rect, 170f, 200f, false, archPaint)
+
+        // face: poster centre-cut photo (circle-cropped) or dark disc
         if (bmp != null) {
             clip.reset(); clip.addCircle(cx, cy, faceR, Path.Direction.CW)
             canvas.save(); canvas.clipPath(clip)
@@ -177,25 +217,13 @@ class AgenticOrbView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
             canvas.drawCircle(cx, cy, faceR, fillPaint)
         }
 
-        // rotating neon arcs
-        val ringR = faceR + 4.5f * d
-        rect.set(cx - ringR, cy - ringR, cx + ringR, cy + ringR)
-        canvas.drawCircle(cx, cy, ringR, ringBase)
-        val rot = ((now - startAt) % 6000) / 6000f * 360f
-        arcPaint.color = Color.rgb(139, 61, 255)
-        canvas.drawArc(rect, rot, 105f, false, arcPaint)
-        arcPaint.color = Color.rgb(59, 130, 246)
-        canvas.drawArc(rect, rot + 140f, 60f, false, arcPaint)
-        arcPaint.color = Color.rgb(34, 255, 170)
-        canvas.drawArc(rect, rot + 235f, 42f, false, arcPaint)
+        // neon ring hugging the photo
+        ringPaint.strokeWidth = 2f * d
+        canvas.drawCircle(cx, cy, faceR + 1.2f * d, ringPaint)
 
-        // live dot (bottom-right, on the ring)
-        val ang = Math.toRadians(45.0)
-        val dx = cx + (ringR * cos(ang)).toFloat(); val dy = cy + (ringR * sin(ang)).toFloat()
-        val dr = (4.6f + pulse * 1.1f) * d
-        canvas.drawCircle(dx, dy, dr + 1.6f * d, dotRing)
-        dotPaint.color = Color.rgb(34, 255, 170)
-        canvas.drawCircle(dx, dy, dr, dotPaint)
+        // three tilted orbits with travelling light dots
+        val rx = faceR + 10.5f * d; val ry = faceR + 4f * d
+        for (o in orbits) drawOrbit(canvas, cx, cy, rx, ry, o, now)
     }
 }
 

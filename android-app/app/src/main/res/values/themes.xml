@@ -9,4 +9,8 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_fg</item>
         <item name="postSplashScreenTheme">@style/Theme.Badshah</item>
     </style>
+    <!-- v7.7.3: custom premium splash (SplashActivity) — dark stage behind the art -->
+    <style name="Theme.Badshah.SplashArt" parent="Theme.Badshah">
+        <item name="android:windowBackground">@color/badshah_bg</item>
+    </style>
 </resources>
