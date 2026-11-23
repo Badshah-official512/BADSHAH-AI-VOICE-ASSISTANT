@@ -108,9 +108,22 @@ h3 [data-ic]{color:var(--blue)}
 .auth-alt{font-size:13px;color:var(--mut);text-align:center;margin-top:12px;line-height:1.5}
 .note{background:#FFF7E8;border:1px solid #F0DFAE;color:#7A5410;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-top:12px}
 
-/* ---------- boot ---------- */
-#bootSplash{position:fixed;inset:0;z-index:300;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .4s}
+/* ---------- boot (v7.7.3 premium splash — user-approved mock: neon room, hero in
+   ring, realistic gold crown, BADSHAH AI, Loading... bar) ---------- */
+#bootSplash{position:fixed;inset:0;z-index:300;background:#07040F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;transition:opacity .4s;overflow:hidden}
 #bootSplash.hidden{opacity:0;pointer-events:none}
+#bootSplash .bootBg{position:absolute;inset:0;background:url('assets/call-bg.jpg') center/cover no-repeat;opacity:.9}
+#bootSplash .bootBg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,4,15,.28),rgba(7,4,15,.58))}
+#bootSplash>*{position:relative;z-index:1}
+#bootSplash .bootRing{width:168px;height:194px;border-radius:88px 88px 28px 28px;border:2px solid rgba(168,120,255,.9);box-shadow:0 0 34px rgba(124,77,255,.55),inset 0 0 24px rgba(124,77,255,.25);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;background:rgba(10,6,24,.35)}
+#bootSplash .bootRing img{width:148px;height:170px;object-fit:contain;display:block}
+#bootSplash .bootCrown{width:74px;height:auto;filter:drop-shadow(0 4px 14px rgba(245,197,66,.45))}
+#bootSplash .bootTitle{font-family:'Baloo 2',sans-serif;font-size:30px;font-weight:800;letter-spacing:3px;color:#fff;text-shadow:0 2px 18px rgba(124,77,255,.65)}
+#bootSplash .bootSub{color:#C9B8FF;font-size:13.5px;margin-top:-7px}
+#bootSplash .bootBar{width:190px;height:7px;border-radius:99px;background:rgba(255,255,255,.22);overflow:hidden}
+#bootSplash .bootBar i{display:block;height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,#7C4DFF,#B79CFF);animation:bootFill 1.15s ease-in-out infinite alternate}
+@keyframes bootFill{from{width:16%}to{width:84%}}
+#bootSplash .bootLoad{color:#E6E0FF;font-size:13px;letter-spacing:.4px}
 
 /* ---------- app frame ---------- */
 #appView{min-height:100dvh;display:flex;flex-direction:column}
@@ -748,11 +761,25 @@ img[data-avimg], #whoImg, .dp-head img, .stage.bust img, .floatbub img{animation
 @keyframes cavSway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
 #chatAvWrap{animation:cavSway 7.5s ease-in-out infinite}
 #chatPinAv{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:200;display:none;flex-direction:column;align-items:center;pointer-events:none}
-#chatPinAv .pinWrap{position:relative;width:62px;height:62px;animation:cavSway 7.5s ease-in-out infinite}
-#chatPinAv .pinRing{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--blue),var(--purple),#22FFAA,var(--blue));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:cavSpin 12s linear infinite;opacity:.9}
+#chatPinAv .pinWrap{position:relative;width:88px;height:88px;animation:cavSway 7.5s ease-in-out infinite}
+/* v7.7.3 ORBIT CIRCLE (user-approved mock): gold arch over the top + 3 tilted orbit
+   rings (gold / teal / purple) with glowing travelling dots, neon bloom all round */
+#chatPinAv .pinArch{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 202deg,transparent 0deg,#E9B64C 42deg,#FFE9A8 90deg,#E9B64C 138deg,transparent 172deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));filter:drop-shadow(0 0 7px rgba(245,197,66,.75));z-index:3;pointer-events:none}
+#chatPinAv .pinOrbit{position:absolute;left:50%;top:50%;border-radius:50%;pointer-events:none;z-index:2}
+#chatPinAv .pinOrbit::after{content:'';position:absolute;right:-4px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%}
+#chatPinAv .po1{width:110px;height:48px;margin:-24px 0 0 -55px;border:1.5px solid rgba(245,197,66,.8);animation:pinOrb1 9s linear infinite}
+#chatPinAv .po1::after{background:#FFD76A;box-shadow:0 0 9px 2px rgba(255,215,106,.85)}
+#chatPinAv .po2{width:102px;height:66px;margin:-33px 0 0 -51px;border:1.5px solid rgba(45,226,198,.75);animation:pinOrb2 12s linear infinite}
+#chatPinAv .po2::after{background:#5FF2DA;box-shadow:0 0 9px 2px rgba(45,226,198,.85)}
+#chatPinAv .po3{width:114px;height:58px;margin:-29px 0 0 -57px;border:1.5px solid rgba(168,120,255,.75);animation:pinOrb3 15s linear infinite}
+#chatPinAv .po3::after{background:#C4A0FF;box-shadow:0 0 9px 2px rgba(168,120,255,.85)}
+@keyframes pinOrb1{from{transform:rotate(-18deg)}to{transform:rotate(342deg)}}
+@keyframes pinOrb2{from{transform:rotate(42deg)}to{transform:rotate(-318deg)}}
+@keyframes pinOrb3{from{transform:rotate(96deg)}to{transform:rotate(456deg)}}
+#chatPinAv .pinRing{position:absolute;inset:11px;border-radius:50%;background:conic-gradient(from 0deg,var(--blue),var(--purple),#22FFAA,var(--blue));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:cavSpin 12s linear infinite;opacity:.9;z-index:2;box-shadow:0 0 18px rgba(124,77,255,.45)}
 #chatPinAv .pinHalo{position:absolute;inset:-11px;border-radius:50%;background:radial-gradient(circle,rgba(124,77,255,.32),rgba(47,124,246,.10) 55%,transparent 72%);animation:cavHaloPulse 3.2s ease-in-out infinite;pointer-events:none}
-#pinAvImg{position:absolute;inset:5px;width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center 20%;display:block;animation:cavBreath 3.4s ease-in-out infinite;box-shadow:0 6px 16px rgba(60,40,160,.35)}
-#chatPinAv .pinDot{position:absolute;right:3px;bottom:4px;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid #fff;z-index:2}
+#pinAvImg{position:absolute;inset:16px;width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:center 20%;display:block;animation:cavBreath 3.4s ease-in-out infinite;box-shadow:0 6px 16px rgba(60,40,160,.35);z-index:2}
+#chatPinAv .pinDot{position:absolute;right:12px;bottom:13px;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid #fff;z-index:4}
 #chatPinAv .pinName{margin-top:5px;background:rgba(18,20,36,.85);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:1.4px;padding:3px 11px;border-radius:99px;box-shadow:0 4px 12px rgba(20,16,60,.3)}
 #chatPinAv[data-state="listening"] .pinRing{background:conic-gradient(from 0deg,#2F7CF6,#22d3ee,#2F7CF6);animation-duration:4.5s}
 #chatPinAv[data-state="listening"] #pinAvImg{animation:cavBreath 1.6s ease-in-out infinite}
@@ -773,7 +800,7 @@ img[data-avimg], #whoImg, .dp-head img, .stage.bust img, .floatbub img{animation
 .avvid{display:none}
 body.av-zinda .avvid{display:block}
 body.av-zinda #pinAvImg,body.av-zinda #chatAv,body.av-zinda #callAvatar{display:none}
-#pinAvVid{position:absolute;inset:5px;width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 6px 16px rgba(60,40,160,.35)}
+#pinAvVid{position:absolute;inset:16px;width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 6px 16px rgba(60,40,160,.35);z-index:2}
 #chatAvVid{position:absolute;inset:7px;width:90px;height:90px;border-radius:50%;object-fit:cover;box-shadow:0 8px 22px rgba(60,40,160,.35)}
 #callAvVid{position:relative;z-index:2;width:218px;height:218px;max-width:72vw;border-radius:50%;object-fit:cover;object-position:center 20%;border:3px solid rgba(255,255,255,.16);box-shadow:0 18px 44px rgba(20,10,60,.5);animation:cavBreath 3.6s ease-in-out infinite}
 #callStage.speaking #callAvVid{animation:cavTalk .85s ease-in-out infinite}
@@ -782,11 +809,16 @@ body.av-zinda #pinAvImg,body.av-zinda #chatAv,body.av-zinda #callAvatar{display:
 
 /* ===== HERO CHARACTER (user design) ===== */
 #callChar{display:none}
-body.av-hero #callChar{display:block;position:relative;z-index:2;height:min(46vh,430px);width:auto;max-width:88%;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(80,40,200,.45));animation:cavBreath 3.6s ease-in-out infinite}
+/* v7.7.3 HERO FIT (user-approved mock): character anchored to the STAGE, not the flow —
+   feet land on the platform disc centre (~76.5% of stage height), height 61% of the
+   stage, horizontally centred at every phone aspect (tall phones included). */
+@keyframes heroBreath{0%,100%{transform:translateX(-50%) rotate(2.32deg) scale(1)}50%{transform:translateX(-50%) rotate(2.32deg) scale(1.035)}}
+@keyframes heroTalk{0%,100%{transform:translateX(-50%) rotate(2.32deg) translateY(0) scale(1)}25%{transform:translateX(-50%) rotate(2.32deg) translateY(-2.5px) scale(1.02)}55%{transform:translateX(-50%) rotate(2.32deg) translateY(1px) scale(.995)}}
+body.av-hero #callChar{display:block;position:absolute;left:50%;bottom:23.5%;height:61%;width:auto;max-width:88%;object-fit:contain;z-index:4;transform:translateX(-50%) rotate(2.32deg);filter:drop-shadow(0 14px 26px rgba(80,40,200,.45));animation:heroBreath 3.6s ease-in-out infinite}
 body.av-hero #callAvatar,body.av-hero #callAvVid{display:none}
 body.av-hero #callStage{background-image:linear-gradient(180deg,rgba(10,6,28,.16),rgba(10,6,28,.40)),url('assets/call-bg.jpg');background-size:cover;background-position:center 28%}
-#callStage.speaking #callChar{animation:cavTalk .85s ease-in-out infinite}
-#callStage.listening #callChar{animation:cavBreath 1.5s ease-in-out infinite}
+body.av-hero #callStage.speaking #callChar{animation:heroTalk .85s ease-in-out infinite}
+body.av-hero #callStage.listening #callChar{animation:heroBreath 1.5s ease-in-out infinite}
 body.av-hero .callHero{min-height:min(50vh,470px);justify-content:flex-end;padding-bottom:4px}
 body.av-hero .callShadow{display:none}
 body.av-hero #chatAvWrap{width:150px;height:174px;border-radius:80px 80px 26px 26px}

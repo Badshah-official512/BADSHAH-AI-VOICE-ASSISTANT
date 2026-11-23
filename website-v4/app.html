@@ -28,10 +28,14 @@
 <div class="lights"><div class="glow g-blue"></div><div class="glow g-red"></div></div>
 
 <!-- ================= AUTH ================= -->
-<div id="bootSplash" style="position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
-  <img src="assets/avatar-bust.png" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:2px solid var(--line);box-shadow:0 0 44px rgba(var(--mc),.55)">
-  <div style="font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;color:var(--txt)">BADSHAH AI</div>
-  <div style="color:var(--mut);font-size:14px">Khul raha hai… tumhara account khud yaad hai</div>
+<div id="bootSplash">
+  <div class="bootBg"></div>
+  <div class="bootRing"><img src="assets/char-half.webp" alt=""></div>
+  <img class="bootCrown" src="assets/crown-gold.png" alt="">
+  <div class="bootTitle">BADSHAH AI</div>
+  <div class="bootSub">Your Personal AI Assistant</div>
+  <div class="bootBar"><i></i></div>
+  <div class="bootLoad">Loading...</div>
 </div>
 <div id="lockView" class="hidden" style="position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:24px">
   <img src="assets/avatar-bust.png" alt="" style="width:92px;height:92px;border-radius:50%;object-fit:cover;border:2px solid var(--line)">
@@ -153,7 +157,7 @@
         </div>
         <select class="model" id="modelSel" hidden></select>
       </div>
-      <div id="chatPinAv" data-state="idle"><div class="pinWrap"><div class="pinRing"></div><div class="pinHalo"></div><img id="pinAvImg" data-avimg src="assets/avatar-face.png" alt="BADSHAH"><video id="pinAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="pinDot"></div></div><span class="pinName">BADSHAH</span></div>
+      <div id="chatPinAv" data-state="idle"><div class="pinWrap"><div class="pinArch"></div><div class="pinOrbit po1"></div><div class="pinOrbit po2"></div><div class="pinOrbit po3"></div><div class="pinRing"></div><div class="pinHalo"></div><img id="pinAvImg" data-avimg src="assets/avatar-face.png" alt="BADSHAH"><video id="pinAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="pinDot"></div></div><span class="pinName">BADSHAH</span></div>
       <div id="chatPanel">
         <div class="stage" id="stage">
           <div class="orb-host" id="orbHost"></div>
@@ -985,8 +989,8 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI"><img id="callChar" src="assets/char-full.webp" alt="BADSHAH">
-        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI">
+        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><img id="callChar" src="assets/char-full.webp" alt="BADSHAH"><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1029,7 +1033,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 const CFG = window.BADSHAH_CONFIG;
-try{ const _avId=localStorage.getItem('ba_avatar')||'hero'; const _avMap={hero:['assets/char-face.jpg','assets/char-half.webp'],zinda:['assets/avatar-face.png','assets/avatar-face.png'],cartoon:['assets/av3d-idle.jpg','assets/av3d-idle.jpg'],crown:['assets/av3d-crown.jpg','assets/av3d-crown.jpg'],headset:['assets/av3d-headset.jpg','assets/av3d-headset.jpg'],shades:['assets/av3d-shades.jpg','assets/av3d-shades.jpg'],asli:['assets/avatar-face.png','assets/avatar-face.png'],poster:['assets/logo-poster.png','assets/logo-poster.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
+try{ const _avId=localStorage.getItem('ba_avatar')||'hero'; const _avMap={hero:['assets/char-face.jpg','assets/char-half.webp'],zinda:['assets/avatar-face.png','assets/avatar-face.png'],cartoon:['assets/av3d-idle.jpg','assets/av3d-idle.jpg'],crown:['assets/av3d-crown.jpg','assets/av3d-crown.jpg'],headset:['assets/av3d-headset.jpg','assets/av3d-headset.jpg'],shades:['assets/av3d-shades.jpg','assets/av3d-shades.jpg'],asli:['assets/avatar-face.png','assets/avatar-face.png'],poster:['assets/poster-cut.png','assets/poster-cut.png'],poora:['assets/avatar-bust.png','assets/character.png']}; if(_avId==='custom'){ const _c=localStorage.getItem('ba_avatar_custom'); if(_c){ window.__avImg=_c; window.__avHero=_c; } } else if(_avMap[_avId]){ window.__avImg=_avMap[_avId][0]; window.__avHero=_avMap[_avId][1]; } }catch(e){}
 const $ = id => document.getElementById(id);
 const state = { user:null, mode: localStorage.getItem('ba_mode')||'badshah', plan:'free', planExpiry:null, chats: JSON.parse(localStorage.getItem('ba_chats')||'[]'), current: 0, imgMode:false, busy:false };
 if(!state.chats.length) state.chats=[{title:'New chat',msgs:[]}];
@@ -2624,7 +2628,7 @@ window.AVATARS=[
  {id:'headset',name:'3D Headset',round:'assets/av3d-headset.jpg',hero:'assets/av3d-headset.jpg',a:'#2F7CF6',b:'#22d3ee'},
  {id:'shades',name:'3D Shades',round:'assets/av3d-shades.jpg',hero:'assets/av3d-shades.jpg',a:'#64748B',b:'#A855F7'},
  {id:'asli',name:'Asli Badshah',round:'assets/avatar-face.png',hero:'assets/avatar-face.png',a:'#7C4DFF',b:'#2F7CF6'},
- {id:'poster',name:'Poster Neon',round:'assets/logo-poster.png',hero:'assets/logo-poster.png',a:'#A855F7',b:'#EC4899'},
+ {id:'poster',name:'Poster Neon',round:'assets/poster-cut.png',hero:'assets/poster-cut.png',a:'#A855F7',b:'#EC4899'},
  {id:'poora',name:'Poora Character',round:'assets/avatar-bust.png',hero:'assets/character.png',a:'#2F7CF6',b:'#22d3ee'},
  {id:'sona',name:'Sunehra Glow',round:'assets/avatar-bust.png',hero:'assets/character-bust.png',a:'#F59E0B',b:'#FDE68A'},
  {id:'aag',name:'Aag Glow',round:'assets/avatar-bust.png',hero:'assets/character-bust.png',a:'#EF4444',b:'#F97316'},
