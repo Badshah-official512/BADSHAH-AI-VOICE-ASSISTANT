@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand palette (mirrors ui/theme/Theme.kt). -->
+    <color name="badshah_bg">#0C0918</color>
+    <color name="badshah_panel">#171130</color>
+    <color name="badshah_panel2">#211947</color>
+    <color name="badshah_violet">#8B5CF6</color>
+    <color name="badshah_gold">#F5B942</color>
+    <color name="badshah_cyan">#22D3EE</color>
+    <color name="badshah_text">#EDEAF7</color>
+    <color name="badshah_mute">#9A93B8</color>
+    <color name="ic_launcher_background">#150A2E</color>
+</resources>

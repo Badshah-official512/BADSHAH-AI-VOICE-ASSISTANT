@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BADSHAH AI</string>
+    <string name="tagline">Your Personal AI Assistant</string>
+    <string name="loading">Loading…</string>
+    <string name="call_end">End call</string>
+    <string name="call_minimize">Minimize</string>
+    <string name="call_camera_switch">Switch camera</string>
+    <string name="call_mic_mute">Mute microphone</string>
+</resources>

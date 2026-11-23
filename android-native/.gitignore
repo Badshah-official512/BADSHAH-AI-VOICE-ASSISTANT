@@ -1,0 +1,13 @@
+# BADSHAH AI native — never commit secrets or local state.
+local.properties
+gradle.properties
+keystore.properties
+*.jks
+*.keystore
+/.idea/
+/.gradle/
+/build/
+/app/build/
+/app/release/
+*.iml
+.DS_Store

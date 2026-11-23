@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App theme: dark violet, no action bar. Framework parent (no Material
+         library dependency — UI is 100% Compose Material3). -->
+    <style name="Theme.Badshah" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/badshah_bg</item>
+        <item name="android:statusBarColor">@color/badshah_bg</item>
+        <item name="android:navigationBarColor">@color/badshah_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- System splash: PLAIN dark background only — it is just a bridge.
+         The real premium splash is the Compose SplashScreen (mock-splash.jpg):
+         neon room + ring + hero half character + realistic gold crown + Loading... -->
+    <style name="Theme.Badshah.Splash" parent="@style/Theme.Badshah">
+        <item name="android:windowBackground">@color/badshah_bg</item>
+    </style>
+</resources>
