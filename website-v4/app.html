@@ -30,12 +30,24 @@
 <!-- ================= AUTH ================= -->
 <div id="bootSplash">
   <div class="bootBg"></div>
-  <div class="bootRing"><img src="assets/char-half.webp" alt=""></div>
   <img class="bootCrown" src="assets/crown-gold.png" alt="">
   <div class="bootTitle">BADSHAH AI</div>
   <div class="bootSub">Your Personal AI Assistant</div>
-  <div class="bootBar"><i></i></div>
-  <div class="bootLoad">Loading...</div>
+  <div class="bootStage">
+    <div class="bootOrbit bo1"></div>
+    <div class="bootOrbit bo2"></div>
+    <div class="bootOrbit bo3"></div>
+    <img class="bootChar" src="assets/char-full.webp" alt="">
+    <div class="bootDisc"></div>
+  </div>
+  <div class="bootBar"><i id="bootBarFill"></i></div>
+  <div class="bootLoad" id="bootLoadTxt">Loading... 0%</div>
+  <div class="bootLines">
+    <span data-i18n="bootLine1">Initializing AI systems...</span><span class="bdot">•</span>
+    <span data-i18n="bootLine2">Preparing smart memory</span><span class="bdot">•</span>
+    <span data-i18n="bootLine3">Connecting secure network</span>
+  </div>
+  <div class="bootFoot" data-i18n="bootFoot">Powered by Advanced AI Technology • Premium Experience</div>
 </div>
 <div id="lockView" class="hidden" style="position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:13px;padding:24px">
   <img src="assets/avatar-bust.png" alt="" style="width:92px;height:92px;border-radius:50%;object-fit:cover;border:2px solid var(--line)">
@@ -105,43 +117,60 @@
     <!-- ===== HOME / COMMAND CENTER ===== -->
     <section class="view on" id="v-home">
       <div class="viewc">
-        <div class="topbar">
+        <div class="topbar v78-top">
           <button class="dots" data-drawer aria-label="Menu">☰</button>
-          <div class="brand-t">BADSHAH AI <span class="crown">♛</span></div>
-          <div class="topright"><span class="pill"><b>●</b> ONLINE</span><button class="dots" data-morebtn aria-label="More">⋮</button></div>
+          <div class="v78-brand"><img class="v78-crown" src="assets/crown-gold.png" alt=""><div><b>BADSHAH AI</b><small>Your Personal AI Assistant</small></div></div>
+          <div class="topright v78-topright">
+            <span class="pill v78-online"><b>●</b> Online</span>
+            <select class="v78-langsel" id="homeLangSel" aria-label="Language">
+              <option value="en">English</option>
+              <option value="ru">Roman Urdu</option>
+              <option value="ur">Urdu</option>
+            </select>
+            <button class="v78-avbtn" type="button" onclick="showView('account')" aria-label="Account"><img id="homeUserAv" src="assets/poster-cut.png" alt=""></button>
+          </div>
         </div>
-        <div class="herorow">
-          <button class="herobtn pri" onclick="openCallSmart()"><span data-ic="phone"></span>Live Call</button>
-          <button class="herobtn" onclick="showView('chat')"><span data-ic="message"></span>Chat Karo</button>
-          <button class="herobtn" onclick="heroApp()"><span data-ic="grid"></span>App Kholo</button>
+        <div class="v78-greetbar">
+          <img class="v78-greet-crown" src="assets/crown-gold.png" alt="">
+          <div class="v78-greet-txt"><b id="homeGreet">Hello! I'm BADSHAH AI</b><span data-i18n="greetSub">How can I help you today?</span></div>
+          <button type="button" class="v78-seeall" onclick="showView('features')" data-i18n="seeAll">See All →</button>
         </div>
-        <div class="stage avatarhide">
-          <div class="float"><img class="full" src="assets/avatar-full.webp" alt="BADSHAH hologram"></div>
-          <div class="ring"></div>
+        <div class="v78-herostage">
+          <div class="v78-ring"><span class="v78-ringspin"></span><img src="assets/char-half.webp" alt="BADSHAH AI"></div>
         </div>
-        <div class="chips">
-          <div class="chip"><h4>SYSTEM STATUS</h4><p class="ok">● All Systems Live</p></div>
-          <div class="chip"><h4>MEMORY</h4><p id="homeMemChip">Yaad: —</p></div>
+        <div class="v78-panel">
+          <div class="v78-panel-head"><b data-i18n="quickActions">Quick Actions</b><button type="button" onclick="showView('galaxy')" data-i18n="seeAll">See All →</button></div>
+          <div class="v78-qa">
+            <button type="button" onclick="v78Quick('image')"><span class="v78-qi">🎨</span><span data-i18n="qaImage">Generate Image</span></button>
+            <button type="button" onclick="v78Quick('code')"><span class="v78-qi">💻</span><span data-i18n="qaCode">Write Code</span></button>
+            <button type="button" onclick="v78Quick('website')"><span class="v78-qi">🌐</span><span data-i18n="qaWebsite">Create Website</span></button>
+            <button type="button" onclick="v78Quick('search')"><span class="v78-qi">🔍</span><span data-i18n="qaSearch">Search Web</span></button>
+            <button type="button" onclick="v78Quick('learn')"><span class="v78-qi">🎓</span><span data-i18n="qaLearn">Learn Anything</span></button>
+            <button type="button" onclick="showView('galaxy')"><span class="v78-qi">🧩</span><span data-i18n="qaMore">More Tools</span></button>
+          </div>
         </div>
-        <div class="wave" aria-hidden="true"><i style="height:16px;animation-delay:0s"></i><i style="height:26px;animation-delay:.08s"></i><i style="height:36px;animation-delay:.16s"></i><i style="height:22px;animation-delay:.24s"></i><i style="height:40px;animation-delay:.32s"></i><i style="height:28px;animation-delay:.4s"></i><i style="height:18px;animation-delay:.48s"></i><i style="height:34px;animation-delay:.56s"></i><i style="height:24px;animation-delay:.64s"></i><i style="height:38px;animation-delay:.72s"></i><i style="height:20px;animation-delay:.8s"></i><i style="height:30px;animation-delay:.88s"></i><i style="height:15px;animation-delay:.96s"></i></div>
-        <div class="greet"><h2 id="homeGreet">Assalam o Alaikum</h2><p>Main hoon BADSHAH — bolo, kya kar sakta hoon tumhare liye?</p></div>
-        <div class="comp-in" style="margin-top:12px">
-          <textarea id="homeCmd" rows="1" placeholder="Command likho — ya neeche mic/call dabao…"></textarea>
+        <div class="v78-panel">
+          <div class="v78-panel-head"><b data-i18n="aiStatus">AI Status</b><span class="v78-ready" id="homeStatusHead">● All Systems Ready</span></div>
+          <div class="v78-statusrows">
+            <div class="v78-srow"><span class="v78-sic">🎙️</span><span class="v78-sname" data-i18n="stVoice">Voice Assistant</span><span class="v78-sval" id="stVoice">—</span></div>
+            <div class="v78-srow"><span class="v78-sic">🧑‍🚀</span><span class="v78-sname" data-i18n="stAvatar">3D Avatar</span><span class="v78-sval ok">✓</span></div>
+            <div class="v78-srow"><span class="v78-sic">🧠</span><span class="v78-sname" data-i18n="stMemory">Smart Memory</span><span class="v78-sval" id="stMemory">—</span></div>
+            <div class="v78-srow"><span class="v78-sic">🌍</span><span class="v78-sname" data-i18n="stOnline">Online Access</span><span class="v78-sval" id="stOnline">—</span></div>
+          </div>
+          <p class="v78-memline" id="homeMemChip">Memory: —</p>
+        </div>
+        <div class="v78-panel">
+          <div class="v78-panel-head"><b data-i18n="recentActivity">Recent Activity</b><button type="button" onclick="showView('chat')" data-i18n="seeAll">See All →</button></div>
+          <div id="homeRecent"><p class="v78-empty" data-i18n="recentEmpty">No activity yet — your chats and creations will appear here.</p></div>
+        </div>
+        <div class="wave v78-wave" aria-hidden="true"><i style="height:16px;animation-delay:0s"></i><i style="height:26px;animation-delay:.08s"></i><i style="height:36px;animation-delay:.16s"></i><i style="height:22px;animation-delay:.24s"></i><i style="height:40px;animation-delay:.32s"></i><i style="height:28px;animation-delay:.4s"></i><i style="height:18px;animation-delay:.48s"></i><i style="height:34px;animation-delay:.56s"></i><i style="height:24px;animation-delay:.64s"></i><i style="height:38px;animation-delay:.72s"></i><i style="height:20px;animation-delay:.8s"></i><i style="height:30px;animation-delay:.88s"></i><i style="height:15px;animation-delay:.96s"></i></div>
+        <div class="comp-in v78-compin">
+          <button class="icobtn v78-micbtn" id="homeMic" type="button" aria-label="Voice call" onclick="openCallSmart()"><span data-ic="mic"></span></button>
+          <textarea id="homeCmd" rows="1" placeholder="Type your message here..."></textarea>
           <button class="icobtn send" id="homeSend" aria-label="Send">➤</button>
         </div>
-        <div class="qa">
-          <button class="qabtn" onclick="showView('briefing')"><span class="e"><span data-ic="sun"></span></span><span class="n">Subah ki Briefing</span></button>
-          <button class="qabtn" onclick="showView('study')"><span class="e"><span data-ic="book"></span></span><span class="n">Parhai Ustaad</span></button>
-          <button class="qabtn" onclick="showView('memory')"><span class="e"><span data-ic="cpu"></span></span><span class="n">Meri Yaadein</span></button>
-          <button class="qabtn" onclick="openCallSmart()"><span class="e"><span data-ic="phone"></span></span><span class="n">Live Call</span></button>
-        </div>
-        <div class="qa" style="margin-top:8px">
-          <button class="qabtn" onclick="showView('features')"><span class="e"><span data-ic="grid"></span></span><span class="n">Saare Features</span></button>
-          <button class="qabtn" onclick="showView('phase7')"><span class="e"><span data-ic="spark"></span></span><span class="n">Phase 7 Extras</span></button>
-          <button class="qabtn" onclick="showView('keys')"><span class="e"><span data-ic="key"></span></span><span class="n">API Keys</span></button>
-          <button class="qabtn" onclick="showView('settings')"><span class="e"><span data-ic="gear"></span></span><span class="n">Settings</span></button>
-        </div>
-        <div class="tag">BADSHAH AI v7 • HOLOGRAM COMMAND CENTER</div>
+        <div class="v78-modelstrip"><span data-i18n="modelWord">Model</span><b id="homeModelName">Gemini</b><span class="v78-mrun">● <span data-i18n="runningWord">Running</span></span><button type="button" class="v78-mchange" onclick="showView('chat');setTimeout(function(){var b=document.getElementById('btnModel');if(b)b.click();},120)" data-i18n="changeWord">Change</button></div>
+        <div class="tag" data-i18n="premiumLine">👑 Premium Experience • Powered by Advanced AI Technology</div>
       </div>
     </section>
 
@@ -349,17 +378,22 @@
     <!-- ===== ABOUT ===== -->
     <section class="view" id="v-about">
       <div class="viewc">
-        <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="info"></span> About</div><div class="psub">BADSHAH AI ke baare mein</div></div></div>
+        <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="info"></span> About</div><div class="psub" data-i18n="aboutSub">The story of BADSHAH AI</div></div></div>
         <div class="stage bust avatarhide"><img src="assets/avatar-bust.png" alt="BADSHAH"></div>
-        <div class="card" style="margin-top:14px"><h3>BADSHAH — Zain Shah</h3><p>Assalam o Alaikum! Main hoon <b style="color:var(--txt)">Zain Shah (Badshah)</b> — Swabi, Pakistan se web developer aur AI builder. BADSHAH AI mera banaya hua personal AI assistant hai: awaaz se baat, phone control, yaad aur parhai — sab kuch ek jagah, aur sab ke liye free.</p></div>
-        <div class="card"><h3>Is app ke baare mein</h3><p>BADSHAH AI (version <span class="appVer">7.0.0</span>) — live voice calls (Gemini Live), smart chat, AI images, screen-share madad, phone control aur long-term memory. Website: badshah222-ai.pages.dev</p></div>
-        <div class="shead">MUJHE FOLLOW KARO</div>
-        <a class="socrow" href="https://www.youtube.com/@BadshahAIWebsites" target="_blank" rel="noopener"><div class="ic"><span data-ic="play"></span></div><div class="tt"><b>YouTube — Badshah AI Websites</b><small>AI + website banana seekho (Urdu)</small></div><span class="ar">›</span></a>
+        <div class="card" style="margin-top:14px"><h3 data-i18n="abAboutT">About BADSHAH AI</h3><p data-i18n="abAboutP">BADSHAH AI is a personal AI assistant that lives in your pocket — an Android app and a web app in one. You can chat with it, talk to it on a live voice call, ask it to create images, write code, build websites, help you study, and even control your phone by voice. It listens first, speaks in your own language, and remembers what matters to you. BADSHAH AI is free for everyone.</p></div>
+        <div class="card"><h3 data-i18n="abCreatorT">Meet the Creator</h3><p data-i18n="abCreatorP">BADSHAH AI was created by Zain Shah, known online as Badshah — a student developer from Swabi, Pakistan. What began as one student's idea — "my own AI assistant, built by me" — grew step by step into the app you are using now: designed, built and improved by him, release after release.</p></div>
+        <div class="card"><h3 data-i18n="abBuiltT">How It Was Built</h3><p data-i18n="abBuiltP">Zain designed and built BADSHAH AI himself, using modern AI development tools to write, test and polish every part of it. The assistant is powered by Google Gemini and Groq AI models, with a Supabase backend for accounts and memory, and Cloudflare hosting so the web app stays fast everywhere. The same system runs in the Android app and in the web app — one assistant, every screen.</p></div>
+        <div class="card"><h3 data-i18n="abWhyT">Why I Built It</h3><p data-i18n="abWhyP">"I built BADSHAH AI because I wanted a personal assistant that feels like a friend — one that speaks my language, understands my world, and is always ready to help. And I did not want to keep it to myself: everyone deserves a friendly assistant for chat, voice calls, images, code, websites and learning — in their own language, and free." — Zain Shah (Badshah)</p></div>
+        <div class="card"><h3 data-i18n="abDoT">What It Can Do</h3><p data-i18n="abDoP">Smart chat in your own language • Live voice calls with Gemini Live • AI image generation • Code writing and complete website building • Phone control by voice during calls • Long-term memory • Study help, tools, and a friendly dost who listens first</p></div>
+        <p class="tag">BADSHAH AI v<span class="appVer">7.8.0</span> • Android + Web</p>
+        <div class="shead" data-i18n="contactHead">CONTACT &amp; FOLLOW</div>
+        <a class="socrow" href="mailto:zainff043@gmail.com"><div class="ic"><span data-ic="message"></span></div><div class="tt"><b>Support Email</b><small>zainff043@gmail.com</small></div><span class="ar">›</span></a>
+        <a class="socrow" href="https://www.youtube.com/@BadshahAIWebsites" target="_blank" rel="noopener"><div class="ic"><span data-ic="play"></span></div><div class="tt"><b>YouTube — Badshah AI Websites</b><small>Learn AI + website building (Urdu)</small></div><span class="ar">›</span></a>
         <a class="socrow" href="https://www.youtube.com/@Badshahofficial-222" target="_blank" rel="noopener"><div class="ic"><span data-ic="play"></span></div><div class="tt"><b>YouTube — Badshah Official</b><small>Main channel</small></div><span class="ar">›</span></a>
         <a class="socrow" href="https://www.tiktok.com/@zain_ff45" target="_blank" rel="noopener"><div class="ic"><span data-ic="music"></span></div><div class="tt"><b>TikTok</b><small>@zain_ff45</small></div><span class="ar">›</span></a>
         <a class="socrow" href="https://www.instagram.com/badshahofficial222" target="_blank" rel="noopener"><div class="ic"><span data-ic="camera"></span></div><div class="tt"><b>Instagram</b><small>@badshahofficial222</small></div><span class="ar">›</span></a>
         <a class="socrow" href="https://www.facebook.com/share/1Jgyv3r7vG/" target="_blank" rel="noopener"><div class="ic"><span data-ic="user"></span></div><div class="tt"><b>Facebook</b><small>Badshah Official</small></div><span class="ar">›</span></a>
-        <a class="socrow" href="https://badshah222.pages.dev" target="_blank" rel="noopener"><div class="ic"><span data-ic="globe"></span></div><div class="tt"><b>Meri Portfolio Website</b><small>badshah222.pages.dev</small></div><span class="ar">›</span></a>
+        <a class="socrow" href="https://badshah222.pages.dev" target="_blank" rel="noopener"><div class="ic"><span data-ic="globe"></span></div><div class="tt"><b>Portfolio Website</b><small>badshah222.pages.dev</small></div><span class="ar">›</span></a>
         <a class="btn green w" style="margin-top:6px" href="https://wa.me/923251787969" target="_blank" rel="noopener"><span data-ic="message"></span> WhatsApp Help Center</a>
       </div>
     </section>
@@ -769,11 +803,11 @@
         <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="palette"></span> Chat &amp; Appearance</div><div class="psub">Rang, theme aur likhai</div></div></div>
         <div class="card"><h3>Neon theme</h3><p>App ka accent rang chuno — poori app ka glow badal jayega.</p>
           <div class="theme-row" id="themeRow" style="border-top:none;padding-top:14px"><span>Theme</span><div class="theme-dots">
-            <button class="tdot on" data-theme="emerald" style="background:linear-gradient(135deg,#3FA9FF,#8B3DFF)" title="Hologram"></button>
+            <button class="tdot" data-theme="emerald" style="background:linear-gradient(135deg,#3FA9FF,#8B3DFF)" title="Hologram"></button>
             <button class="tdot" data-theme="royal" style="background:linear-gradient(135deg,#8B5CF6,#38BDF8)" title="Royal"></button>
             <button class="tdot" data-theme="sunset" style="background:linear-gradient(135deg,#FB7185,#FBBF24)" title="Sunset"></button>
             <button class="tdot" data-theme="ocean" style="background:linear-gradient(135deg,#38BDF8,#34D399)" title="Ocean"></button>
-            <button class="tdot" data-theme="neon" style="background:linear-gradient(135deg,#E879F9,#F472B6)" title="Neon"></button>
+            <button class="tdot on" data-theme="neon" style="background:linear-gradient(135deg,#E879F9,#F472B6)" title="Neon"></button>
           </div></div>
         </div>
         <div class="card"><h3>Phone / Laptop Mode</h3><p>Barri screen par Laptop Mode mein sidebar aur side panel hamesha khula rehta hai. Phone Mode mein ek column wali saaf layout. Auto = screen ke size par khud faisla.</p>
@@ -866,7 +900,7 @@
     <section class="view" id="v-set-adv">
       <div class="viewc">
         <div class="topbar"><button class="backbtn" onclick="showView('settings')">‹</button><div style="flex:1"><div class="ptitle"><span data-ic="sliders"></span> Advanced &amp; About</div><div class="psub">Version, update aur maloomat</div></div></div>
-        <div class="card"><h3>BADSHAH AI</h3><p>Web version <b style="color:var(--txt)" class="appVer">7.0.0</b> • Android app bhi version.json se khud update check karta hai.</p>
+        <div class="card"><h3>BADSHAH AI</h3><p>Web version <b style="color:var(--txt)" class="appVer">7.8.0</b> • Android app bhi version.json se khud update check karta hai.</p>
           <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-g btn-s" onclick="checkUpdate()">Update check karo</button><a class="btn btn-g btn-s" href="./BADSHAH-AI.apk" download>APK download</a></div>
           <p id="updMsg" style="margin-top:10px"></p>
         </div>
@@ -885,16 +919,15 @@
       <button class="dp-btn" onclick="showView('settings')"><span data-ic="gear"></span> Settings</button>
     </div>
     <div class="dp-card"><h4>Keyboard Shortcuts</h4><p>Ctrl+K — Chat par jao<br>Ctrl+1…5 — Home, Chat, Rooms, Galaxy, Settings<br>Ctrl+M — Mic on/off<br>Ctrl+Shift+L — Mode badlo<br>Esc — Sheets band karo</p></div>
-    <div class="dp-card"><h4>Version</h4><p>BADSHAH AI v<span class="appVer">7.1.0</span> — Laptop Mode mein sidebar aur ye panel hamesha saamne rehte hain.</p></div>
+    <div class="dp-card"><h4>Version</h4><p>BADSHAH AI v<span class="appVer">7.8.0</span> — Laptop Mode mein sidebar aur ye panel hamesha saamne rehte hain.</p></div>
   </aside>
 
   <!-- bottom nav -->
   <nav id="tabbar">
     <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6.5 9.5V20h11V9.5"/></svg>Home</button>
     <button data-tab="chat"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5Z"/></svg>Chat</button>
-    <button data-tab="call"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a13 13 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A18 18 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg>Call</button>
-    <button data-tab="rooms"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Rooms</button>
-    <button data-tab="galaxy"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><circle cx="5" cy="5" r="1.7"/><circle cx="19" cy="5" r="1.7"/><circle cx="5" cy="19" r="1.7"/><circle cx="19" cy="19" r="1.7"/><path d="M6.3 6.3 9.5 9.5M17.7 6.3l-3.2 3.2M6.3 17.7l3.2-3.2M17.7 17.7l-3.2-3.2"/></svg>Galaxy</button>
+    <button data-tab="galaxy"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><circle cx="5" cy="5" r="1.7"/><circle cx="19" cy="5" r="1.7"/><circle cx="5" cy="19" r="1.7"/><circle cx="19" cy="19" r="1.7"/><path d="M6.3 6.3 9.5 9.5M17.7 6.3l-3.2 3.2M6.3 17.7l3.2-3.2M17.7 17.7l-3.2-3.2"/></svg>Creative Studio</button>
+    <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.14-1.4l2-1.55-2-3.46-2.36.95A7 7 0 0 0 14.1 5.1L13.75 2.6h-3.5L9.9 5.1a7 7 0 0 0-2.4 1.44l-2.36-.95-2 3.46 2 1.55a7 7 0 0 0 0 2.8l-2 1.55 2 3.46 2.36-.95a7 7 0 0 0 2.4 1.44l.35 2.5h3.5l.35-2.5a7 7 0 0 0 2.4-1.44l2.36.95 2-3.46-2-1.55c.1-.45.14-.92.14-1.4Z"/></svg>Settings</button>
   </nav>
 </div>
 
@@ -990,7 +1023,7 @@
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
     <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI">
-        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><img id="callChar" src="assets/char-full.webp" alt="BADSHAH"><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><img id="callChar" src="assets/char-full.webp" alt="BADSHAH"><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span><span class="cchip" id="callTimer">00:00</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1014,16 +1047,29 @@
       <div class="mic-meter"><i id="micBar"></i></div>
     </div>
     <div class="call-btns">
-      <button class="cbtn" id="btnMute" title="Mute"><span data-ic="mic"></span></button>
-      <button class="cbtn end" id="btnEnd" title="End call"><span data-ic="phone"></span></button>
-      <button class="cbtn" id="btnSpk" title="Speaker"><span data-ic="speaker"></span></button>
+      <div class="cbtn-wrap"><button class="cbtn" id="btnMute" title="Mute"><span data-ic="mic"></span></button><span class="cbtn-lab" data-i18n="ctlMute">Mute</span></div>
+      <div class="cbtn-wrap"><button class="cbtn" id="btnSpk" title="Speaker"><span data-ic="speaker"></span></button><span class="cbtn-lab" data-i18n="ctlSpeaker">Speaker</span></div>
+      <div class="cbtn-wrap"><button class="cbtn" id="btnCamMain" title="Camera"><span data-ic="camera"></span></button><span class="cbtn-lab" data-i18n="ctlCamera">Camera</span></div>
+      <div class="cbtn-wrap"><button class="cbtn" id="btnMinCall" title="Minimize"><span class="cbtn-min">▽</span></button><span class="cbtn-lab" data-i18n="ctlMinimize">Minimize</span></div>
+      <div class="cbtn-wrap"><button class="cbtn end" id="btnEnd" title="End call"><span data-ic="phone"></span></button><span class="cbtn-lab" data-i18n="ctlEnd">End</span></div>
     </div>
+    <p class="call-listen" id="callListen"><span class="cl-dot"></span><span id="callListenTxt">Listening...</span><span class="cl-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></p>
   </div>
   <div id="callChatPanel" class="hidden">
     <div class="ccp-head"><div><b>💬 Call Chat</b><span>Call ki saari baatein yahan bari dikhti hain — lamba code, prompt, jawab sab. Kisi bhi jawab ko copy bhi kar sakte ho.</span></div><button class="ccp-x" id="btnCallChatX" type="button">✕</button></div>
     <div id="callChatBox" title="Call Chat — ye baatein alag save hoti hain"></div>
     <div class="ccp-foot"><button class="eng" type="button" id="btnCopyCallChat">📋 Saari chat copy karo</button><button class="eng" type="button" id="btnCallChatImg">🖼️ Image banao</button><button class="eng" type="button" id="btnCallChatVid">🎬 Video banao</button></div>
   </div>
+</div>
+
+<!-- ===== v7.8: minimized-call floating bar (ref-2) — call keeps running behind it ===== -->
+<div id="callMiniBar" class="hidden" role="button" aria-label="Back to call">
+  <img class="cmb-face" src="assets/poster-cut.png" alt="">
+  <div class="cmb-txt"><b>Ask BADSHAH AI</b><span id="cmbStatus">Listening...</span></div>
+  <span class="cmb-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+  <button class="cmb-btn" id="cmbMic" type="button" aria-label="Mute / unmute">🎙️</button>
+  <button class="cmb-btn" id="cmbChat" type="button" aria-label="Open chat">⌨️</button>
+  <button class="cmb-btn cmb-end" id="cmbEnd" type="button" aria-label="End call">✕</button>
 </div>
 
 <script src="bh-core.js"></script>
@@ -1202,10 +1248,27 @@ $('btnPair').onclick=async()=>{
 /* ---------- CALL v3 — Gemini Live (BYOK key) + ElevenLabs + PHONE CONTROL tools ---------- */
 const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', ws:null, ac:null, stream:null, proc:null, analyser:null, raf:0,
   sources:[], playT:0, muted:false, handle:null, retries:0, key:null, chunks:0,
-  elBuf:[], elSpeech:false, elSil:0, elBusy:false, elHist:[], elAudio:null, elVoices:null };
+  elBuf:[], elSpeech:false, elSil:0, elBusy:false, elHist:[], elAudio:null, elVoices:null,
+  /* v7.8 Live-listen fix state */
+  greeted:false, setupReady:false, speaker:true, minimized:false, startedAt:0, timerT:null,
+  micSrc:null, micGain:null, micWatch:null, barge:0, bargeUntil:0,
+  diag:{ frames:0, sent:0, droppedPlayback:0, droppedPreSetup:0, droppedNoSocket:0, bargeIns:0, rebuilds:0, turns:0,
+         lastFrameAt:0, lastSentAt:0, lastRms:0, maxRms:0, lastRebuildAt:0, lastDiagAt:0 } };
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
-function callStatus(t){ $('callStatus').textContent=t; }
+function callStatus(t){ const el=$('callStatus'); if(el) el.textContent=t; const mb=$('cmbStatus'); if(mb && call.minimized) mb.textContent=t; const lt=$('callListenTxt'); if(lt){ const T=window.v78T||(k=>k==='mutedWord'?'Muted':'Listening...'); lt.textContent = call.muted ? T('mutedWord') : (/listening|speak, I am/i.test(t) ? T('listening') : t); } }
+/* ----- v7.8 Live diagnostics: phone test par console mein mic flow ka saboot ----- */
+function liveLog(){ try{ console.log.apply(console, ['[BH Live]'].concat(Array.prototype.slice.call(arguments))); }catch(e){} }
+function liveDiag(){ const d=call.diag||{}; const now=Date.now(); return {
+  on:call.on, engine:call.engine, minimized:!!call.minimized,
+  ws:call.ws?call.ws.readyState:null, setupReady:!!call.setupReady,
+  acState:call.ac?call.ac.state:null, acRate:call.ac?call.ac.sampleRate:null,
+  tracks:call.stream?call.stream.getAudioTracks().map(t=>({state:t.readyState,enabled:t.enabled,muted:t.muted})):[],
+  frames:d.frames||0, sent:d.sent||0, droppedPlayback:d.droppedPlayback||0, droppedPreSetup:d.droppedPreSetup||0,
+  droppedNoSocket:d.droppedNoSocket||0, bargeIns:d.bargeIns||0, rebuilds:d.rebuilds||0, turns:d.turns||0,
+  lastFrameAgoMs:d.lastFrameAt?now-d.lastFrameAt:null, lastSentAgoMs:d.lastSentAt?now-d.lastSentAt:null,
+  lastRms:d.lastRms||0, maxRms:d.maxRms||0 }; }
+window.__bhLiveDiag=liveDiag;
 function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. Speak slowly and clearly — pronounce every single word separately and completely, never rush and never join words together. You can control the user phone with tools: open_app, open_youtube, open_whatsapp (by number), whatsapp_by_name (by saved contact name), set_torch, volume_control, end_call (when the user asks to end the call, say a short goodbye and use it at once), and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src=window.__avHero||'assets/av3d-idle.jpg'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
@@ -1249,6 +1312,7 @@ function setEngine(e, restart){
 }
 async function openCall(){
   if(window.BadshahBridge && BadshahBridge.ensureMic){ try{ BadshahBridge.ensureMic(); }catch(e){} }
+  call.minimized=false; const _mb0=$('callMiniBar'); if(_mb0) _mb0.classList.add('hidden');
   $('callView').classList.remove('hidden'); callUI(); const _rf=$('rgbFrame'); if(_rf) _rf.classList.add('on');
   if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('dark'); }catch(e){} }
   $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); const _mb=$('callMediaBox'); if(_mb) _mb.classList.add('hidden');
@@ -1257,8 +1321,16 @@ async function openCall(){
   $('engEl').onclick=()=>{ if(!localStorage.getItem('ba_el_key')){ openKeyBox('eleven'); } else setEngine('eleven',true); };
   $('callVoice').onchange=()=>{ localStorage.setItem(call.engine==='gemini'?'ba_voice_gem':'ba_voice_el', selVoice()); if(call.engine==='gemini'&&call.on){ stopEngine(); startEngine(); } };
   setEngine(call.engine,false);
+  startCallTimer();
   startEngine();
 }
+/* ----- v7.8: call timer + minimize-to-bar (call isi screen ka overlay hai, alag page nahi) ----- */
+function fmtCallTime(s){ const m=Math.floor(s/60), ss=s%60; return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss; }
+function startCallTimer(){ call.startedAt=Date.now(); const t=$('callTimer'); if(t) t.textContent='00:00'; if(call.timerT) clearInterval(call.timerT); call.timerT=setInterval(()=>{ const el=$('callTimer'); if(el && call.on) el.textContent=fmtCallTime(Math.floor((Date.now()-call.startedAt)/1000)); },1000); }
+function stopCallTimer(){ if(call.timerT){ clearInterval(call.timerT); call.timerT=null; } const t=$('callTimer'); if(t) t.textContent='00:00'; }
+function minimizeCall(){ if(!call.on) return; call.minimized=true; $('callView').classList.add('hidden'); const bar=$('callMiniBar'); if(bar){ bar.classList.remove('hidden'); const st=$('cmbStatus'); if(st) st.textContent=call.muted?(window.v78T?window.v78T('mutedWord'):'Muted'):(window.v78T?window.v78T('listening'):'Listening...'); } liveLog('call minimized — call chalti rahegi', liveDiag()); }
+function restoreCall(){ if(!call.on) return; call.minimized=false; const bar=$('callMiniBar'); if(bar) bar.classList.add('hidden'); $('callView').classList.remove('hidden'); }
+window.minimizeCall=minimizeCall; window.restoreCall=restoreCall;
 function openCallSmart(){ openCall(); }
 $('btnCall').onclick=openCallSmart; $('btnCallSide').onclick=openCallSmart;
 $('btnKeyCancel').onclick=()=>{ if(__kbMode==='eleven') backFromKeyBox(); else closeCall(); };
@@ -1271,9 +1343,17 @@ $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); const el=$('elKe
   if(!localStorage.getItem('ba_gemini_key') && !localStorage.getItem('ba_el_key')){ $('keyErr').textContent='Pehle kam az kam Gemini key dalo.'; return; }
   $('keyErr').textContent=''; $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); startEngine(); };
 $('btnEnd').onclick=closeCall;
+$('btnMinCall').onclick=minimizeCall;
+$('btnCamMain').onclick=()=>{ toggleCam(); };
+(function(){ const bar=$('callMiniBar'); if(!bar) return;
+  bar.addEventListener('click',e=>{ if(e.target.closest('.cmb-btn')) return; restoreCall(); });
+  const mic=$('cmbMic'); if(mic) mic.onclick=e=>{ e.stopPropagation(); const b=$('btnMute'); if(b) b.click(); mic.textContent=call.muted?'🔇':'🎙️'; };
+  const cht=$('cmbChat'); if(cht) cht.onclick=e=>{ e.stopPropagation(); minimizeCall(); try{ showView('chat'); }catch(err){} };
+  const end=$('cmbEnd'); if(end) end.onclick=e=>{ e.stopPropagation(); closeCall(); };
+})();
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'Mute — mic band hai':'Live — bolo, main sun raha hoon'); };
-$('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ const _rf2=$('rgbFrame'); if(_rf2) _rf2.classList.remove('on'); if(call.screenOn) toggleScreen(); if(call.camOn) toggleCam(); call.on=false; if(window.__callLog&&window.__callLog.length>1&&window.__bhSaveCallLog){ try{ window.__bhSaveCallLog(window.__callLog); }catch(e){} } window.__callLog=[]; if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('light'); }catch(e){} } stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
+$('btnSpk').onclick=()=>{ call.speaker=!call.speaker; $('btnSpk').classList.toggle('muted',!call.speaker); let applied=false; try{ if(window.BadshahBridge && BadshahBridge.setSpeaker){ BadshahBridge.setSpeaker(call.speaker); applied=true; } }catch(e){} callStatus(applied ? (call.speaker?'Speaker ON':'Speaker OFF') : 'Speaker is ON during calls — routing is handled by the phone'); };
+function closeCall(){ const _rf2=$('rgbFrame'); if(_rf2) _rf2.classList.remove('on'); stopCallTimer(); call.minimized=false; const _mb9=$('callMiniBar'); if(_mb9) _mb9.classList.add('hidden'); if(call.screenOn) toggleScreen(); if(call.camOn) toggleCam(); call.on=false; if(window.__callLog&&window.__callLog.length>1&&window.__bhSaveCallLog){ try{ window.__bhSaveCallLog(window.__callLog); }catch(e){} } window.__callLog=[]; if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('light'); }catch(e){} } stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
 /* ----- Screen share ----- */
 function bhSendFrame(b64){ if(call.screenOn && call.engine==='gemini' && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({realtimeInput:{video:{mimeType:'image/jpeg',data:b64}}})); }catch(e){} } }
 window.__bhScreenFrame=function(b64){ bhSendFrame(b64); };
@@ -1310,9 +1390,9 @@ async function toggleScreen(){
 let camStream=null, camTimer=null;
 function bhCamHint(){ if(call.engine==='gemini' && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'Main ne apna camera on kar diya hai. Camera mein jo dikhe dekh kar batao — jab main poochun ke ye kya hai ya is ka kya karoon, camera dekh kar jawab do.'}]}],turnComplete:true}})); }catch(e){} } }
 async function toggleCam(){
-  const b=$('btnCam');
+  const b=$('btnCam'); const b2=$('btnCamMain');
   if(call.camOn){
-    call.camOn=false; if(b) b.classList.remove('on');
+    call.camOn=false; if(b) b.classList.remove('on'); if(b2) b2.classList.remove('on');
     if(camTimer){ clearInterval(camTimer); camTimer=null; }
     if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
     callStatus('Camera off'); return;
@@ -1326,7 +1406,7 @@ async function toggleCam(){
     const cv=document.createElement('canvas');
     camTimer=setInterval(()=>{ if(!camStream) return; const vw=vid.videoWidth||640; const sc=Math.min(1,640/vw); cv.width=Math.max(2,Math.round(vw*sc)); cv.height=Math.max(2,Math.round((vid.videoHeight||480)*sc)); cv.getContext('2d').drawImage(vid,0,0,cv.width,cv.height); if(call.camOn && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({realtimeInput:{video:{mimeType:'image/jpeg',data:cv.toDataURL('image/jpeg',0.55).split(',')[1]}}})); }catch(e){} } },1000);
     camStream.getVideoTracks()[0].onended=()=>{ if(call.camOn) toggleCam(); };
-    call.camOn=true; if(b) b.classList.add('on'); callStatus('Camera on — Gemini can see'); bhCamHint();
+    call.camOn=true; if(b) b.classList.add('on'); if(b2) b2.classList.add('on'); callStatus('Camera on — Gemini can see'); bhCamHint();
   }catch(e){ callStatus('Camera permission not granted'); }
 }
 async function getLiveKey(){
@@ -1334,9 +1414,38 @@ async function getLiveKey(){
   return localStorage.getItem('ba_gemini_key')||null;
 }
 async function bhMicTakeover(){ if(window.BadshahBridge && BadshahBridge.micTakeover){ try{ BadshahBridge.micTakeover(); }catch(e){} await new Promise(r=>setTimeout(r,350)); } }
+/* v7.8: mic pipeline alag function mein — watchdog isay dobara bana sakta hai agar
+   Android WebView ScriptProcessor ko rok de (pehle yehi khamosh failure tha:
+   model ki pehli awaaz ke baad onaudioprocess aana band ho jata tha). */
+function buildMicPipeline(){
+  if(!call.ac || !call.stream) return false;
+  try{ if(call.proc){ call.proc.onaudioprocess=null; call.proc.disconnect(); } }catch(e){}
+  try{ if(call.micSrc) call.micSrc.disconnect(); }catch(e){}
+  const src=call.ac.createMediaStreamSource(call.stream); call.micSrc=src;
+  call.analyser=call.ac.createAnalyser(); call.analyser.fftSize=256; src.connect(call.analyser);
+  const proc=call.ac.createScriptProcessor(2048,1,1); call.proc=proc;
+  const g=call.ac.createGain(); g.gain.value=0; call.micGain=g; src.connect(proc); proc.connect(g); g.connect(call.ac.destination);
+  proc.onaudioprocess=onAudioChunk;
+  call.diag.lastFrameAt=Date.now();
+  return true;
+}
+function startMicWatchdog(){
+  if(call.micWatch) return;
+  call.micWatch=setInterval(async ()=>{
+    if(!call.on || call.engine!=='gemini') return;
+    const now=Date.now();
+    if(call.ac && call.ac.state!=='running'){ liveLog('AudioContext state =', call.ac.state, '— resume try'); try{ await call.ac.resume(); }catch(e){} }
+    if(call.setupReady && !call.muted && call.diag.lastFrameAt && (now-call.diag.lastFrameAt)>3000 && (now-(call.diag.lastRebuildAt||0))>8000){
+      call.diag.lastRebuildAt=now; call.diag.rebuilds++;
+      liveLog('WATCHDOG: 3s se koi mic frame nahi — mic pipeline dobara bana raha hoon', liveDiag());
+      try{ buildMicPipeline(); }catch(e){ liveLog('Mic rebuild fail', e); }
+    }
+    if(call.setupReady && (now-(call.diag.lastDiagAt||0))>10000){ call.diag.lastDiagAt=now; liveLog('mic flow', liveDiag()); }
+  },1000);
+}
 async function ensureAudio(){
-  if(call.ac){ if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} } return true; }
-  const gum=()=>navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+  if(call.ac){ if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} } if(!call.proc && call.stream){ try{ buildMicPipeline(); }catch(e){} } startMicWatchdog(); return true; }
+  const gum=()=>navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});
   await bhMicTakeover();
   try{ call.stream=await gum(); }
   catch(e){
@@ -1352,11 +1461,10 @@ async function ensureAudio(){
   const AC=window.AudioContext||window.webkitAudioContext;
   call.ac=new AC();
   if(call.ac.state==='suspended'){ try{ await call.ac.resume(); }catch(e){} }
-  const src=call.ac.createMediaStreamSource(call.stream);
-  call.analyser=call.ac.createAnalyser(); call.analyser.fftSize=256; src.connect(call.analyser);
-  const proc=call.ac.createScriptProcessor(2048,1,1); call.proc=proc;
-  const g=call.ac.createGain(); g.gain.value=0; src.connect(proc); proc.connect(g); g.connect(call.ac.destination);
-  proc.onaudioprocess=onAudioChunk;
+  try{ call.ac.onstatechange=()=>{ liveLog('AudioContext statechange →', call.ac && call.ac.state); if(call.ac && call.ac.state==='suspended' && call.on){ call.ac.resume().catch(()=>{}); } }; }catch(e){}
+  buildMicPipeline();
+  startMicWatchdog();
+  liveLog('mic ready', liveDiag());
   meterLoop();
   return true;
 }
@@ -1376,15 +1484,32 @@ function downsampleTo16k(f, rate){
 function onAudioChunk(e){
   if(!call.on || call.muted || !call.ac) return;
   const raw=downsampleTo16k(e.inputBuffer.getChannelData(0), call.ac.sampleRate);
-  /* Door se awaz: halki/dur ki awaz ko software gain se mazboot karo — soft-clip (tanh) taaki paas ki tez awaz phate nahi */
-  const f=new Float32Array(raw.length); const BOOST=2.2;
+  /* v7.8 diagnostics: har frame ginna — phone test mein yehi saboot hai ke mic chal raha hai */
+  let rsum=0; for(let i=0;i<raw.length;i++) rsum+=raw[i]*raw[i];
+  const rms=Math.sqrt(rsum/Math.max(1,raw.length));
+  call.diag.frames++; call.diag.lastFrameAt=Date.now(); call.diag.lastRms=rms; if(rms>call.diag.maxRms) call.diag.maxRms=rms;
+  /* Door se awaz ke liye halka gain — v7.8 mein BOOST 2.2 se 1.6: zyada tanh saturation
+     awaaz ko phata hua bana kar server VAD ki samajh kharab kar raha tha */
+  const f=new Float32Array(raw.length); const BOOST=1.6;
   for(let i=0;i<raw.length;i++) f[i]=Math.tanh(raw[i]*BOOST);
   if(call.engine==='gemini'){
-    if(!call.ws || call.ws.readyState!==1) return;
+    if(!call.setupReady){ call.diag.droppedPreSetup++; return; }
+    if(!call.ws || call.ws.readyState!==1){ call.diag.droppedNoSocket++; return; }
+    /* v7.8 ECHO GUARD (asal fix): speaker par model ki apni awaaz mic mein wapas ja kar
+       server ko lagta tha user bol raha hai — turn kabhi band nahi hota, reply nahi aata.
+       Jab tak model bol raha hai, mic frames nahi bhejte; user zor se beech mein bole
+       (sustained loud voice) to playback rok kar usay sunte hain (barge-in). */
+    const nowT=call.ac.currentTime;
+    const playing=(call.playT>nowT+0.12)||call.sources.length>0;
+    if(playing && nowT>(call.bargeUntil||0)){
+      if(rms>0.16){ call.barge=(call.barge||0)+1; } else call.barge=0;
+      if(call.barge>=5){ call.barge=0; call.bargeUntil=nowT+1.6; call.diag.bargeIns++; flushPlayback(); liveLog('BARGE-IN: user bol raha hai — playback roka, mic khola', liveDiag()); }
+      else { call.diag.droppedPlayback++; return; }
+    } else if(!playing) call.barge=0;
     const pcm=new Int16Array(f.length);
     for(let i=0;i<f.length;i++) pcm[i]=Math.max(-1,Math.min(1,f[i]))*32767;
     let bin=''; const bytes=new Uint8Array(pcm.buffer); for(let i=0;i<bytes.length;i+=8192) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));
-    try{ call.ws.send(JSON.stringify({ realtimeInput:{ audio:{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) } } })); call.chunks++; }catch(err){}
+    try{ call.ws.send(JSON.stringify({ realtimeInput:{ audio:{ mimeType:'audio/pcm;rate=16000', data:btoa(bin) } } })); call.chunks++; call.diag.sent++; call.diag.lastSentAt=Date.now(); }catch(err){}
   } else {
     if(call.elBusy) return;
     let sum=0; for(let i=0;i<f.length;i++) sum+=f[i]*f[i];
@@ -1533,6 +1658,7 @@ function logLine(w,t){ if(!t) return; if(!window.__callLog) window.__callLog=[];
   try{ const box=$('callChatBox'); if(box){ const d=document.createElement('div'); d.className='ccb '+(w==='Tum'?'me':'ai'); const sp=document.createElement('span'); sp.textContent=s; d.appendChild(sp); if(w!=='Tum'){ const cb=document.createElement('button'); cb.className='cpbtn'; cb.type='button'; cb.textContent='📋 Copy'; cb.onclick=()=>{ try{ navigator.clipboard&&navigator.clipboard.writeText(s); if(window.bhToast) bhToast('Copy ho gaya ✓'); }catch(e){} }; d.appendChild(cb); } box.appendChild(d); while(box.children.length>80) box.removeChild(box.firstChild); box.scrollTop=box.scrollHeight; } }catch(e){} }
 function connectGemini(){
   const key=call.key; if(!key) return;
+  call.setupReady=false; call.diag.lastFrameAt=Date.now();
   if(call.ws){ try{ const old=call.ws; old.onclose=null; old.onmessage=null; old.onerror=null; old.close(); }catch(e){} call.ws=null; }
   const ws=new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key='+encodeURIComponent(key));
   call.ws=ws;
@@ -1547,32 +1673,35 @@ function connectGemini(){
       inputAudioTranscription:{}, outputAudioTranscription:{},
       tools: LIVE_TOOLS,
       contextWindowCompression:{ slidingWindow:{} },
-      realtimeInputConfig:{ automaticActivityDetection:{ disabled:false, startOfSpeechSensitivity:'START_SENSITIVITY_LOW', endOfSpeechSensitivity:'END_SENSITIVITY_LOW', prefixPaddingMs:300, silenceDurationMs:1100 } },
+      realtimeInputConfig:{ automaticActivityDetection:{ disabled:false, startOfSpeechSensitivity:'START_SENSITIVITY_HIGH', endOfSpeechSensitivity:'END_SENSITIVITY_HIGH', prefixPaddingMs:500, silenceDurationMs:1100 } },
       sessionResumption:{ handle: call.handle||undefined } } }));
   };
   ws.onmessage=async ev=>{
     let data; try{ data=JSON.parse(typeof ev.data==='string'?ev.data:await ev.data.text()); }catch(e){ return; }
-    if(data.setupComplete){ callStatus('Gemini Live — speak, I am listening'); call.retries=0;
+    if(data.setupComplete){ call.setupReady=true; call.diag.lastFrameAt=Date.now(); callStatus('Gemini Live — speak, I am listening'); call.retries=0; liveLog('setupComplete — ab mic frames server ko jayenge', liveDiag());
       if(!call.greeted){ call.greeted=true; try{ ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:'(The call just connected. Greet me warmly right now, speak first, and ask how you can help.)'}]}],turnComplete:true}})); }catch(e){} }
     }
     if(data.sessionResumptionUpdate && data.sessionResumptionUpdate.resumable) call.handle=data.sessionResumptionUpdate.newHandle;
     if(data.toolCall && data.toolCall.functionCalls){ for(const fc of data.toolCall.functionCalls){ runPhoneTool(fc, ws); } }
     const sc=data.serverContent;
     if(sc){
-      if(sc.interrupted) flushPlayback();
+      if(sc.interrupted){ flushPlayback(); liveLog('server: interrupted — playback flushed', liveDiag()); }
       const parts=(sc.modelTurn&&sc.modelTurn.parts)||[];
       for(const p of parts){ if(p.inlineData&&p.inlineData.data) playPcm(p.inlineData.data); }
-      if(sc.inputTranscription&&sc.inputTranscription.text){ txFeed(sc.inputTranscription.text); call._lastIn=sc.inputTranscription.text; }
-      if(sc.outputTranscription&&sc.outputTranscription.text){ call._lastOut=sc.outputTranscription.text; }
+      /* v7.8: transcription tukron mein aati hai — purana code har tukray par _lastIn overwrite
+         kar deta tha (sirf aakhri tukra bachta tha). Ab merge: cumulative ho to replace, warna joro. */
+      const mergeTx=(prev,piece)=>{ if(!piece) return prev||''; if(!prev) return piece; if(piece.indexOf(prev)===0) return piece; if(prev.indexOf(piece)===0) return prev; return prev+piece; };
+      if(sc.inputTranscription&&sc.inputTranscription.text){ txFeed(sc.inputTranscription.text); call._lastIn=mergeTx(call._lastIn, sc.inputTranscription.text); }
+      if(sc.outputTranscription&&sc.outputTranscription.text){ call._lastOut=mergeTx(call._lastOut, sc.outputTranscription.text); }
       if(localStorage.getItem('ba_set_transcript')!=='0'){
         if(sc.outputTranscription&&sc.outputTranscription.text){ $('callCaption').textContent=sc.outputTranscription.text; }
         if(sc.inputTranscription&&sc.inputTranscription.text){ callStatus('Tum: '+sc.inputTranscription.text); }
       }
-      if(sc.turnComplete){ if(call._lastIn){ logLine('Tum', call._lastIn); if(window.bhAutoMem) bhAutoMem(call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — speak, I am listening'); },600); }
+      if(sc.turnComplete){ call.diag.turns++; liveLog('turnComplete #'+call.diag.turns, { suna: call._lastIn||'', bola: (call._lastOut||'').slice(0,80) }, liveDiag()); if(call._lastIn){ logLine('Tum', call._lastIn); if(window.bhAutoMem) bhAutoMem(call._lastIn); call._lastIn=''; } if(call._lastOut){ logLine('BADSHAH', call._lastOut); call._lastOut=''; } setTimeout(()=>{ if(call.on&&call.engine==='gemini') callStatus('Gemini Live — speak, I am listening'); },600); }
     }
     if(data.goAway){ try{ws.close()}catch(e){} }
   };
-  ws.onclose=()=>{ if(call.ws!==ws) return; call.ws=null; if(call.on&&call.engine==='gemini') scheduleReconnect(); };
+  ws.onclose=()=>{ if(call.ws!==ws) return; call.ws=null; call.setupReady=false; liveLog('socket closed', liveDiag()); if(call.on&&call.engine==='gemini') scheduleReconnect(); };
   ws.onerror=()=>{ callStatus('Connection issue — retrying…'); };
 }
 function scheduleReconnect(){
@@ -1645,16 +1774,20 @@ async function elSpeak(text){
 }
 function stopEngine(){
   try{ call.ws&&call.ws.close(); }catch(e){}
-  call.ws=null; call.elBuf=[]; call.elSpeech=false; call.elBusy=false;
+  call.ws=null; call.setupReady=false; call.elBuf=[]; call.elSpeech=false; call.elBusy=false;
   if(call.elAudio){ try{call.elAudio.pause()}catch(e){} call.elAudio=null; }
   flushPlayback();
 }
 function stopAudio(){
   cancelAnimationFrame(call.raf);
-  try{ call.proc&&call.proc.disconnect(); }catch(e){}
+  if(call.micWatch){ clearInterval(call.micWatch); call.micWatch=null; }
+  call.setupReady=false; call.barge=0; call.bargeUntil=0;
+  try{ if(call.proc){ call.proc.onaudioprocess=null; call.proc.disconnect(); } }catch(e){}
+  try{ if(call.micSrc) call.micSrc.disconnect(); }catch(e){}
   try{ call.stream&&call.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   try{ call.ac&&call.ac.close(); }catch(e){}
-  call.ac=call.stream=call.proc=call.analyser=null; call.playT=0; call.sources=[]; call.handle=null; call.greeted=false; if(call.rcT){ clearTimeout(call.rcT); call.rcT=null; }
+  call.ac=call.stream=call.proc=call.analyser=call.micSrc=call.micGain=null; call.playT=0; call.sources=[]; call.handle=null; call.greeted=false; if(call.rcT){ clearTimeout(call.rcT); call.rcT=null; }
+  liveLog('audio stopped', liveDiag());
 }
 
 /* ---------- init ---------- */
@@ -1666,7 +1799,7 @@ renderAll();
 /* ================= v7 UI layer ================= */
 /* ---- themes ---- */
 (function(){
-  const saved=localStorage.getItem('ba_theme')||'emerald';
+  const saved=localStorage.getItem('ba_theme')||'neon';
   document.body.dataset.theme=saved;
   document.querySelectorAll('#themeRow .tdot').forEach(b=>{
     b.classList.toggle('on', b.dataset.theme===saved);
@@ -1790,7 +1923,7 @@ function svgIcon(n){ return '<svg viewBox="0 0 24 24">'+(ICONS[n]||ICONS.spark)+
 function fillIcons(root){ (root||document).querySelectorAll('[data-ic]').forEach(el=>{ el.innerHTML=svgIcon(el.getAttribute('data-ic')); }); }
 
 /* ---- view switcher ---- */
-const VIEWTAB={home:'home',chat:'chat',rooms:'rooms',galaxy:'galaxy'};
+const VIEWTAB={home:'home',chat:'chat',rooms:'rooms',galaxy:'galaxy',settings:'settings'};
 function showView(v){
   document.querySelectorAll('#mainEl .view').forEach(s=>s.classList.remove('on'));
   const el=$('v-'+v); if(el){ el.classList.add('on'); el.scrollTop=0; }
@@ -2376,7 +2509,7 @@ function updateGreet(){
 $('homeSend').onclick=()=>{ const v=$('homeCmd').value.trim(); showView('chat'); openPanel('chat'); if(v){ $('input').value=v; send(); $('homeCmd').value=''; } };
 $('homeCmd').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('homeSend').click(); } });
 window.heroApp=function(){ showView('chat'); setTimeout(()=>{ const i=$('input'); if(i){ i.focus(); } bhToast('App ka naam likho — misal: WhatsApp kholo'); },90); };
-fetch('/version.json').then(r=>r.json()).then(v=>{ document.querySelectorAll('.appVer').forEach(e=>e.textContent=v.version); }).catch(()=>{});
+fetch('/version.json').then(r=>r.json()).then(v=>{ document.querySelectorAll('.appVer').forEach(e=>e.textContent=v.name||v.version||e.textContent); }).catch(()=>{});
 /* ===== v7.2 G1: chat avatar reactions ===== */
 (function(){
   function moodOf(t, err){ t=(t||'').toLowerCase();
@@ -3066,6 +3199,74 @@ initSwitch('swLock','lock',false,lockToggle);
 fillIcons(document);
 updateGreet();
 if(state.user) window.__bhOnLogin();
+</script>
+<script>
+/* ================= v7.8 HOME (ref-1) — status, recent activity, model strip ================= */
+window.v78Quick=function(kind){
+  if(kind==='learn'){ studyAsk(''); return; }
+  showView('chat'); openPanel('chat');
+  const inp=$('input'); if(!inp) return;
+  if(kind==='image'){ const sel=$('modelSel'); if(sel && CFG.imageModels && CFG.imageModels[0]){ sel.value=CFG.imageModels[0]; sel.dispatchEvent(new Event('change')); } inp.value='Create a beautiful image: '; inp.focus(); return; }
+  if(kind==='code'){ inp.value='Write this code for me: '; inp.focus(); return; }
+  if(kind==='website'){ inp.value='Build a complete website for me (HTML/CSS/JS): '; inp.focus(); return; }
+  if(kind==='search'){ inp.value='Search the web and tell me: '; inp.focus(); return; }
+};
+(function(){
+  /* ================= v7.8 i18n — is round ki saari nayi strings isi table se =================
+     Maujooda language system (ba_clang: en / ru / ur) hi istemal hota hai; neeche ki strings
+     I18N_TXT mein merge ho jati hain taaki applyContentLang() inhe bhi badal de. */
+  const V78={
+  en:{greetSub:'How can I help you today?',seeAll:'See All →',quickActions:'Quick Actions',qaImage:'Generate Image',qaCode:'Write Code',qaWebsite:'Create Website',qaSearch:'Search Web',qaLearn:'Learn Anything',qaMore:'More Tools',aiStatus:'AI Status',stVoice:'Voice Assistant',stAvatar:'3D Avatar',stMemory:'Smart Memory',stOnline:'Online Access',allReady:'● All Systems Ready',recentActivity:'Recent Activity',recentEmpty:'No activity yet — your chats and creations will appear here.',modelWord:'Model',runningWord:'Running',changeWord:'Change',premiumLine:'👑 Premium Experience • Powered by Advanced AI Technology',homePlaceholder:'Type your message here...',ctlMute:'Mute',ctlSpeaker:'Speaker',ctlCamera:'Camera',ctlMinimize:'Minimize',ctlEnd:'End',listening:'Listening...',mutedWord:'Muted',keyNeeded:'Key needed',readyWord:'✓ Ready',offWord:'Off',offlineWord:'Offline',loadingWord:'Loading...',bootLine1:'Initializing AI systems...',bootLine2:'Preparing smart memory',bootLine3:'Connecting secure network',bootFoot:'Powered by Advanced AI Technology • Premium Experience',aboutSub:'The story of BADSHAH AI',abAboutT:'About BADSHAH AI',abAboutP:'BADSHAH AI is a personal AI assistant that lives in your pocket — an Android app and a web app in one. You can chat with it, talk to it on a live voice call, ask it to create images, write code, build websites, help you study, and even control your phone by voice. It listens first, speaks in your own language, and remembers what matters to you. BADSHAH AI is free for everyone.',abCreatorT:'Meet the Creator',abCreatorP:'BADSHAH AI was created by Zain Shah, known online as Badshah — a student developer from Swabi, Pakistan. What began as one student\'s idea — "my own AI assistant, built by me" — grew step by step into the app you are using now: designed, built and improved by him, release after release.',abBuiltT:'How It Was Built',abBuiltP:'Zain designed and built BADSHAH AI himself, using modern AI development tools to write, test and polish every part of it. The assistant is powered by Google Gemini and Groq AI models, with a Supabase backend for accounts and memory, and Cloudflare hosting so the web app stays fast everywhere. The same system runs in the Android app and in the web app — one assistant, every screen.',abWhyT:'Why I Built It',abWhyP:'"I built BADSHAH AI because I wanted a personal assistant that feels like a friend — one that speaks my language, understands my world, and is always ready to help. And I did not want to keep it to myself: everyone deserves a friendly assistant for chat, voice calls, images, code, websites and learning — in their own language, and free." — Zain Shah (Badshah)',abDoT:'What It Can Do',abDoP:'Smart chat in your own language • Live voice calls with Gemini Live • AI image generation • Code writing and complete website building • Phone control by voice during calls • Long-term memory • Study help, tools, and a friendly dost who listens first',contactHead:'CONTACT & FOLLOW',youAsked:'You asked: ',callLines:'Voice call — ',genImage:'Generated an image',justNow:'just now',minAgo:' min ago',hrAgo:' hr ago',dAgo:' d ago'},
+  ru:{greetSub:'Aaj main aapki kya madad kar sakta hoon?',seeAll:'Sab Dekho →',quickActions:'Quick Actions',qaImage:'Image Banao',qaCode:'Code Likho',qaWebsite:'Website Banao',qaSearch:'Web Search',qaLearn:'Kuch Bhi Seekho',qaMore:'Mazeed Tools',aiStatus:'AI Status',stVoice:'Voice Assistant',stAvatar:'3D Avatar',stMemory:'Smart Memory',stOnline:'Online Access',allReady:'● Saare Systems Tayyar',recentActivity:'Haal ki Activity',recentEmpty:'Abhi koi activity nahi — tumhari chats aur creations yahan aayengi.',modelWord:'Model',runningWord:'Chal raha hai',changeWord:'Badlo',premiumLine:'👑 Premium Experience • Advanced AI Technology ki taaqat',homePlaceholder:'Apna message yahan likho...',ctlMute:'Mute',ctlSpeaker:'Speaker',ctlCamera:'Camera',ctlMinimize:'Chhota Karo',ctlEnd:'Khatam',listening:'Sun raha hoon...',mutedWord:'Mute hai',keyNeeded:'Key chahiye',readyWord:'✓ Tayyar',offWord:'Band',offlineWord:'Offline',loadingWord:'Load ho raha hai...',bootLine1:'AI systems shuru ho rahe hain...',bootLine2:'Smart memory tayyar ho rahi hai',bootLine3:'Secure network se jud raha hai',bootFoot:'Advanced AI Technology ki taaqat • Premium Experience',aboutSub:'BADSHAH AI ki kahani',abAboutT:'BADSHAH AI ke baare mein',abAboutP:'BADSHAH AI ek personal AI assistant hai jo tumhari jaib mein rehta hai — ek hi waqt mein Android app bhi aur web app bhi. Tum is se chat kar sakte ho, live voice call par baat kar sakte ho, images banwa sakte ho, code likhwa sakte ho, websites banwa sakte ho, parhai mein madad le sakte ho, aur awaaz se apna phone bhi control kar sakte ho. Ye pehle sunta hai, tumhari apni zubaan mein bolta hai, aur jo baat ahem ho wo yaad rakhta hai. BADSHAH AI sab ke liye free hai.',abCreatorT:'Banane wale se milo',abCreatorP:'BADSHAH AI ko Zain Shah ne banaya hai, jo online Badshah ke naam se jana jata hai — Swabi, Pakistan se ek student developer. Jo baat ek student ke ek khayal se shuru hui — "mera apna AI assistant, jo main khud banaun" — wo qadam ba qadam is app mein badal gayi jo tum ab istemal kar rahe ho: usi ne design kiya, banaya aur har release ke saath behtar kiya.',abBuiltT:'Ye bana kaise',abBuiltP:'Zain ne BADSHAH AI ko khud design aur build kiya, modern AI development tools istemal karke is ka har hissa likha, test kiya aur nikhaara. Is assistant ko Google Gemini aur Groq AI models ki taaqat milti hai, accounts aur memory ke liye Supabase backend hai, aur Cloudflare hosting hai taaki web app har jagah tez chale. Ek hi system Android app aur web app dono mein chalta hai — ek assistant, har screen.',abWhyT:'Main ne ye kyun banaya',abWhyP:'"Main ne BADSHAH AI is liye banaya kyunke main ek aisa personal assistant chahta tha jo dost jaisa lage — jo meri zubaan bole, meri duniya ko samjhe, aur hamesha madad ke liye tayyar ho. Aur main isay sirf apne tak nahi rakhna chahta tha: har kisi ko ek dostana assistant milna chahiye — chat, voice calls, images, code, websites aur seekhne ke liye — us ki apni zubaan mein, aur bilkul free." — Zain Shah (Badshah)',abDoT:'Ye kya kar sakta hai',abDoP:'Tumhari apni zubaan mein smart chat • Gemini Live ke saath live voice calls • AI image banana • Code likhna aur mukammal website banana • Call ke doran awaaz se phone control • Lambi muddat ki memory • Parhai mein madad, tools, aur ek dostana dost jo pehle sunta hai',contactHead:'RABTA & FOLLOW',youAsked:'Tum ne poochha: ',callLines:'Voice call — ',genImage:'Ek image banayi',justNow:'abhi abhi',minAgo:' min pehle',hrAgo:' ghante pehle',dAgo:' din pehle'},
+  ur:{greetSub:'آج میں آپ کی کیا مدد کر سکتا ہوں؟',seeAll:'سب دیکھیں ←',quickActions:'فوری ایکشنز',qaImage:'تصویر بنائیں',qaCode:'کوڈ لکھیں',qaWebsite:'ویب سائٹ بنائیں',qaSearch:'ویب تلاش',qaLearn:'کچھ بھی سیکھیں',qaMore:'مزید ٹولز',aiStatus:'AI اسٹیٹس',stVoice:'وائس اسسٹنٹ',stAvatar:'3D اوتار',stMemory:'سمارٹ میموری',stOnline:'آن لائن رسائی',allReady:'● تمام سسٹمز تیار',recentActivity:'حالیہ سرگرمی',recentEmpty:'ابھی کوئی سرگرمی نہیں — آپ کی چیٹس اور تخلیقات یہاں نظر آئیں گی۔',modelWord:'ماڈل',runningWord:'چل رہا ہے',changeWord:'بدلیں',premiumLine:'👑 پریمیم تجربہ • جدید AI ٹیکنالوجی کی طاقت',homePlaceholder:'اپنا پیغام یہاں لکھیں...',ctlMute:'خاموش',ctlSpeaker:'اسپیکر',ctlCamera:'کیمرہ',ctlMinimize:'چھوٹا کریں',ctlEnd:'ختم',listening:'سن رہا ہوں...',mutedWord:'خاموش ہے',keyNeeded:'Key درکار ہے',readyWord:'✓ تیار',offWord:'بند',offlineWord:'آف لائن',loadingWord:'لوڈ ہو رہا ہے...',bootLine1:'AI سسٹمز شروع ہو رہے ہیں...',bootLine2:'سمارٹ میموری تیار ہو رہی ہے',bootLine3:'محفوظ نیٹ ورک سے جُڑ رہا ہے',bootFoot:'جدید AI ٹیکنالوجی کی طاقت • پریمیم تجربہ',aboutSub:'BADSHAH AI کی کہانی',abAboutT:'BADSHAH AI کے بارے میں',abAboutP:'BADSHAH AI ایک ذاتی AI اسسٹنٹ ہے جو آپ کی جیب میں رہتا ہے — ایک ہی وقت میں اینڈرائیڈ ایپ بھی اور ویب ایپ بھی۔ آپ اس سے چیٹ کر سکتے ہیں، لائیو وائس کال پر بات کر سکتے ہیں، تصاویر بنوا سکتے ہیں، کوڈ لکھوا سکتے ہیں، ویب سائٹس بنوا سکتے ہیں، پڑھائی میں مدد لے سکتے ہیں، اور آواز سے اپنا فون بھی کنٹرول کر سکتے ہیں۔ یہ پہلے سنتا ہے، آپ کی اپنی زبان میں بولتا ہے، اور جو بات اہم ہو وہ یاد رکھتا ہے۔ BADSHAH AI سب کے لیے مفت ہے۔',abCreatorT:'بنانے والے سے ملیں',abCreatorP:'BADSHAH AI کو زین شاہ نے بنایا ہے، جو آن لائن Badshah کے نام سے جانا جاتا ہے — سوابی، پاکستان سے ایک طالب علم ڈویلپر۔ جو بات ایک طالب علم کے ایک خیال سے شروع ہوئی — "میرا اپنا AI اسسٹنٹ، جو میں خود بناؤں" — وہ قدم بہ قدم اس ایپ میں بدل گئی جو آپ اب استعمال کر رہے ہیں: اسی نے ڈیزائن کیا، بنایا اور ہر ریلیز کے ساتھ بہتر کیا۔',abBuiltT:'یہ بنا کیسے',abBuiltP:'زین نے BADSHAH AI کو خود ڈیزائن اور بلڈ کیا، جدید AI ڈویلپمنٹ ٹولز استعمال کر کے اس کا ہر حصہ لکھا، ٹیسٹ کیا اور نکھارا۔ اس اسسٹنٹ کو Google Gemini اور Groq AI ماڈلز کی طاقت ملتی ہے، اکاؤنٹس اور میموری کے لیے Supabase بیک اینڈ ہے، اور Cloudflare ہوسٹنگ ہے تاکہ ویب ایپ ہر جگہ تیز چلے۔ ایک ہی سسٹم اینڈرائیڈ ایپ اور ویب ایپ دونوں میں چلتا ہے — ایک اسسٹنٹ، ہر اسکرین۔',abWhyT:'میں نے یہ کیوں بنایا',abWhyP:'"میں نے BADSHAH AI اس لیے بنایا کیونکہ میں ایک ایسا ذاتی اسسٹنٹ چاہتا تھا جو دوست جیسا لگے — جو میری زبان بولے، میری دنیا کو سمجھے، اور ہمیشہ مدد کے لیے تیار ہو۔ اور میں اسے صرف اپنے تک نہیں رکھنا چاہتا تھا: ہر کسی کو ایک دوستانہ اسسٹنٹ ملنا چاہیے — چیٹ، وائس کالز، تصاویر، کوڈ، ویب سائٹس اور سیکھنے کے لیے — اس کی اپنی زبان میں، اور بالکل مفت۔" — زین شاہ (Badshah)',abDoT:'یہ کیا کر سکتا ہے',abDoP:'آپ کی اپنی زبان میں سمارٹ چیٹ • Gemini Live کے ساتھ لائیو وائس کالز • AI تصویر بنانا • کوڈ لکھنا اور مکمل ویب سائٹ بنانا • کال کے دوران آواز سے فون کنٹرول • طویل مدتی میموری • پڑھائی میں مدد، ٹولز، اور ایک دوستانہ دوست جو پہلے سنتا ہے',contactHead:'رابطہ و فالو',youAsked:'آپ نے پوچھا: ',callLines:'وائس کال — ',genImage:'ایک تصویر بنائی',justNow:'ابھی ابھی',minAgo:' منٹ پہلے',hrAgo:' گھنٹے پہلے',dAgo:' دن پہلے'}
+  };
+  try{ if(typeof I18N_TXT!=='undefined'){ Object.assign(I18N_TXT.en, V78.en); Object.assign(I18N_TXT.ru, V78.ru); Object.assign(I18N_TXT.ur, V78.ur); } }catch(e){}
+  window.v78T=function(k){ try{ const L=(typeof contentLang==='function')?contentLang():'en'; return (V78[L]&&V78[L][k])||V78.en[k]||k; }catch(e){ return V78.en[k]||k; } };
+  window.v78LangApply=function(){
+    try{
+      const hc=$('homeCmd'); if(hc) hc.placeholder=window.v78T('homePlaceholder');
+      const hh=$('homeStatusHead'); if(hh) hh.textContent=window.v78T('allReady');
+      const lt=$('callListenTxt'); if(lt && typeof call!=='undefined' && !call.on) lt.textContent=window.v78T('listening');
+      const sel=$('homeLangSel'); if(sel) sel.value=(typeof contentLang==='function')?contentLang():'en';
+      if(window.v78HomeSync) window.v78HomeSync();
+    }catch(e){}
+  };
+  try{ const _scl=window.setContentLang; if(typeof _scl==='function' && !window.__v78LangWrapped){ window.__v78LangWrapped=1; window.setContentLang=function(l){ _scl(l); window.v78LangApply(); }; } }catch(e){}
+  try{ if(typeof applyContentLang==='function') applyContentLang(); }catch(e){}
+  /* --- boot splash progress (ref-3) --- */
+  const bs=$('bootSplash'), fill=$('bootBarFill'), txt=$('bootLoadTxt');
+  if(bs && fill && txt){ let p=0; const iv=setInterval(()=>{ if(bs.classList.contains('hidden')){ fill.style.width='100%'; txt.textContent=window.v78T('loadingWord')+' 100%'; clearInterval(iv); return; } p=Math.min(92,p+Math.random()*16); fill.style.width=p+'%'; txt.textContent=window.v78T('loadingWord')+' '+Math.floor(p)+'%'; },160); }
+  /* --- home language selector: asal dropdown — setContentLang se poori UI badalti hai --- */
+  const hsel=$('homeLangSel');
+  if(hsel){ try{ hsel.value=contentLang(); }catch(e){} hsel.onchange=()=>{ if(window.setContentLang) window.setContentLang(hsel.value); }; }
+  window.v78LangApply();
+  /* --- home avatar: logged-in user photo if the app already knows it --- */
+  try{ const u=state.user; const im=$('homeUserAv'); if(u && u.photoURL && im) im.src=u.photoURL; }catch(e){}
+  /* --- AI Status rows from REAL state --- */
+  function relTime(t){ const s=Math.max(0,(Date.now()-t)/1000); if(s<60) return window.v78T('justNow'); if(s<3600) return Math.floor(s/60)+window.v78T('minAgo'); if(s<86400) return Math.floor(s/3600)+window.v78T('hrAgo'); return Math.floor(s/86400)+window.v78T('dAgo'); }
+  window.v78HomeSync=function(){
+    try{
+      const sv=$('stVoice'); if(sv) sv.innerHTML=localStorage.getItem('ba_gemini_key')?'<span class="ok">'+window.v78T('readyWord')+'</span>':'<span class="warn">'+window.v78T('keyNeeded')+'</span>';
+      const sm=$('stMemory'); if(sm){ let on=true; try{ on=localStorage.getItem('ba_set_memOn')!=='0'; }catch(e){} sm.innerHTML=on?'<span class="ok">✓</span>':'<span class="warn">'+window.v78T('offWord')+'</span>'; }
+      const so=$('stOnline'); if(so) so.innerHTML=navigator.onLine?'<span class="ok">✓</span>':'<span class="warn">'+window.v78T('offlineWord')+'</span>';
+      const mn=$('homeModelName'); const sel=$('modelSel'); if(mn && sel && sel.selectedOptions && sel.selectedOptions[0]) mn.textContent=sel.selectedOptions[0].textContent.replace(/^[^A-Za-z0-9]+/,'').replace(/ — .*/,'');
+      /* Recent Activity — sirf asal local data: chats, call logs, saved images */
+      const box=$('homeRecent'); if(!box) return;
+      const acts=[];
+      (state.chats||[]).forEach(c=>{ const ms=c.msgs||[]; const last=ms[ms.length-1]||{}; const t=c.updatedAt||c.ts||last.ts||last.at||0; if(!t) return; const first=ms.find(m=>m&&m.role==='user'&&m.content); if(first) acts.push({t:t, icon:'💬', text:window.v78T('youAsked')+String(first.content).slice(0,60)}); });
+      try{ (JSON.parse(localStorage.getItem('ba_calllogs')||'[]')).forEach(l=>{ if(l && l.at) acts.push({t:l.at, icon:'📞', text:window.v78T('callLines')+((l.lines||[]).length)+' lines'}); }); }catch(e){}
+      try{ (JSON.parse(localStorage.getItem('ba_images')||'[]')).forEach(im=>{ if(im && (im.at||im.ts)) acts.push({t:im.at||im.ts, icon:'🎨', text:window.v78T('genImage')}); }); }catch(e){}
+      acts.sort((a,b)=>b.t-a.t);
+      const top3=acts.slice(0,3);
+      if(!top3.length){ box.innerHTML='<p class="v78-empty">'+window.v78T('recentEmpty')+'</p>'; return; }
+      box.innerHTML=top3.map(a=>'<div class="v78-arow"><span class="v78-aic">'+a.icon+'</span><span class="v78-atx">'+esc(a.text)+'</span><span class="v78-atm">'+relTime(a.t)+'</span><span class="v78-ack">✓</span></div>').join('');
+    }catch(e){}
+  };
+  window.addEventListener('online',window.v78HomeSync); window.addEventListener('offline',window.v78HomeSync);
+  const sel=$('modelSel'); if(sel) sel.addEventListener('change',()=>setTimeout(window.v78HomeSync,50));
+  setInterval(window.v78HomeSync, 20000);
+  setTimeout(window.v78HomeSync, 600); setTimeout(window.v78HomeSync, 2500);
+})();
 </script>
 </body>
 </html>

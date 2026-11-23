@@ -824,3 +824,113 @@ body.av-hero .callShadow{display:none}
 body.av-hero #chatAvWrap{width:150px;height:174px;border-radius:80px 80px 26px 26px}
 body.av-hero #chatAvWrap::after{display:none}
 body.av-hero #chatAv{inset:auto;left:50%;bottom:0;transform:translateX(-50%);width:136px;height:160px;border-radius:0;object-fit:contain;box-shadow:none}
+
+/* ============================================================
+   v7.8 — ref-1/2/3 neon home, call overlay, mini bar, boot splash
+   ============================================================ */
+/* ---------- boot splash (ref-3) ---------- */
+#bootSplash .bootStage{position:relative;width:min(300px,72vw);height:330px;display:flex;align-items:flex-end;justify-content:center;margin-top:2px}
+#bootSplash .bootChar{height:318px;max-width:88%;object-fit:contain;position:relative;z-index:2;filter:drop-shadow(0 0 26px rgba(124,77,255,.45))}
+#bootSplash .bootDisc{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:250px;height:56px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(168,120,255,.5),rgba(124,77,255,.18) 55%,transparent 72%);border:2px solid rgba(190,150,255,.65);box-shadow:0 0 34px rgba(124,77,255,.55),inset 0 0 22px rgba(124,77,255,.4);z-index:1}
+#bootSplash .bootOrbit{position:absolute;left:50%;top:44%;border-radius:50%;pointer-events:none;z-index:1}
+#bootSplash .bo1{width:290px;height:120px;margin:-60px 0 0 -145px;border:1.5px solid rgba(190,150,255,.55);transform:rotate(-14deg);animation:pinOrb1 9s linear infinite}
+#bootSplash .bo2{width:270px;height:150px;margin:-75px 0 0 -135px;border:1.5px solid rgba(96,220,255,.4);transform:rotate(10deg);animation:pinOrb2 13s linear infinite}
+#bootSplash .bo3{width:300px;height:96px;margin:-48px 0 0 -150px;border:1.5px solid rgba(245,197,66,.4);transform:rotate(-4deg);animation:pinOrb3 16s linear infinite}
+#bootSplash .bootBar{width:min(300px,72vw);height:9px}
+#bootSplash .bootBar i{width:0;animation:none;transition:width .18s ease}
+#bootSplash .bootLines{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;color:#B9A8E8;font-size:12.5px;max-width:92vw;text-align:center}
+#bootSplash .bootLines .bdot{color:#7C4DFF}
+#bootSplash .bootFoot{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#8E7CC4;font-size:11.5px;letter-spacing:.3px}
+/* ---------- home (ref-1) ---------- */
+#v-home{background:radial-gradient(120% 60% at 50% 0%,#1B0F38 0%,#0A0618 55%,#07040F 100%);color:#EDE9FF}
+#v-home .viewc{padding-bottom:18px}
+.v78-top{display:flex;align-items:center;gap:8px;padding:10px;background:linear-gradient(90deg,rgba(32,17,72,.92),rgba(15,8,36,.92));border:1px solid rgba(150,110,255,.4);border-radius:18px;backdrop-filter:blur(10px)}
+.v78-top .dots{color:#CDBFF5;background:rgba(124,77,255,.14);border:1px solid rgba(150,110,255,.35);border-radius:12px}
+.v78-brand{display:flex;align-items:center;gap:9px;flex:1;min-width:0;overflow:hidden}
+.v78-brand-txt{min-width:0;overflow:hidden}
+.v78-brand small{display:block;color:#A892E8;font-size:10.5px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v78-crown{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(245,197,66,.5))}
+.v78-brand b{display:block;font-family:"Baloo 2",sans-serif;font-size:15.5px;letter-spacing:.3px;color:#fff;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v78-brand small{display:block;color:#A892E8;font-size:10.5px;letter-spacing:.2px}
+.v78-topright{display:flex;align-items:center;gap:8px}
+.v78-online{background:rgba(20,12,44,.75);border:1px solid rgba(150,110,255,.45);color:#D9CEFF;font-size:11.5px;padding:5px 9px;border-radius:99px;font-weight:700}
+.v78-online b{color:#34F5A2}
+.v78-langsel{background:rgba(20,12,44,.75);border:1px solid rgba(150,110,255,.45);color:#EDE9FF;border-radius:99px;padding:5px 6px;font-size:12px;font-weight:600;max-width:84px}
+.v78-langsel option{color:#17112B}
+.v78-avbtn{padding:0;border-radius:50%;border:2px solid rgba(190,150,255,.8);width:34px;height:34px;overflow:hidden;flex:none;box-shadow:0 0 14px rgba(124,77,255,.5)}
+.v78-avbtn img{width:100%;height:100%;object-fit:cover;display:block}
+.v78-greetbar{display:flex;align-items:center;gap:11px;margin-top:10px;background:linear-gradient(90deg,rgba(124,77,255,.28),rgba(38,20,86,.65));border:1px solid rgba(150,110,255,.5);border-radius:18px;padding:11px 14px;box-shadow:0 8px 26px rgba(80,40,200,.28)}
+.v78-greet-crown{width:30px;height:30px;object-fit:contain;flex:none}
+.v78-greet-txt{flex:1;min-width:0}
+.v78-greet-txt b{display:block;color:#fff;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v78-greet-txt span{display:block;color:#C4B2F2;font-size:12.5px}
+.v78-seeall{color:#B79CFF;font-size:12.5px;font-weight:700;flex:none}
+.v78-herostage{position:relative;margin-top:12px;height:308px;border-radius:22px;overflow:hidden;background:url('assets/call-bg.jpg') center 30%/cover no-repeat;border:1px solid rgba(150,110,255,.4);box-shadow:0 16px 40px rgba(60,20,160,.4)}
+.v78-herostage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,4,15,.05),rgba(7,4,15,.34));pointer-events:none}
+.v78-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);width:236px;height:236px;border-radius:50%;display:flex;align-items:flex-end;justify-content:center;z-index:1}
+.v78-ringspin{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#7C4DFF,#38BDF8,#E879F9,#F5C542,#7C4DFF);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));animation:cavSpin 11s linear infinite;box-shadow:0 0 30px rgba(124,77,255,.55)}
+.v78-ring img{height:222px;max-width:86%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 6px 18px rgba(0,0,0,.45))}
+.v78-panel{margin-top:12px;background:rgba(17,10,38,.82);border:1px solid rgba(150,110,255,.38);border-radius:20px;padding:13px 14px;box-shadow:0 10px 30px rgba(40,16,110,.35)}
+.v78-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.v78-panel-head b{color:#fff;font-size:15.5px;font-family:"Baloo 2",sans-serif;letter-spacing:.3px}
+.v78-panel-head button{color:#B79CFF;font-size:12.5px;font-weight:700}
+.v78-ready{color:#34F5A2;font-size:12.5px;font-weight:700}
+.v78-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.v78-qa button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px 12px;border-radius:16px;background:linear-gradient(180deg,rgba(124,77,255,.16),rgba(30,16,66,.5));border:1px solid rgba(150,110,255,.4);color:#EDE9FF;font-size:12.8px;font-weight:600;transition:.15s}
+.v78-qa button:active{transform:scale(.97);border-color:#B79CFF}
+.v78-qi{font-size:21px;line-height:1}
+.v78-statusrows{display:flex;flex-direction:column}
+.v78-srow{display:flex;align-items:center;gap:11px;padding:9px 2px;border-top:1px solid rgba(150,110,255,.18)}
+.v78-srow:first-child{border-top:0}
+.v78-sic{width:34px;height:34px;border-radius:50%;background:rgba(124,77,255,.2);border:1px solid rgba(150,110,255,.4);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.v78-sname{flex:1;color:#DCD2FA;font-size:14px}
+.v78-sval{font-size:14px;font-weight:700;color:#CDBFF5}
+.v78-sval .ok,.v78-srow .ok{color:#34F5A2}
+.v78-sval .warn{color:#FFC24D}
+.v78-memline{margin-top:9px;color:#9B87D8;font-size:12px}
+.v78-empty{color:#9B87D8;font-size:13.5px;padding:4px 2px}
+.v78-arow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-top:1px solid rgba(150,110,255,.18)}
+.v78-arow:first-child{border-top:0}
+.v78-aic{width:32px;height:32px;border-radius:10px;background:rgba(124,77,255,.18);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+.v78-atx{flex:1;min-width:0;color:#DCD2FA;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v78-atm{color:#9B87D8;font-size:12px;flex:none}
+.v78-ack{color:#34F5A2;font-weight:800;flex:none}
+.v78-wave{justify-content:center;margin-top:14px}
+.v78-compin{margin-top:10px;background:rgba(17,10,38,.9);border:1px solid rgba(150,110,255,.5);border-radius:99px;padding:6px;align-items:center}
+.v78-compin textarea{background:transparent;color:#fff}
+.v78-compin textarea::placeholder{color:#9B87D8}
+.v78-micbtn{background:linear-gradient(135deg,#7C4DFF,#B04DFF);color:#fff;border-radius:50%;box-shadow:0 0 18px rgba(150,80,255,.65);flex:none}
+.v78-modelstrip{display:flex;align-items:center;gap:9px;margin-top:11px;background:rgba(17,10,38,.82);border:1px solid rgba(150,110,255,.35);border-radius:14px;padding:10px 14px;color:#9B87D8;font-size:13px}
+.v78-modelstrip b{color:#fff;font-size:13.5px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v78-mrun{color:#34F5A2;font-weight:700;font-size:12.5px}
+.v78-mchange{color:#B79CFF;font-weight:700;font-size:12.5px}
+#v-home .tag{color:#8E7CC4}
+/* ---------- call overlay additions ---------- */
+.cbtn-wrap{display:flex;flex-direction:column;align-items:center;gap:5px}
+.cbtn-lab{font-size:11px;color:#B9C6DE;font-weight:600}
+.cbtn-min{font-size:19px;line-height:1}
+.cbtn.on{box-shadow:0 0 0 2px #34F5A2,0 8px 22px rgba(52,245,162,.3)}
+.call-listen{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;color:#5FF2DA;font-size:13.5px;font-weight:600;min-height:20px}
+.cl-dot{width:8px;height:8px;border-radius:50%;background:#34F5A2;box-shadow:0 0 10px #34F5A2;animation:pulse 1.5s infinite}
+.cl-wave{display:inline-flex;gap:3px;align-items:center}
+.cl-wave i{width:3.5px;height:9px;border-radius:3px;background:#5FF2DA;animation:eqB 0.9s ease-in-out infinite}
+.cl-wave i:nth-child(2){animation-delay:.1s}.cl-wave i:nth-child(3){animation-delay:.2s}.cl-wave i:nth-child(4){animation-delay:.3s}.cl-wave i:nth-child(5){animation-delay:.4s}.cl-wave i:nth-child(6){animation-delay:.5s}.cl-wave i:nth-child(7){animation-delay:.6s}
+@keyframes eqB{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.5)}}
+/* ---------- minimized call bar (ref-2) ---------- */
+#callMiniBar{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:210;display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:99px;background:linear-gradient(90deg,rgba(24,12,54,.96),rgba(44,20,96,.96));border:1.5px solid rgba(170,120,255,.85);box-shadow:0 0 26px rgba(140,80,255,.55),0 14px 34px rgba(0,0,0,.5);color:#fff;cursor:pointer}
+#callMiniBar.hidden{display:none!important}
+.cmb-face{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,160,255,.9);flex:none}
+.cmb-txt{flex:1;min-width:0}
+.cmb-txt b{display:block;font-size:14.5px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmb-txt span{display:block;font-size:12px;color:#C4A0FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmb-wave{display:inline-flex;gap:2.5px;align-items:center;flex:none}
+.cmb-wave i{width:3.5px;height:10px;border-radius:3px;background:#B78CFF;animation:eqB 0.9s ease-in-out infinite}
+.cmb-wave i:nth-child(odd){animation-delay:.25s}
+.cmb-btn{width:40px;height:40px;border-radius:50%;background:rgba(124,77,255,.3);border:1px solid rgba(170,120,255,.7);color:#fff;font-size:16px;flex:none;display:flex;align-items:center;justify-content:center}
+.cmb-end{background:rgba(229,72,77,.85);border-color:rgba(255,120,120,.8)}
+@media (max-width:380px){ .v78-qa{grid-template-columns:repeat(2,1fr)} .v78-herostage{height:272px} .v78-ring{width:206px;height:206px} .v78-ring img{height:194px} }
+/* home active ho to tabbar bhi dark neon (ref-1) — purane WebView mein :has ignore hoga, light tabbar fallback rahega */
+body:has(#v-home.on) #tabbar{background:rgba(10,6,24,.96);border-top:1px solid rgba(150,110,255,.35)}
+body:has(#v-home.on) #tabbar .tab{color:#9B87D8}
+body:has(#v-home.on) #tabbar .tab.on{color:#CDB4FF}
+.v78-brand>span{min-width:0;overflow:hidden}
