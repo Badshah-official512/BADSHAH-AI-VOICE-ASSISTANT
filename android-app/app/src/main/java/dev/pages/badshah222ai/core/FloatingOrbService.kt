@@ -11,6 +11,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.PixelFormat
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -44,14 +45,43 @@ class FloatingOrbService : Service() {
 
     private var wm: WindowManager? = null
     private var orb: AgenticOrbView? = null
+    private var bar: PillBarView? = null
     private var glow: EdgeGlowView? = null
+
+    // v7.8: do forms — circular ORB (idle form, purana behaviour) aur horizontal
+    // pill BAR (ref-2, minimized-call form). App foreground se background jaye
+    // (call minimize) to form BAR ho jata hai; bar ke avatar hisse par tap
+    // karne se wapas ORB form aa jata hai. Sirf ek form ek waqt mein dikhta hai.
+    private enum class Form { ORB, BAR }
+    @Volatile private var form = Form.ORB
+    @Volatile private var wasForeground = true
+
+    private fun applyVisibility() {
+        // v7.2: app khud saamne ho to floating element chhupao — sirf doosri apps ke upar dikhao
+        val fg = MainActivity.appInForeground
+        if (wasForeground && !fg) form = Form.BAR // minimize = pill bar form
+        wasForeground = fg
+        orb?.visibility = if (!fg && form == Form.ORB) View.VISIBLE else View.GONE
+        bar?.visibility = if (!fg && form == Form.BAR) View.VISIBLE else View.GONE
+        glow?.visibility = if (fg) View.GONE else View.VISIBLE
+    }
+
+    private fun switchForm(next: Form) {
+        form = next
+        applyVisibility()
+    }
+
+    private fun openApp() {
+        val i = Intent(this, MainActivity::class.java)
+            .putExtra("EXTRA_WAKE", "1")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        startActivity(i)
+    }
+
     private val visHandler = Handler(Looper.getMainLooper())
     private val visLoop = object : Runnable {
         override fun run() {
-            // v7.2: app khud saamne ho to bubble chhupao — sirf doosri apps ke upar dikhao
-            val vis = if (MainActivity.appInForeground) View.GONE else View.VISIBLE
-            orb?.visibility = vis
-            glow?.visibility = vis
+            applyVisibility()
             visHandler.postDelayed(this, 600)
         }
     }
@@ -86,10 +116,7 @@ class FloatingOrbService : Service() {
                         if (System.currentTimeMillis() - downAt > 600) {
                             stopSelf() // long-press removes the orb
                         } else {
-                            val i = Intent(this, MainActivity::class.java)
-                                .putExtra("EXTRA_WAKE", "1")
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                            startActivity(i)
+                            openApp()
                         }
                     }
                     true
@@ -99,6 +126,49 @@ class FloatingOrbService : Service() {
         }
         orb = iv
         runCatching { wm?.addView(iv, params) }
+
+        // v7.8 (ref-2): horizontal pill bar — minimized-call form. Same drag /
+        // tap-to-restore / long-press-remove behaviour as the orb; tap on the
+        // left avatar zone collapses the bar back to the circular orb form.
+        // NOTE: is service ko call ka state maloom nahi hota (CallService koi
+        // static flag nahi deta aur naya IPC nahi banaya gaya), is liye bar ki
+        // status line "Tap to talk" rehti hai.
+        val density = resources.displayMetrics.density
+        val barW = minOf((312 * density).toInt(), resources.displayMetrics.widthPixels - (24 * density).toInt())
+        val barH = (68 * density).toInt()
+        val bv = PillBarView(this, bmp).apply { contentDescription = "Ask BADSHAH AI" }
+        val barParams = WindowManager.LayoutParams(
+            barW, barH, type,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT,
+        ).apply { gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL; x = 0; y = (54 * density).toInt() }
+        var bDownX = 0; var bDownY = 0; var bStartX = 0; var bStartY = 0; var bDownAt = 0L
+        bv.setOnTouchListener { v, e ->
+            when (e.action) {
+                MotionEvent.ACTION_DOWN -> { bDownX = e.rawX.toInt(); bDownY = e.rawY.toInt(); bStartX = barParams.x; bStartY = barParams.y; bDownAt = System.currentTimeMillis(); true }
+                MotionEvent.ACTION_MOVE -> {
+                    barParams.x = bStartX + (e.rawX.toInt() - bDownX); barParams.y = bStartY + (e.rawY.toInt() - bDownY)
+                    runCatching { wm?.updateViewLayout(v, barParams) }; true
+                }
+                MotionEvent.ACTION_UP -> {
+                    val moved = Math.abs(e.rawX.toInt() - bDownX) + Math.abs(e.rawY.toInt() - bDownY)
+                    if (moved < 12) {
+                        if (System.currentTimeMillis() - bDownAt > 600) {
+                            stopSelf() // long-press removes the bar (orb wala hi rule)
+                        } else if (e.x < 64 * density) {
+                            switchForm(Form.ORB) // avatar zone tap = chhota orb form
+                        } else {
+                            openApp() // baqi har tap = app restore / call par wapas
+                        }
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+        bv.visibility = View.GONE
+        bar = bv
+        runCatching { wm?.addView(bv, barParams) }
         // v7.3: RGB edge glow — call ke doran poori screen ke kinaron par roshni,
         // app background mein ho tab bhi rehti hai (service sirf call ke doran chalti hai)
         val gv = EdgeGlowView(this)
@@ -117,11 +187,140 @@ class FloatingOrbService : Service() {
         visHandler.removeCallbacks(visLoop)
         glow?.stopAnim()
         orb?.stopAnim()
+        bar?.stopAnim()
         glow?.let { runCatching { wm?.removeView(it) } }
         orb?.let { runCatching { wm?.removeView(it) } }
+        bar?.let { runCatching { wm?.removeView(it) } }
         glow = null
+        bar = null
         orb = null; running = false
         super.onDestroy()
+    }
+}
+
+/**
+ * v7.8 pill bar (ref-2): horizontal floating bar with a purple neon glow
+ * border — round poster centre-cut photo on the left, "Ask BADSHAH AI" +
+ * status line, an animated purple waveform of small vertical bars, and two
+ * round buttons on the right (mic = filled purple, keyboard = dark with a
+ * purple outline; glyphs drawn with canvas strokes). Status line is
+ * "Tap to talk": this service has no call-state signal (see service note).
+ * Drawn on the same 40 ms tick style as the orb; no behaviour lives here —
+ * drag / tap / long-press are handled by the service's touch listener.
+ */
+class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
+    private val d = ctx.resources.displayMetrics.density
+    private val sd = ctx.resources.displayMetrics.scaledDensity
+    private val bgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.argb(238, 23, 17, 48) }
+    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 1.8f * d; color = Color.argb(235, 168, 120, 255)
+    }
+    private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 2f * d; color = Color.argb(230, 168, 120, 255)
+    }
+    private val titlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE; textSize = 14.5f * sd; typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+    }
+    private val statusPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(220, 196, 181, 253); textSize = 11.5f * sd
+    }
+    private val wavePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; color = Color.rgb(168, 120, 255); strokeWidth = 3.2f * d
+    }
+    private val micFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.rgb(124, 58, 237) }
+    private val kbFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.argb(255, 38, 28, 74) }
+    private val kbStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeWidth = 1.4f * d; color = Color.argb(220, 168, 120, 255)
+    }
+    private val glyphPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; color = Color.WHITE; strokeWidth = 1.7f * d
+    }
+    private val glyphFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.WHITE }
+    private val rect = RectF()
+    private val clip = Path()
+    private var startAt = System.currentTimeMillis()
+    private var animOn = false
+    private val tick = object : Runnable {
+        override fun run() { invalidate(); if (animOn) handler.postDelayed(this, 40) }
+    }
+    override fun onAttachedToWindow() { super.onAttachedToWindow(); animOn = true; handler.post(tick) }
+    override fun onDetachedFromWindow() { stopAnim(); super.onDetachedFromWindow() }
+    fun stopAnim() { animOn = false; handler.removeCallbacks(tick) }
+
+    private fun drawMicGlyph(canvas: Canvas, cx: Float, cy: Float) {
+        // mic body
+        rect.set(cx - 3.4f * d, cy - 8f * d, cx + 3.4f * d, cy + 1.5f * d)
+        canvas.drawRoundRect(rect, 3.4f * d, 3.4f * d, glyphFill)
+        // cradle arc + stem + base
+        rect.set(cx - 6.4f * d, cy - 5.5f * d, cx + 6.4f * d, cy + 7.5f * d)
+        canvas.drawArc(rect, 20f, 140f, false, glyphPaint)
+        canvas.drawLine(cx, cy + 7.5f * d, cx, cy + 10.5f * d, glyphPaint)
+        canvas.drawLine(cx - 4.5f * d, cy + 10.5f * d, cx + 4.5f * d, cy + 10.5f * d, glyphPaint)
+    }
+
+    private fun drawKeyboardGlyph(canvas: Canvas, cx: Float, cy: Float) {
+        rect.set(cx - 9.5f * d, cy - 6.5f * d, cx + 9.5f * d, cy + 6.5f * d)
+        canvas.drawRoundRect(rect, 2.5f * d, 2.5f * d, glyphPaint)
+        // key dots: top row of 4, bottom row of 3 + spacebar
+        for (i in 0..3) canvas.drawCircle(cx + (i - 1.5f) * 4.4f * d, cy - 2.8f * d, 0.9f * d, glyphFill)
+        for (i in 0..2) canvas.drawCircle(cx + (i - 1f) * 4.4f * d, cy + 0.8f * d, 0.9f * d, glyphFill)
+        rect.set(cx - 4.6f * d, cy + 3.4f * d, cx + 4.6f * d, cy + 4.6f * d)
+        canvas.drawRoundRect(rect, 1.2f * d, 1.2f * d, glyphFill)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val w = width.toFloat(); val h = height.toFloat()
+        val cy = h / 2f
+        val now = System.currentTimeMillis()
+        val pulse = (sin((now % 2400) / 2400.0 * 2 * Math.PI).toFloat() + 1f) / 2f // 0..1 breathing
+        val radius = h / 2f - 2f * d
+
+        // purple neon glow (breathing) + body + border
+        rect.set(3f * d, 3f * d, w - 3f * d, h - 3f * d)
+        glowPaint.color = Color.argb((40 + pulse * 50).toInt(), 139, 61, 255); glowPaint.strokeWidth = 7f * d
+        canvas.drawRoundRect(rect, radius, radius, glowPaint)
+        canvas.drawRoundRect(rect, radius, radius, bgPaint)
+        canvas.drawRoundRect(rect, radius, radius, borderPaint)
+
+        // left: round poster centre-cut photo
+        val avCx = 32f * d; val avR = 23f * d
+        if (bmp != null) {
+            clip.reset(); clip.addCircle(avCx, cy, avR, Path.Direction.CW)
+            canvas.save(); canvas.clipPath(clip)
+            val scale = maxOf((avR * 2) / bmp.width, (avR * 2) / bmp.height)
+            val dw = bmp.width * scale; val dh = bmp.height * scale
+            canvas.drawBitmap(bmp, avCx - dw / 2f, cy - dh / 2f, null)
+            canvas.restore()
+        } else {
+            canvas.drawCircle(avCx, cy, avR, kbFill)
+        }
+        canvas.drawCircle(avCx, cy, avR + 0.8f * d, ringPaint)
+
+        // text column
+        val textX = 63f * d
+        canvas.drawText("Ask BADSHAH AI", textX, cy - 3.5f * d, titlePaint)
+        canvas.drawText("Tap to talk", textX, cy + 13.5f * d, statusPaint)
+
+        // right: two round buttons (keyboard, then mic nearest the edge)
+        val btnR = 17f * d
+        val micCx = w - 25f * d
+        val kbCx = micCx - 2 * btnR - 8f * d
+        canvas.drawCircle(kbCx, cy, btnR, kbFill)
+        canvas.drawCircle(kbCx, cy, btnR, kbStroke)
+        drawKeyboardGlyph(canvas, kbCx, cy)
+        canvas.drawCircle(micCx, cy, btnR, micFill)
+        drawMicGlyph(canvas, micCx, cy)
+
+        // waveform: 5 small vertical bars between text and buttons, animated
+        val waveCx = kbCx - btnR - 16f * d
+        for (i in 0..4) {
+            val ph = (now % 900) / 900.0 * 2 * Math.PI + i * 0.9
+            val bh = (5f + 6.5f * (0.5f + 0.5f * sin(ph).toFloat())) * d
+            val x = waveCx + (i - 2) * 6.4f * d
+            canvas.drawLine(x, cy - bh / 2f, x, cy + bh / 2f, wavePaint)
+        }
     }
 }
 
