@@ -1009,3 +1009,26 @@ body.av-hero #callStage .callPanels{position:absolute;left:14px;right:14px;botto
   .cmb-wave i:nth-child(n+5){display:none}
   .cmb-txt b{font-size:13px}
 }
+
+/* ===== v7.8.2 Feature-4: CHAT HEADER FIXED — chat scroll par upar wala hissa
+   (☰ menu + model selector + Call button) apni jagah rehta hai, sirf messages
+   ki list scroll hoti hai. Pehle .view khud scroll container tha aur #appView
+   sirf min-height:100dvh tha — lambi chat mein poora page scroll hota aur
+   topbar saath upar chala jata tha. Ab chat view height-bounded flex column
+   hai: topbar static, #msgs hi wahid scroller. ===== */
+#appView:has(> main > #v-chat.on){height:100dvh;max-height:100dvh;overflow:hidden}
+#v-chat{overflow:hidden}
+#v-chat .topbar{flex:0 0 auto}
+#v-chat #chatPanel{flex:1 1 auto;min-height:0}
+#v-chat #msgs{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#v-chat .composer{flex:0 0 auto}
+
+/* ===== v7.8.2 Feature-3: chat attachments (+ button -> gallery/file) ===== */
+#attachRow{display:flex;flex-wrap:wrap;gap:7px;padding:2px 2px 9px}
+#attachRow.hidden{display:none}
+.att-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px 8px 5px 6px;max-width:100%}
+.att-chip img{width:34px;height:34px;border-radius:8px;object-fit:cover;flex:none}
+.att-chip span{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
+.att-chip button{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--bg2);color:var(--mut);font-size:11px;cursor:pointer;line-height:1}
+.att-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 7px}
+.att-fchip{display:inline-flex;align-items:center;gap:5px;background:rgba(127,127,127,.14);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

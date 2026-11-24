@@ -69,6 +69,12 @@ window.addMsgEl=function(role,content,img,idx){
   const w=$('msgWrap'); const d=document.createElement('div'); d.className='msg '+(role==='user'?'user':'ai'); if(idx!=null) d.dataset.i=idx;
   const av=role==='user'?'':'<img class="av" src="'+AV[state.mode]+'" alt="">';
   d.innerHTML=av+'<div class="body">'+(img?'<img class="gen" src="'+escH(img)+'" alt="AI image">':'')+'<div class="txt"></div><div class="acts"></div></div>';
+  /* v7.8.2 Feature-3: user ke attached files ke chips — poora filename (extension
+     ke saath) + size, taake saaf pata chale kya bheja tha */
+  if(role==='user'&&idx!=null){ try{ const mm=chat()&&chat().msgs?chat().msgs[idx]:null;
+    if(mm&&mm.atts&&mm.atts.length){ const ac=document.createElement('div'); ac.className='att-chips';
+      mm.atts.forEach(a=>{ const s=document.createElement('span'); s.className='att-fchip'; s.textContent=attIcon(a.kind)+' '+a.name+' · '+attSize(a.size); ac.appendChild(s); });
+      const bd=d.querySelector('.body'); bd.insertBefore(ac, bd.querySelector('.txt')); } }catch(e){} }
   d.querySelector('.txt').innerHTML=role==='ai'?mdx(content):escH(content);
   const acts=d.querySelector('.acts');
   if(role==='ai'){
@@ -124,6 +130,48 @@ function exportChat(c){
 }
 $('btnNewChat').onclick=()=>{ state.chats.unshift({title:'New chat',msgs:[]}); state.current=0; saveChats(); renderChats(); renderMsgs(); openPanel('chat'); closeDrawer(); setComposeMode('chat'); inp.focus(); };
 
+/* ---------------- attachments (v7.8.2 Feature-3: + button se gallery/file) ----------------
+   Images -> asal EDIT route (/api/image ko image + instruction; Gemini image model
+   image ko dekh kar edit karta hai). Video/ZIP -> file chip ke tor par message ke
+   saath jate hain; backend unhe parh nahi sakta, is liye assistant ko prompt mein
+   saaf note jata hai — koi jhooti "parh liya" wali baat nahi hoti. */
+const ATT_MAX=10*1024*1024; /* 10 MB per file — is se bari file par saaf English message */
+let pendingAtts=[];
+function attKind(f){ const t=(f.type||'').toLowerCase(), n=(f.name||'').toLowerCase();
+  if(t.indexOf('image/')===0) return 'image';
+  if(t.indexOf('video/')===0) return 'video';
+  if(t==='application/zip'||t==='application/x-zip-compressed'||/\.zip$/.test(n)) return 'zip';
+  return null; }
+function attSize(n){ if(n<1024) return n+' B'; if(n<1048576) return Math.round(n/1024)+' KB'; return (n/1048576).toFixed(1)+' MB'; }
+function attIcon(k){ return k==='image'?'🖼️':k==='video'?'🎬':k==='zip'?'🗜️':'📎'; }
+function renderAtts(){ const row=$('attachRow'); if(!row) return; row.innerHTML=''; row.classList.toggle('hidden',!pendingAtts.length);
+  pendingAtts.forEach((a,i)=>{ const c=document.createElement('div'); c.className='att-chip';
+    if(a.kind==='image'&&a.dataUrl){ const im=document.createElement('img'); im.src=a.dataUrl; im.alt=''; c.appendChild(im); }
+    const s=document.createElement('span'); s.textContent=attIcon(a.kind)+' '+a.name+' · '+attSize(a.size); c.appendChild(s);
+    const x=document.createElement('button'); x.type='button'; x.textContent='✕'; x.setAttribute('aria-label','Remove attachment'); x.onclick=()=>{ pendingAtts.splice(i,1); renderAtts(); };
+    c.appendChild(x); row.appendChild(c); }); }
+function downscaleImage(f){ return new Promise(res=>{ const rd=new FileReader();
+  rd.onload=()=>{ const img=new Image(); img.onload=()=>{ try{ const sc=Math.min(1,1024/Math.max(img.width,img.height)); if(sc>=1){ res(rd.result); return; } const cv=document.createElement('canvas'); cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc); cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); res(cv.toDataURL('image/jpeg',.85)); }catch(e){ res(rd.result); } }; img.onerror=()=>res(rd.result); img.src=rd.result; };
+  rd.onerror=()=>res(null); rd.readAsDataURL(f); }); }
+async function attPick(files){ for(const f of files){ if(pendingAtts.length>=3){ toast('Maximum 3 files at a time'); break; }
+    const kind=attKind(f); if(!kind){ toast('This file type is not supported — please send an image, a video, or a ZIP file.'); continue; }
+    if(f.size>ATT_MAX){ toast('File too large: "'+f.name+'" is '+attSize(f.size)+'. The limit is 10 MB per file.'); continue; }
+    const att={name:f.name,size:f.size,kind:kind};
+    if(kind==='image'){ att.dataUrl=await downscaleImage(f); if(!att.dataUrl){ toast('That image could not be read — please try another one.'); continue; } }
+    pendingAtts.push(att); }
+  renderAtts(); }
+(function(){ const fi=$('chatFile'); if(fi) fi.addEventListener('change',()=>{ const fs=[].slice.call(fi.files||[]); fi.value=''; if(fs.length) attPick(fs); }); })();
+async function callImageEdit(instr, att){
+  const model=isImageModel($('modelSel').value)?$('modelSel').value:(CFG.imageModels||[])[0];
+  const r=await fetch(CFG.imageUrl,{method:'POST',headers:{'Content-Type':'application/json',...(await authHeaders())},body:JSON.stringify({q:instr,model:model,image:att.dataUrl}),signal:ctrl.signal});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||('Server '+r.status));
+  const img=d.image||d.image_url||d.url; if(!img) throw new Error('Edited image nahi bani — dobara try karo.');
+  let reply='Ye lo tumhari edited image 🎨';
+  if(d.provider&&d.provider!=='gemini') reply+='\n\n(Note: the image-edit route was unavailable, so a fresh image was generated from your text instead.)';
+  return {reply:reply,img:img};
+}
+
 /* ---------------- AI calls ---------------- */
 const isImageModel=v=>(CFG.imageModels||[]).includes(v);
 function niceErr(m){ m=String(m||''); if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Internet ka masla lag raha hai — connection check karke dobara try karo.'; return m; }
@@ -178,12 +226,13 @@ async function callVideo(text,waitEl){
   throw new Error('Video mein bohat waqt lag raha hai — baad mein try karo.');
 }
 function setBusy(b){ state.busy=b; $('btnStop').classList.toggle('hidden',!b); }
-async function runAI(text){
+async function runAI(text, attEdit){
   setBusy(true); ctrl=new AbortController();
   const wait=addMsgEl('ai','',null); wait.querySelector('.txt').innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
   try{
     let reply='',img=null;
-    if(composeMode==='video') reply=await callVideo(text,wait);
+    if(attEdit) ({reply,img}=await callImageEdit(text, attEdit));
+    else if(composeMode==='video') reply=await callVideo(text,wait);
     else if(composeMode==='image'||isImageModel($('modelSel').value)) ({reply,img}=await callImage(text));
     else reply=await callChat(text);
     wait.remove(); chat().msgs.push({role:'ai',content:reply,img}); const el=addMsgEl('ai',reply,img,chat().msgs.length-1); saveChats();
@@ -196,13 +245,28 @@ async function runAI(text){
   ctrl=null;
 }
 window.send=async function(){
-  const text=inp.value.trim(); if(!text||state.busy) return;
+  const text=inp.value.trim(); if(state.busy) return;
+  if(!text && !pendingAtts.length) return;
+  /* v7.8.2 Feature-3: attachments ke saath bhi send hota hai (bina text ke bhi) */
+  const atts=pendingAtts; pendingAtts=[]; renderAtts();
   inp.value=''; autosize(); syncComposer();
-  const c=chat(); c.msgs.push({role:'user',content:text}); if(c.msgs.length===1||c.title==='New chat') c.title=text.slice(0,34);
-  addMsgEl('user',text,null,c.msgs.length-1); renderChats(); saveChats(); BH.onSend(text);
-  if(window.bhAutoMem) bhAutoMem(text);
+  const imgAtt=atts.filter(a=>a.kind==='image')[0]||null;
+  const otherAtts=atts.filter(a=>a!==imgAtt);
+  const shownText=text||(imgAtt?'Is image ko edit karo':'📎 '+atts.map(a=>a.name).join(', '));
+  const c=chat(); const um={role:'user',content:shownText};
+  if(imgAtt) um.img=imgAtt.dataUrl;
+  if(atts.length) um.atts=atts.map(a=>({name:a.name,size:a.size,kind:a.kind}));
+  c.msgs.push(um); if(c.msgs.length===1||c.title==='New chat') c.title=shownText.slice(0,34);
+  addMsgEl('user',shownText,um.img||null,c.msgs.length-1); renderChats(); saveChats(); BH.onSend(shownText);
+  if(window.bhAutoMem) bhAutoMem(shownText);
   T('message',{mode:composeMode});
-  await runAI(text);
+  if(imgAtt){ await runAI(text||'Enhance and edit this image', imgAtt); return; }
+  let aiText=text;
+  if(otherAtts.length){
+    const note=otherAtts.map(a=>'[Attached file: '+a.name+' ('+a.kind+', '+attSize(a.size)+')]').join(' ');
+    aiText=(text?text+'\n':'')+note+'\nNote for the assistant: the user attached the file(s) named above, but you cannot open or view video or ZIP files. If the user asks about their contents, honestly say you cannot open that file type yet.';
+  }
+  await runAI(aiText||shownText);
 };
 window.regenerate=async function(){
   if(state.busy) return; const c=chat(); while(c.msgs.length&&c.msgs[c.msgs.length-1].role==='ai') c.msgs.pop();
@@ -256,6 +320,7 @@ $('scrim').onclick=closeDrawer;
 $('btnPlus').onclick=()=>openSheet('plusSheet');
 $('btnMore').onclick=()=>openSheet('moreSheet');
 $('plusSheet').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const a=b.dataset.act; closeSheets();
+  if(a==='attach'){ const fi=$('chatFile'); if(fi) fi.click(); return; }
   if(a==='image') setComposeMode('image'); else if(a==='video') setComposeMode('video'); else if(a==='voice') toggleVoice(); else if(a==='call') openCallSmart();
   else if(a==='code'){ setComposeMode('chat'); inp.value='Mujhe ye code likh kar do: '; syncComposer(); } else if(a==='translate'){ setComposeMode('chat'); inp.value='Is ko Urdu aur English dono mein translate karo: '; syncComposer(); }
   else if(a==='temp'){ tempChat=!tempChat; toast(tempChat?'🕶️ Temporary chat ON — save nahi hogi':'Temporary chat band'); $('stageName').textContent=(state.mode==='rani'?'RANI':'BADSHAH')+(tempChat?' · temp':''); }

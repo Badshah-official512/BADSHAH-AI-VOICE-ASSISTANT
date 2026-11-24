@@ -176,6 +176,8 @@
         <div id="modeBar" class="hidden" style="display:flex;align-items:center;gap:8px;background:linear-gradient(90deg,rgba(47,124,246,.13),rgba(124,77,255,.13));border:1px solid var(--line);border-radius:12px;padding:7px 12px;margin:0 0 8px;font-size:13px;font-weight:600"><span id="modeBarTxt" style="flex:1">Mode ON hai</span><button onclick="clearChatMode()" style="border:0;background:transparent;font-size:15px;cursor:pointer;color:var(--mut)" aria-label="Mode band karo">✕</button></div>
         <div class="composer">
           <div class="quick-row" id="quickRow"></div>
+          <div id="attachRow" class="hidden"></div>
+          <input type="file" id="chatFile" class="hidden" accept="image/*,video/*,.zip,application/zip" multiple aria-label="Attach files">
           <div class="comp-in">
             <button class="icobtn plus" id="btnPlus" aria-label="Aur options">＋</button>
             <textarea id="input" rows="1" placeholder="BADSHAH se kuch bhi poochho…" enterkeyhint="send"></textarea>
@@ -463,6 +465,7 @@
         <div class="card" style="margin-top:12px"><h3><span data-ic="check"></span> Asal mein kya live hai</h3><p><b style="color:var(--txt)">Background call LIVE hai</b> — Android app mein call minimize karke doosri apps use karo, BADSHAH ki awaaz aur Live connection chalta rehta hai (v6.8 se). Floating bubble bhi LIVE hai — call ke doran doosri app kholo to BADSHAH bubble upar rahega (neeche wali card se overlay permission ON karo).</p></div>
         <button class="btn btn-p w" onclick="openCallSmart()">Background call try karo</button>
         <div class="card" style="margin-top:12px"><h3><span data-ic="type"></span> Accessibility Control</h3><p id="a11yStat" style="color:var(--txt);font-weight:600">Status: —</p><p>ON ho to BADSHAH tumhare kehne par doosri apps mein type, tap, scroll kar sakta hai aur screen parh sakta hai — masalan call mein bolo "WhatsApp mein type karo: Salam" to wo type kar dega. Koi data phone se bahar nahi jata, aur ye tum kabhi bhi band kar sakte ho. Android 13+ par agar service ON na ho to: Settings → Apps → BADSHAH AI → ⋮ → "Allow restricted settings" pehle ON karna hoga.</p><button class="btn btn-p w" onclick="a11yOpen()">Accessibility Settings kholo</button></div>
+        <div class="card" style="margin-top:12px"><h3><span data-ic="check"></span> Keep BADSHAH AI Alive</h3><p id="battStat" style="color:var(--txt);font-weight:600">Battery: —</p><p>Tecno/HiOS can kill BADSHAH AI in the background — that is what stops Accessibility Control after a call ends. These are two <b style="color:var(--txt)">one-time</b> system allows: set them once and the phone will not keep asking, and the app stays alive. Battery: tap the button and choose <b style="color:var(--txt)">Unrestricted / Allow</b>. Auto-start: turn BADSHAH AI <b style="color:var(--txt)">ON</b> in the HiOS auto-start list.</p><button class="btn btn-p w" onclick="battOpen()">Keep BADSHAH AI alive — Battery: Unrestricted</button><button class="btn btn-p w" style="margin-top:8px" onclick="autostartOpen()">Auto-start (Tecno/HiOS)</button></div>
         <div class="card" style="margin-top:12px"><h3><span data-ic="ghost"></span> Floating Bubble</h3><p id="ovStat" style="color:var(--txt);font-weight:600">Status: —</p><p>Overlay permission ON ho to call ke doran jab tum doosri app kholo, chhota BADSHAH bubble screen par rahega — tap karne se app wapas khul jayegi, long-press se bubble hat jayega.</p><button class="btn btn-p w" onclick="ovOpen()">Overlay permission do</button></div>
       </div>
     </section>
@@ -909,6 +912,7 @@
     <div class="grab"></div>
     <h4>Kya karna hai?</h4>
     <div class="sheet-grid">
+      <button data-act="attach"><i>📎</i><b>File attach</b><small>Image edit · Video · ZIP</small></button>
       <button data-act="image"><i>🎨</i><b>Image banao</b><small>Gemini image, free</small></button>
       <button data-act="video" data-cfg-feature="video"><i>🎬</i><b>Video banao</b><small>Beta</small></button>
       <button data-act="voice"><i>🗣️</i><b>Voice mode</b><small>Bolo, jawab suno</small></button>
@@ -1239,7 +1243,7 @@ function liveDiag(){ const d=call.diag||{}; const now=Date.now(); return {
   lastFrameAgoMs:d.lastFrameAt?now-d.lastFrameAt:null, lastSentAgoMs:d.lastSentAt?now-d.lastSentAt:null,
   lastRms:d.lastRms||0, maxRms:d.maxRms||0 }; }
 window.__bhLiveDiag=liveDiag;
-function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. Speak slowly and clearly — pronounce every single word separately and completely, never rush and never join words together. You can control the user phone with tools: open_app, open_youtube, open_whatsapp (by number), whatsapp_by_name (by saved contact name), set_torch, volume_control, end_call (when the user asks to end the call, say a short goodbye and use it at once), and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
+function sysPrompt(){ return 'You are BADSHAH, a loyal, funny and caring male best friend and digital assistant created by Zain Shah. Speak naturally in the user language (Urdu, Roman Urdu, English or Hindi — auto-detect and mirror; Roman Urdu must stay in Latin letters, never Devanagari). Listen first and let the user finish. Talk with real feelings: happy, caring, a little playful. Keep replies conversational and short — this is a voice call. Speak slowly and clearly — pronounce every single word separately and completely, never rush and never join words together. You can control the user phone with tools: open_app, open_youtube, open_whatsapp (by number), whatsapp_by_name (by saved contact name), set_torch, volume_control, end_call (when the user asks to end the call, say a short goodbye and use it at once), and (when the user has enabled Accessibility Control) type_text, tap_on_screen, scroll_screen, press_back, go_home, read_screen, open_recents, open_notifications. You also have a cloud Agent Computer: when the user asks you to search the web, research something, open a website or do any computer work during the call, use agent_task with the work in the user own words — the computer takes a minute or two; when the user later asks for the outcome, use agent_result and tell them what the computer found. When the user asks for such an action during the call, use the matching tool and confirm briefly in one short line. For WhatsApp you open the chat with the message typed — the user presses send themselves. Tum sirf machine nahi ho — tum us ke DOST aur BHAI ho: baat dil se suno, us ki khushi mein saath khush ho, pareshani mein kandha do. Jo kuch wo apne baare mein bataye (naam, ghar walay, kaam, pasand, pareshaniyan) yaad rakho aur agli baaton mein naturally laao — jaise purana dost laata hai. Lehja apna-pan wala ho, halki shararat ke saath, lekin hamesha izzat ke saath. Jawab chhote, saaf aur dil se — lecture bilkul nahi.' + (window.__bhMemPrompt ? ' User ke baare mein tumhari yaadein (in ko naturally baaton mein use karo, lecture ki tarah mat sunao): ' + window.__bhMemPrompt : '') + (window.__bhStylePrompt ? ' User ka seekha hua baat-cheet andaz — jawab hamesha isi andaz, zubaan aur lehje mein do: ' + window.__bhStylePrompt : '') + ' User ko bar bar guide karne par majboor mat karo — ek dafa samjho, yaad rakho, aur khud agla madadgar qadam suggest karo. Tum sirf jawab dene wale nahi, tum us ke khayal rakhne wale dost ho.'; }
 function callUI(){ const _ca=$('callAvatar'); if(_ca) _ca.src=window.__avHero||'assets/av3d-idle.jpg'; $('callName').textContent='BADSHAH'; }
 function selVoice(){ const s=$('callVoice'); return s?s.value:''; }
 async function fillVoices(){
@@ -1282,6 +1286,10 @@ function setEngine(e, restart){
 }
 async function openCall(){
   if(window.BadshahBridge && BadshahBridge.ensureMic){ try{ BadshahBridge.ensureMic(); }catch(e){} }
+  /* v7.8.2: har nayi call bilkul saaf slate se — pichli call ki dedupe keys,
+     aadhi transcription aur purane counters nayi call ko kabhi block na karein */
+  call._doneKeys={}; call._lastIn=''; call._lastOut=''; call.retries=0; call.handle=null; call.greeted=false; call.setupReady=false;
+  call.diag={ frames:0, sent:0, droppedPlayback:0, droppedPreSetup:0, droppedNoSocket:0, bargeIns:0, rebuilds:0, turns:0, lastFrameAt:0, lastSentAt:0, lastRms:0, maxRms:0, lastRebuildAt:0, lastDiagAt:0 };
   call.minimized=false; const _mb0=$('callMiniBar'); if(_mb0) _mb0.classList.add('hidden');
   $('callView').classList.remove('hidden'); callUI(); const _rf=$('rgbFrame'); if(_rf) _rf.classList.add('on');
   if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('dark'); }catch(e){} }
@@ -1517,6 +1525,8 @@ const LIVE_TOOLS=[{functionDeclarations:[
   {name:'scroll_screen',description:'Scroll the current app screen down or up (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{direction:{type:'STRING',enum:['down','up']}},required:['direction']}},
   {name:'press_back',description:'Press the Android Back button (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
   {name:'go_home',description:'Go to the Android home screen (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
+  {name:'open_recents',description:'Open the Android Recents / recent-apps screen (Android app only; needs Accessibility Control ON). Use when the user asks to see or switch to recent apps.',parameters:{type:'OBJECT',properties:{}}},
+  {name:'open_notifications',description:'Pull down the Android notifications shade (Android app only; needs Accessibility Control ON). Use when the user asks to see their notifications.',parameters:{type:'OBJECT',properties:{}}},
   {name:'read_screen',description:'Read the visible text on the current phone screen so you can answer questions about what is on it (Android app only; needs Accessibility Control ON).',parameters:{type:'OBJECT',properties:{}}},
   {name:'agent_task',description:'Give a task to the user cloud Agent Computer: web searching, research, opening websites, reading pages, any computer work. Use during the call when the user asks you to search the web, find information, research a topic or do computer work. The computer takes 1-3 minutes; afterwards use agent_result to report what it found.',parameters:{type:'OBJECT',properties:{task:{type:'STRING',description:'The work to do, in the user own words, e.g. "Search: best budget phones in Pakistan 2026" or "Open dawn.com and read the top headlines"'}},required:['task']}},
   {name:'agent_result',description:'Check the latest Agent Computer task and report its result to the user. Use when the user asks what the computer found, or whether the work is done.',parameters:{type:'OBJECT',properties:{}}},
@@ -1527,6 +1537,9 @@ function a11yCall(method, args, okMsg){
   const B=window.BadshahBridge;
   if(!B || typeof B[method]!=='function') return 'Ye sirf Android app mein chalta hai — website par nahi';
   if(B.a11yStatus && B.a11yStatus()!=='on') return 'Accessibility Control OFF hai — pehle Floating Dost page se isay ON karo, phir main ye kar sakoon ga';
+  /* v7.8.2 Fault-2: Settings mein ON lekin service zinda nahi (phone ne process
+     maar diya ho) — jhoota "OFF hai" kehne ki bajaye asal wajah + hal batao */
+  if(B.a11yRunning && B.a11yRunning()!=='on') return 'Accessibility Settings mein ON hai, lekin service abhi chal nahi rahi — phone ne usay rok diya hai. Ek dafa Accessibility Settings mein ja kar isay OFF karke dobara ON karo, service foran wapas jud jayegi';
   const key='a11y:'+method+':'+String(args[0]||'').toLowerCase().slice(0,30);
   if(devDone(key)) return okMsg;
   try{ const r=B[method].apply(B,args);
@@ -1565,6 +1578,8 @@ async function execPhoneTool(name,a){
   if(name==='scroll_screen'){ return a11yCall('a11yScroll',[a.direction==='up'?'up':'down'], 'Scroll kar diya hai'); }
   if(name==='press_back'){ return a11yCall('a11yBack',[], 'Back dabaa diya hai'); }
   if(name==='go_home'){ return a11yCall('a11yHome',[], 'Home screen par aa gaye hain'); }
+  if(name==='open_recents'){ return a11yCall('a11yRecents',[], 'Recent apps khol diye hain'); }
+  if(name==='open_notifications'){ return a11yCall('a11yNotifications',[], 'Notifications khol di hain'); }
   if(name==='read_screen'){ const B2=window.BadshahBridge; if(!B2||!B2.a11yRead) return 'Screen parhna sirf Android app mein hota hai'; if(B2.a11yStatus&&B2.a11yStatus()!=='on') return 'Accessibility Control OFF hai — pehle Floating Dost page se isay ON karo'; try{ const t=B2.a11yRead(); return t? 'Screen par ye likha hai: '+t : 'Screen par koi text nahi mila'; }catch(e){ return 'Screen nahi parh saka'; } }
   return 'Unknown tool';
 }
@@ -1582,6 +1597,8 @@ function devKeyOf(name, a){ a=a||{};
   if(name==='scroll_screen') return 'a11y:a11yScroll:'+(a.direction==='up'?'up':'down');
   if(name==='press_back') return 'a11y:a11yBack:';
   if(name==='go_home') return 'a11y:a11yHome:';
+  if(name==='open_recents') return 'a11y:a11yRecents:';
+  if(name==='open_notifications') return 'a11y:a11yNotifications:';
   return name; }
 function devDone(key){ const t=call._doneKeys&&call._doneKeys[key]; return !!(t && (Date.now()-t<6000)); }
 function devMark(key){ if(!call._doneKeys) call._doneKeys={}; call._doneKeys[key]=Date.now(); }
@@ -1685,8 +1702,12 @@ function playPcm(b64){
   const pcm=new Int16Array(bytes.buffer); const buf=ac.createBuffer(1,pcm.length,24000); const ch=buf.getChannelData(0);
   for(let i=0;i<pcm.length;i++) ch[i]=pcm[i]/32768;
   const s=ac.createBufferSource(); s.buffer=buf;
+  /* v7.8.2: agar outAn kisi purane/band AudioContext ka reh gaya ho to gira do —
+     cross-context connect hamesha throw karta hai (Fault-1 ki jad yahi thi) */
+  if(call.outAn && call.outAn.context!==ac){ try{ call.outAn.disconnect(); }catch(e){} call.outAn=null; }
   if(!call.outAn){ try{ call.outAn=ac.createAnalyser(); call.outAn.fftSize=256; call.outAn.connect(ac.destination); }catch(e){} }
-  if(call.outAn) s.connect(call.outAn); else s.connect(ac.destination);
+  try{ if(call.outAn) s.connect(call.outAn); else s.connect(ac.destination); }
+  catch(e){ try{ s.connect(ac.destination); }catch(e2){} }
   call.sources.push(s); s.onended=()=>{ const i=call.sources.indexOf(s); if(i>=0) call.sources.splice(i,1); };
   const now=ac.currentTime; call.playT=Math.max(call.playT||0,now+0.02); s.start(call.playT); call.playT+=buf.duration; eqPulse();
 }
@@ -1751,6 +1772,17 @@ function stopAudio(){
   call.setupReady=false; call.barge=0; call.bargeUntil=0;
   try{ if(call.proc){ call.proc.onaudioprocess=null; call.proc.disconnect(); } }catch(e){}
   try{ if(call.micSrc) call.micSrc.disconnect(); }catch(e){}
+  /* v7.8.2 FAULT-1 FIX (asal bug): call.outAn (playback analyser) purane AudioContext
+     se bana hota tha aur stopAudio usay kabhi saaf nahi karta tha. Agli call mein naya
+     AudioContext banta, lekin playPcm naye source ko USI purane (band) context ke
+     analyser se connect karta — cross-context connect InvalidAccessError deta hai,
+     har audio chunk throw hota, model ka jawab kabhi sunai hi nahi deta tha, aur
+     exception usi onmessage ka baqi hissa (turnComplete waghera) bhi rok deta tha.
+     Sirf app restart (page reload) par outAn reset hota tha — is liye restart ke
+     baghair dusri call kabhi kaam nahi karti thi. Ab poora teardown: */
+  try{ if(call.outAn) call.outAn.disconnect(); }catch(e){}
+  call.outAn=null;
+  call._lastIn=''; call._lastOut='';
   try{ call.stream&&call.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
   try{ call.ac&&call.ac.close(); }catch(e){}
   call.ac=call.stream=call.proc=call.analyser=call.micSrc=call.micGain=null; call.playT=0; call.sources=[]; call.handle=null; call.greeted=false; if(call.rcT){ clearTimeout(call.rcT); call.rcT=null; }
@@ -1793,6 +1825,8 @@ function tryDeviceCommand(raw){
   if((m=raw.match(/^\s*(?:tap karo|dabao)\s+(.{2,40})/i))){ return a11yCall('a11yTap',[m[1].trim()], 'Dabaa diya hai'); }
   if(/^\s*(back|peeche)\s*(jao|dabao|karo)?\s*$/i.test(raw)){ return a11yCall('a11yBack',[], 'Back dabaa diya hai'); }
   if(/^\s*(home|home jao|ghar jao)\s*$/i.test(raw)){ return a11yCall('a11yHome',[], 'Home screen par aa gaye hain'); }
+  if(/recent|pichli apps/i.test(raw) && /(khol|kholo|dikha|open)/i.test(raw)){ return a11yCall('a11yRecents',[], 'Recent apps khol diye hain'); }
+  if(/notification/i.test(raw) && /(khol|kholo|dikha|open)/i.test(raw)){ return a11yCall('a11yNotifications',[], 'Notifications khol di hain'); }
   if(/^\s*scroll\s+(down|up|neeche|upar)/i.test(raw)){ return a11yCall('a11yScroll',[/up|upar/i.test(raw)?'up':'down'], 'Scroll kar diya hai'); }
   if((m=raw.match(/youtube\s*(?:par|pe)?\s*(.+?)\s*(?:chalao|play|khol|lagao|search|dhundo)/i)) || (m=raw.match(/(.+?)\s+youtube\s*(?:par|pe)?\s*(?:chalao|play|lagao)/i))){
     const q=m[1].trim(); if(q){ if(!bridgeDo('openYouTube',q)) window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank'); return 'YouTube par "'+q+'" chala raha hoon…'; }
@@ -2502,10 +2536,24 @@ fetch('/version.json').then(r=>r.json()).then(v=>{ document.querySelectorAll('.a
   hook(); window.addEventListener('load', hook);
 })();
 window.refreshPhoneCtl=function(){ const B=window.BadshahBridge; const a=$('a11yStat'), o=$('ovStat');
-  if(a) a.textContent = !B ? 'Status: sirf Android app mein hai' : ('Status: '+((B.a11yStatus&&B.a11yStatus()==='on')?'ON \u2714':'OFF'));
+  if(a) a.textContent = !B ? 'Status: sirf Android app mein hai' : ('Status: '+((B.a11yStatus&&B.a11yStatus()==='on') ? ((B.a11yRunning&&B.a11yRunning()!=='on') ? 'ON hai lekin service ruk gayi hai — Accessibility Settings mein ek dafa OFF karke dobara ON karo' : 'ON \u2714') : 'OFF'));
   if(o) o.textContent = !B ? 'Status: sirf Android app mein hai' : ('Status: '+((B.overlayStatus&&B.overlayStatus()==='on')?'ON \u2714':'OFF')); };
 window.a11yOpen=function(){ const B=window.BadshahBridge; if(B&&B.openA11ySettings){ B.openA11ySettings(); setTimeout(window.refreshPhoneCtl,2000); } else bhToast('Ye sirf Android app mein hota hai'); };
 window.ovOpen=function(){ const B=window.BadshahBridge; if(B&&B.openOverlaySettings){ B.openOverlaySettings(); setTimeout(window.refreshPhoneCtl,2000); } else bhToast('Ye sirf Android app mein hota hai'); };
+/* ===== v7.8.2 Part A: Keep-Alive (battery exemption + HiOS auto-start) =====
+   Dono one-time system allows hain — app khud kuch enable nahi karta, sirf
+   sahi Settings screen kholta hai aur asal state dikhata hai (koi fake
+   state nahi: bridge jo report kare, wahi text). */
+window.refreshBatt=function(){ const B=window.BadshahBridge; const bt=$('battStat'); if(!bt) return;
+  if(!B){ bt.textContent='Battery: available in the Android app only'; return; }
+  const s=(B.batteryOptStatus)?B.batteryOptStatus():'';
+  bt.textContent = s==='unrestricted' ? 'Battery: Unrestricted \u2714' : (s==='restricted' ? 'Battery: Restricted — tap the button below and allow Unrestricted' : 'Battery: —'); };
+window.battOpen=function(){ const B=window.BadshahBridge; if(B&&B.batteryOptRequest){ const r=B.batteryOptRequest(); if(r==='already') bhToast('Battery already Unrestricted \u2714'); setTimeout(window.refreshPhoneCtl,2000); } else bhToast('Ye sirf Android app mein hota hai'); };
+window.autostartOpen=function(){ const B=window.BadshahBridge; if(B&&B.autostartSettings){ B.autostartSettings(); setTimeout(window.refreshPhoneCtl,2000); } else bhToast('Ye sirf Android app mein hota hai'); };
+(function(){ const _rpc=window.refreshPhoneCtl; if(typeof _rpc==='function' && !window.__rpcWrapped){ window.__rpcWrapped=1; window.refreshPhoneCtl=function(){ _rpc(); window.refreshBatt(); }; } })();
+/* App resume par status dobara parho — Settings grant ON lekin service
+   murda ho to refreshPhoneCtl wahi honest line dikhata hai (Part A.4). */
+document.addEventListener('visibilitychange',function(){ if(!document.hidden) setTimeout(window.refreshPhoneCtl,300); });
 (function(){ const _sv=window.showView; if(typeof _sv==='function' && !window.__svWrapped){ window.__svWrapped=1; window.showView=function(v){ _sv(v); if(v==='floating') setTimeout(window.refreshPhoneCtl,80); }; } })();
 window.setMode=function(m){ localStorage.setItem('ba_mode',m); applyMode(); };
 function applyMode(){ const m=localStorage.getItem('ba_mode')||'auto'; document.body.classList.toggle('force-phone',m==='phone'); document.body.classList.toggle('force-laptop',m==='laptop'); document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m)); }

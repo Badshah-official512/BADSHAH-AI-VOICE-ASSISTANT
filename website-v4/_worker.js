@@ -293,17 +293,36 @@ async function handleImage(req, env, url) {
   { const g = await gate(env, 'image'); if (g) return g; }
   const ip = req.headers.get('cf-connecting-ip') || 'unknown';
   if (rateLimited(ip)) return json(429, { error: 'Too many requests — thoda ruk kar try karo.' });
-  const q = url.searchParams.get('q') || '';
+  let q = url.searchParams.get('q') || '';
+  let model = url.searchParams.get('model') || 'gemini-3.1-flash-image';
+  /* v7.8.2 Feature-3: IMAGE EDIT — POST JSON {q, model, image:dataURL} aaye to
+     image ko Gemini image model ke paas inlineData part bana kar bhejte hain;
+     ye models asal mein image dekh kar edit karte hain. GET (sirf text) wala
+     purana rasta bilkul waisa hi rakha hai. */
+  let inPart = null;
+  if (req.method === 'POST') {
+    const b = await req.clone().json().catch(() => null);
+    if (b) {
+      if (b.q) q = String(b.q).slice(0, 2000);
+      if (b.model) model = String(b.model);
+      if (b.image) {
+        const m = String(b.image).match(/^data:([^;,]+);base64,([A-Za-z0-9+/=\s]+)$/);
+        if (m) inPart = { inlineData: { mimeType: m[1], data: m[2].replace(/\s+/g, '') } };
+      }
+    }
+  }
+  if (!q && inPart) q = 'Edit this image';
   if (!q) return json(400, { error: 'q is empty' });
-  const model = url.searchParams.get('model') || 'gemini-3.1-flash-image';
   if (!GEMINI_IMAGE_MODELS.has(model)) return json(400, { error: 'Unknown image model: ' + model });
   if (env.SUPABASE_SERVICE_ROLE_KEY) {
     const keys = await poolKeys(env, 'gemini').catch(() => []);
     for (const k of keys) {
+      const parts = [{ text: q }];
+      if (inPart) parts.push(inPart);
       const r = await fetch(GEMINI_REST + model + ':generateContent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
-        body: JSON.stringify({ contents: [{ parts: [{ text: q }] }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
+        body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
       });
       if (r.ok) {
         const d = await r.json();
