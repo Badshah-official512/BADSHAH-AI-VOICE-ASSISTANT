@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -63,7 +64,7 @@ class FloatingOrbService : Service() {
         wasForeground = fg
         orb?.visibility = if (!fg && form == Form.ORB) View.VISIBLE else View.GONE
         bar?.visibility = if (!fg && form == Form.BAR) View.VISIBLE else View.GONE
-        glow?.visibility = if (fg) View.GONE else View.VISIBLE
+        glow?.visibility = if (!fg && form == Form.BAR) View.VISIBLE else View.GONE
     }
 
     private fun switchForm(next: Form) {
@@ -171,6 +172,8 @@ class FloatingOrbService : Service() {
         runCatching { wm?.addView(bv, barParams) }
         // v7.3: RGB edge glow — call ke doran poori screen ke kinaron par roshni,
         // app background mein ho tab bhi rehti hai (service sirf call ke doran chalti hai)
+        // v7.8.1: hologram perimeter — ab sirf BAR form active honay par dikhta
+        // hai (applyVisibility dekho); FLAG_NOT_TOUCHABLE hai, touch block nahi hota.
         val gv = EdgeGlowView(this)
         val gParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT, type,
@@ -205,8 +208,13 @@ class FloatingOrbService : Service() {
  * round buttons on the right (mic = filled purple, keyboard = dark with a
  * purple outline; glyphs drawn with canvas strokes). Status line is
  * "Tap to talk": this service has no call-state signal (see service note).
- * Drawn on the same 40 ms tick style as the orb; no behaviour lives here —
- * drag / tap / long-press are handled by the service's touch listener.
+ * Drawn on a ~33 ms tick; no behaviour lives here — drag / tap /
+ * long-press are handled by the service's touch listener.
+ *
+ * v7.8.1: bar ke gird dynamic hologram halo — layered strokes jin ka rang
+ * purple -> cyan -> green cycle karta hai aur intensity saans leti hai
+ * (listening state mein zyada roshan; setListening dekho). Poore phone ki
+ * screen ke chaaron kinaron wali hologram lighting EdgeGlowView mein hai.
  */
 class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
     private val d = ctx.resources.displayMetrics.density
@@ -237,12 +245,33 @@ class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
         style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND; color = Color.WHITE; strokeWidth = 1.7f * d
     }
     private val glyphFill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = Color.WHITE }
+    private val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE; maskFilter = BlurMaskFilter(5f * d, BlurMaskFilter.Blur.NORMAL)
+    }
     private val rect = RectF()
     private val clip = Path()
     private var startAt = System.currentTimeMillis()
+    // v7.8.1 hologram palette: purple -> cyan -> green
+    private val holoColors = intArrayOf(Color.rgb(139, 61, 255), Color.rgb(34, 211, 238), Color.rgb(52, 245, 162))
+    @Volatile private var listening = false
+    /** Listening state mein halo zyada roshan hota hai. Is service ke paas
+     *  call-state ka koi signal nahi (service wali note dekho), is liye abhi
+     *  isay koi call nahi karta — mechanism view mein tayyar hai. */
+    fun setListening(on: Boolean) { listening = on }
+    private fun lerpColor(c1: Int, c2: Int, f: Float): Int = Color.rgb(
+        (Color.red(c1) + (Color.red(c2) - Color.red(c1)) * f).toInt(),
+        (Color.green(c1) + (Color.green(c2) - Color.green(c1)) * f).toInt(),
+        (Color.blue(c1) + (Color.blue(c2) - Color.blue(c1)) * f).toInt(),
+    )
+    private fun holoColor(now: Long): Int {
+        val t = ((now - startAt) % 6000) / 6000f
+        val seg = (t * holoColors.size).toInt() % holoColors.size
+        val frac = (t * holoColors.size) - (t * holoColors.size).toInt()
+        return lerpColor(holoColors[seg], holoColors[(seg + 1) % holoColors.size], frac)
+    }
     private var animOn = false
     private val tick = object : Runnable {
-        override fun run() { invalidate(); if (animOn) handler.postDelayed(this, 40) }
+        override fun run() { invalidate(); if (animOn) handler.postDelayed(this, 33) }
     }
     override fun onAttachedToWindow() { super.onAttachedToWindow(); animOn = true; handler.post(tick) }
     override fun onDetachedFromWindow() { stopAnim(); super.onDetachedFromWindow() }
@@ -275,13 +304,23 @@ class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
         val cy = h / 2f
         val now = System.currentTimeMillis()
         val pulse = (sin((now % 2400) / 2400.0 * 2 * Math.PI).toFloat() + 1f) / 2f // 0..1 breathing
-        val radius = h / 2f - 2f * d
+        val bodyInset = 7f * d
+        val radius = (h - 2 * bodyInset) / 2f
 
-        // purple neon glow (breathing) + body + border
-        rect.set(3f * d, 3f * d, w - 3f * d, h - 3f * d)
-        glowPaint.color = Color.argb((40 + pulse * 50).toInt(), 139, 61, 255); glowPaint.strokeWidth = 7f * d
+        // v7.8.1: dynamic hologram halo — layered strokes in a hue that keeps
+        // cycling purple -> cyan -> green, with breathing intensity (brighter
+        // while listening). The outer layer is blurred, so the light falls
+        // off softly beyond the pill edge instead of ending in a hard line.
+        val holo = holoColor(now)
+        val boost = if (listening) 1.35f else 1f
+        val inten = (0.70f + 0.30f * pulse) * boost
+        rect.set(bodyInset, bodyInset, w - bodyInset, h - bodyInset)
+        haloPaint.color = holo; haloPaint.alpha = (34 * inten).toInt().coerceIn(0, 120); haloPaint.strokeWidth = 12f * d
+        canvas.drawRoundRect(rect, radius, radius, haloPaint)
+        glowPaint.color = holo; glowPaint.alpha = (58 * inten).toInt().coerceIn(0, 170); glowPaint.strokeWidth = 7f * d
         canvas.drawRoundRect(rect, radius, radius, glowPaint)
         canvas.drawRoundRect(rect, radius, radius, bgPaint)
+        borderPaint.color = holo; borderPaint.alpha = (215 + 40 * pulse).toInt().coerceIn(0, 255)
         canvas.drawRoundRect(rect, radius, radius, borderPaint)
 
         // left: round poster centre-cut photo
@@ -296,6 +335,7 @@ class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
         } else {
             canvas.drawCircle(avCx, cy, avR, kbFill)
         }
+        ringPaint.color = holo
         canvas.drawCircle(avCx, cy, avR + 0.8f * d, ringPaint)
 
         // text column
@@ -314,6 +354,7 @@ class PillBarView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
         drawMicGlyph(canvas, micCx, cy)
 
         // waveform: 5 small vertical bars between text and buttons, animated
+        wavePaint.color = holo
         val waveCx = kbCx - btnR - 16f * d
         for (i in 0..4) {
             val ph = (now % 900) / 900.0 * 2 * Math.PI + i * 0.9
@@ -430,6 +471,14 @@ class AgenticOrbView(ctx: Context, private val bmp: Bitmap?) : View(ctx) {
  * Screen ke kinaron par "energy border": halki base roshni ke upar do
  * chamakti dum-daar dharaein (comets) mukhalif simton mein safar karti
  * hain — purple/blue aur green — bilkul agentic system wali harkat.
+ *
+ * v7.8.1 (user correction): yehi asal "dynamic hologram lighting" hai —
+ * POORE phone ki screen ke chaaron kinaron par, sirf bar ke gird nahi.
+ * Palette user ki spec par purple -> cyan -> green kar di gayi hai, base
+ * glow saans leti (pulse) hai, aur do comets kinaron par safar karti hain.
+ * Overlay FLAG_NOT_TOUCHABLE hai (touch kabhi block nahi hota) aur sirf
+ * BAR form active honay par dikhta hai; service band honay par ye view
+ * remove ho jata hai.
  */
 class EdgeGlowView(ctx: Context) : View(ctx) {
     private val density = ctx.resources.displayMetrics.density
@@ -437,9 +486,10 @@ class EdgeGlowView(ctx: Context) : View(ctx) {
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val rect = RectF()
+    // v7.8.1: hologram palette — sirf purple -> cyan -> green (user spec)
     private val colors = intArrayOf(
-        Color.rgb(59, 130, 246), Color.rgb(239, 68, 68),
-        Color.rgb(163, 230, 53), Color.rgb(139, 61, 255),
+        Color.rgb(139, 61, 255), Color.rgb(34, 211, 238),
+        Color.rgb(52, 245, 162),
     )
     private var startAt = System.currentTimeMillis()
     private val tick = object : Runnable {
@@ -499,7 +549,7 @@ class EdgeGlowView(ctx: Context) : View(ctx) {
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val now = System.currentTimeMillis()
-        val t = ((now - startAt) % 4800) / 4800f
+        val t = ((now - startAt) % 6000) / 6000f
         val seg = (t * colors.size).toInt() % colors.size
         val frac = (t * colors.size) - (t * colors.size).toInt()
         val baseCol = lerpColor(colors[seg], colors[(seg + 1) % colors.size], frac)
@@ -507,8 +557,9 @@ class EdgeGlowView(ctx: Context) : View(ctx) {
         val r = 26f * density
         rect.set(inset, inset, width - inset, height - inset)
 
-        // soft outer glow
-        glowPaint.color = baseCol; glowPaint.alpha = 26; glowPaint.strokeWidth = 8f * density
+        // soft outer glow (v7.8.1: breathing pulse)
+        val pulse = (sin((now % 2400) / 2400.0 * 2 * Math.PI).toFloat() + 1f) / 2f // 0..1
+        glowPaint.color = baseCol; glowPaint.alpha = (18 + pulse * 26).toInt(); glowPaint.strokeWidth = (7f + pulse * 3f) * density
         canvas.drawRoundRect(rect, r, r, glowPaint)
         // faint full border (purani pehchan, halki)
         basePaint.color = baseCol; basePaint.alpha = 64; basePaint.strokeWidth = 2.2f * density
@@ -520,8 +571,8 @@ class EdgeGlowView(ctx: Context) : View(ctx) {
         val perim = 2 * wt + 2 * ht + 2 * Math.PI.toFloat() * r
         if (perim <= 0) return
         val headA = ((now - startAt) % 9000) / 9000f * perim
-        drawComet(canvas, headA, perim, inset, r, Color.rgb(139, 61, 255), Color.rgb(59, 130, 246))
+        drawComet(canvas, headA, perim, inset, r, Color.rgb(139, 61, 255), Color.rgb(34, 211, 238))
         val headB = (headA + perim / 2f) % perim
-        drawComet(canvas, headB, perim, inset, r, Color.rgb(34, 255, 170), Color.rgb(163, 230, 53))
+        drawComet(canvas, headB, perim, inset, r, Color.rgb(34, 211, 238), Color.rgb(52, 245, 162))
     }
 }

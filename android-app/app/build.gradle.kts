@@ -28,8 +28,8 @@ android {
         applicationId = "dev.pages.badshah222ai"   // must match Firebase (google-services.json)
         minSdk = 26
         targetSdk = 35
-        versionCode = 29
-        versionName = "7.8.0"
+        versionCode = 30
+        versionName = "7.8.1"
         buildConfigField("String", "SUPABASE_URL", "\"${project.property("SUPABASE_URL")}\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${project.property("SUPABASE_PUBLISHABLE_KEY")}\"")
         buildConfigField("String", "FUNCTIONS_REGION", "\"${project.property("FIREBASE_FUNCTIONS_REGION")}\"")
