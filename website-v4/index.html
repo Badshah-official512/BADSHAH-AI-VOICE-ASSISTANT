@@ -215,6 +215,10 @@ a.feat{display:block}
 .feat .go{display:inline-block;margin-top:12px;color:var(--blue);font-weight:700;font-size:13.5px;letter-spacing:.4px}
 .soc-c{justify-content:center}
 .soc-c a{padding:11px 20px;font-size:14.5px}
+.tut-frame{max-width:340px;margin:52px auto 0;border:1px solid var(--line);border-radius:28px;padding:12px;background:linear-gradient(180deg,var(--panel),var(--ink2));box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 44px rgba(168,85,247,.28);position:relative}
+.tut-frame video{display:block;width:100%;aspect-ratio:9/16;max-height:72vh;object-fit:contain;background:#000;border-radius:20px}
+.tut-cap{text-align:center;color:var(--mut);font-size:14.5px;margin-top:18px}
+@media(max-width:480px){.tut-frame{max-width:300px}.tut-frame video{max-height:68vh}}
 </style>
 </head>
 <body>
@@ -224,7 +228,7 @@ a.feat{display:block}
 <nav style="top:var(--bar-h,0px)"><div class="nav-in">
   <a class="logo" href="./"><img src="assets/logo-poster.png" alt="BADSHAH AI logo" style="width:40px;height:40px;object-fit:cover;border-radius:10px"><span data-brand>BADSHAH <em>AI</em></span></a>
   <div class="nav-links">
-    <a href="#modes">Modes</a><a href="#features">Features</a><a href="#call">Live Call</a><a href="#free">Free</a><a href="#creator">Creator</a><a href="privacy.html">Privacy</a>
+    <a href="#modes">Modes</a><a href="#features">Features</a><a href="#call">Live Call</a><a href="#tutorial">Tutorial</a><a href="#free">Free</a><a href="#creator">Creator</a><a href="privacy.html">Privacy</a>
   </div>
   <a class="btn btn-p btn-sm" href="./BADSHAH-AI.apk" download>📲 Download APK</a>
 </div></nav>
@@ -309,6 +313,19 @@ a.feat{display:block}
     <div class="call-btns"><div class="cb">🎙️</div><div class="cb end">📞</div><div class="cb">🔊</div></div>
   </div>
   <div class="cta-row reveal"><a class="btn btn-p" href="app.html">📞 Start a Call</a></div>
+</div></section>
+
+<section id="tutorial" style="padding-top:20px"><div class="wrap">
+  <p class="kicker reveal">Full Tutorial</p>
+  <h2 class="sec-t reveal">Watch how it <span style="background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent">works</span></h2>
+  <p class="sec-s reveal">The full walkthrough in under two minutes — sign up, add your free Gemini key, chat, start a live call and use voice commands, step by step.</p>
+  <div class="tut-frame reveal">
+    <video controls preload="none" poster="assets/tutorial-poster.jpg" playsinline>
+      <source src="assets/tutorial.mp4" type="video/mp4">
+      Your browser does not support video playback.
+    </video>
+  </div>
+  <p class="tut-cap reveal">Filmed inside the real app — what you see is exactly what you get.</p>
 </div></section>
 
 <section id="gallery" style="padding-top:10px"><div class="wrap">

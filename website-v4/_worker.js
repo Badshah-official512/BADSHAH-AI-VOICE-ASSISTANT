@@ -29,7 +29,15 @@
    return 403, Live WebSocket works. So every REST feature tries Gemini first and
    falls back to a working free engine (Groq chat / Pollinations image /
    ElevenLabs voice) until a full Gemini API key is added to the pool. */
+/* v7.8.3 (FULL-CHECK B1): live-tested 2026-11-24 — ONLY gemini-3.5-flash-lite
+   answers as Gemini via REST; gemini-3.8-flash and gemini-3.1-pro-preview are
+   rejected by Google and silently fell over to Groq. config.js no longer offers
+   the dead IDs. They stay in this allowlist ONLY so stale clients (cached pages /
+   old APK sessions) keep the graceful Groq failover instead of a hard 400. */
 const GEMINI_CHAT_MODELS = new Set(['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-pro-preview']);
+/* v7.8.3 (FULL-CHECK B2): neither image ID served live on 2026-11-24 (chain fell
+   through to the keyless Pollinations route). IDs stay because /api/image needs
+   an accepted model param; the provider chain behind them is the resilience. */
 const GEMINI_IMAGE_MODELS = new Set(['gemini-3.1-flash-image', 'gemini-3-pro-image']);
 const GEMINI_TTS_MODEL = 'gemini-3.8-flash-tts';
 const GEMINI_VIDEO_MODELS = new Set(['gemini-omni-1.1-flash', 'veo-3.1-generate-preview']);
@@ -120,9 +128,23 @@ async function sbRpc(env, fn, args) {
 }
 
 /* ---------------- API key pool ---------------- */
+/* v7.8.3 — dead-key cooldown (in-isolate memory): a pooled key that upstream
+   rejects with 401/403 is skipped for 10 minutes, so one dead key cannot poison
+   every request's latency (FULL-CHECK L4). Isolates recycle, so this is only a
+   latency guard, never a permanent disable — the Admin Panel `active` flag stays
+   the source of truth. Key VALUES are never logged, only provider + row id. */
+const deadKeyUntil = new Map();
+const DEAD_KEY_COOLDOWN_MS = 10 * 60 * 1000;
+function keyCoolingDown(provider, id) { const u = deadKeyUntil.get(provider + ':' + id); return !!u && u > Date.now(); }
+function markKeyDead(provider, row, status) {
+  if (!row || !row.id) return;
+  deadKeyUntil.set(provider + ':' + row.id, Date.now() + DEAD_KEY_COOLDOWN_MS);
+  console.log('[pool] dead key skipped for 10m: provider=' + provider + ' key_id=' + row.id + ' upstream_status=' + status);
+}
 async function poolKeys(env, provider) {
   const rows = await sbAdmin(env, 'api_keys?select=id,key_value,use_count&provider=eq.' + provider + '&active=eq.true&order=last_used_at.asc.nullsfirst&limit=10');
-  return Array.isArray(rows) ? rows : [];
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(r => !keyCoolingDown(provider, r.id));
 }
 async function touchKey(env, row) {
   try { await sbAdmin(env, 'api_keys?id=eq.' + row.id, { method: 'PATCH', body: JSON.stringify({ use_count: (row.use_count || 0) + 1, last_used_at: new Date().toISOString() }) }); } catch (e) {}
@@ -144,13 +166,16 @@ async function groqAnswer(env, model, q) {
       body: JSON.stringify({ model, messages: [{ role: 'system', content: CHAT_SYSTEM }, { role: 'user', content: q }] })
     }, 25000).catch(() => null);
     if (!r) return null;
-    if (r.status === 429 && !k.__rt) { k.__rt = 1; await new Promise(res => setTimeout(res, 1800)); return oaiAnswerRetry(env, provider, baseUrl, model, q, k); }
+    /* v7.8.3 fix: this retry used undefined `provider`/`baseUrl` variables — a
+       Groq 429 would have thrown ReferenceError and killed the whole chat call. */
+    if (r.status === 429 && !k.__rt) { k.__rt = 1; await new Promise(res => setTimeout(res, 1800)); return oaiAnswerRetry(env, 'groq', 'https://api.groq.com/openai/v1', model, q, k); }
     if (r.ok) {
       const d = await r.json();
       await touchKey(env, k);
       return ((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '');
     }
-    if (r.status !== 401 && r.status !== 429) return null;
+    if (r.status === 401 || r.status === 403) { markKeyDead('groq', k, r.status); continue; }
+    if (r.status !== 429) return null;
   }
   return null;
 }
@@ -169,7 +194,10 @@ async function oaiAnswer(env, provider, baseUrl, model, q) {
       await touchKey(env, k);
       return ((d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '');
     }
-    if (r.status !== 401 && r.status !== 429) return null;
+    /* v7.8.3: 401/403 = this key is dead — cool it down and try the NEXT key
+       (previously a 403 stopped the whole leg, hiding any healthy keys). */
+    if (r.status === 401 || r.status === 403) { markKeyDead(provider, k, r.status); continue; }
+    if (r.status !== 429) return null;
   }
   return null;
 }
@@ -206,7 +234,9 @@ async function geminiAnswer(env, model, q) {
       const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
       return parts.map(p => p.text || '').join('').trim();
     }
-    if (r.status !== 401 && r.status !== 403 && r.status !== 429 && r.status !== 404) return null;
+    if (r.status === 401 || r.status === 403) { markKeyDead('gemini', k, r.status); continue; }
+    if (r.status === 404) return null; /* v7.8.3: model ID dead — every key would 404, fail fast */
+    if (r.status !== 429) return null;
   }
   return null;
 }
@@ -242,7 +272,7 @@ async function handleChat(req, env, url) {
     return json(502, { error: 'Mistral abhi jawab nahi de raha — Admin Panel mein key check karo, ya thodi dair baad try karo.' });
   }
 
-  const model = url.searchParams.get('model') || 'gemini-3.8-flash';
+  const model = url.searchParams.get('model') || 'gemini-3.5-flash-lite'; /* v7.8.3: default = the one live-proven Gemini chat model (B1) */
   if (!GEMINI_CHAT_MODELS.has(model)) return json(400, { error: 'Unknown model: ' + model });
   const gtext = await geminiAnswer(env, model, q);
   if (gtext) return json(200, { text: gtext, provider: 'gemini', model });
@@ -258,7 +288,10 @@ async function handleChat(req, env, url) {
 }
 
 /* ---------------- extra image/video providers (v6.1) ----------------
-   Image order: Gemini -> Cloudflare Workers AI (binding "AI") -> Stability (pool key) -> Replicate FLUX (pool key) -> Pollinations (free, no key).
+   Full /api/image order (handleImage): Gemini image models -> keyed Pollinations
+   (pool key) -> altImage() below: Cloudflare Workers AI (binding "AI") ->
+   Stability (pool key) -> Replicate FLUX (pool key) -> keyless Pollinations URL
+   (last resort, always answers).
    Video: Replicate MiniMax video-01 (pool key "replicate") when Gemini video is unavailable. */
 function b64(buf) { let s = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
 async function altImage(env, q) {
@@ -266,10 +299,18 @@ async function altImage(env, q) {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
   try { const ks = await poolKeys(env, 'stability').catch(() => []);
     for (const k of ks) { const f = new FormData(); f.append('prompt', q); f.append('output_format', 'jpeg');
-      const r = await fetch('https://api.stability.ai/v2beta/stable-image/generate/core', { method: 'POST', headers: { Authorization: 'Bearer ' + k.key_value, Accept: 'image/*' }, body: f });
-      if (r.ok) { await touchKey(env, k); return { image: 'data:image/jpeg;base64,' + b64(await r.arrayBuffer()), provider: 'stability', model: 'core' }; } } } catch (e) {}
+      /* v7.8.3: was a bare fetch with NO timeout and the upstream status was
+         swallowed — a hanging/dead Stability leg could stall or silently kill
+         this chain. Now bounded (25s), status logged, dead key cooled down. */
+      const r = await fetchT('https://api.stability.ai/v2beta/stable-image/generate/core', { method: 'POST', headers: { Authorization: 'Bearer ' + k.key_value, Accept: 'image/*' }, body: f }, 25000).catch(() => null);
+      if (!r) continue;
+      if (r.ok) { await touchKey(env, k); return { image: 'data:image/jpeg;base64,' + b64(await r.arrayBuffer()), provider: 'stability', model: 'core' }; }
+      if (r.status === 401 || r.status === 402 || r.status === 403) markKeyDead('stability', k, r.status); /* 402 = credits exhausted, 401/403 = key rejected */
+      else console.log('[image] stability leg upstream status=' + r.status); } } catch (e) {}
   try { const ks = await poolKeys(env, 'replicate').catch(() => []);
-    for (const k of ks) { const r = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', { method: 'POST', headers: { Authorization: 'Bearer ' + k.key_value, 'Content-Type': 'application/json', Prefer: 'wait' }, body: JSON.stringify({ input: { prompt: q } }) });
+    for (const k of ks) { const r = await fetchT('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', { method: 'POST', headers: { Authorization: 'Bearer ' + k.key_value, 'Content-Type': 'application/json', Prefer: 'wait' }, body: JSON.stringify({ input: { prompt: q } }) }, 25000).catch(() => null);
+      if (!r) continue;
+      if (r.status === 401 || r.status === 403) { markKeyDead('replicate', k, r.status); continue; }
       const d = await r.json().catch(() => ({})); const out = Array.isArray(d.output) ? d.output[0] : d.output;
       if (r.ok && out) { await touchKey(env, k); return { image: out, provider: 'replicate', model: 'flux-schnell' }; } } } catch (e) {}
   return null;
@@ -319,18 +360,23 @@ async function handleImage(req, env, url) {
     for (const k of keys) {
       const parts = [{ text: q }];
       if (inPart) parts.push(inPart);
-      const r = await fetch(GEMINI_REST + model + ':generateContent', {
+      /* v7.8.3: was a bare fetch — no timeout, and a network throw escaped
+         handleImage entirely. Bounded + caught now. */
+      const r = await fetchT(GEMINI_REST + model + ':generateContent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k.key_value },
         body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } })
-      });
+      }, 30000).catch(() => null);
+      if (!r) continue;
       if (r.ok) {
         const d = await r.json();
         const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
         const img = parts.find(p => p.inlineData && p.inlineData.data);
         if (img) { await touchKey(env, k); return json(200, { image: 'data:' + (img.inlineData.mimeType || 'image/png') + ';base64,' + img.inlineData.data, provider: 'gemini', model }); }
       }
-      if (r.status !== 401 && r.status !== 403 && r.status !== 429 && r.status !== 404) break;
+      if (r.status === 401 || r.status === 403) { markKeyDead('gemini', k, r.status); continue; }
+      if (r.status === 429) continue;
+      break; /* v7.8.3: 404 = model ID dead (every key would 404) — anything else: fall through fast */
     }
   }
   // v7.3: owner ki Pollinations image key (Supabase pool) — key kabhi frontend par nahi jati, image yahin se proxy hoti hai
@@ -343,6 +389,7 @@ async function handleImage(req, env, url) {
           let bin = ''; const bytes = new Uint8Array(buf); const CH = 32768;
           for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
           return json(200, { image: 'data:image/jpeg;base64,' + btoa(bin), provider: 'pollinations-key', model: 'flux' }); }
+        if (r.status === 401 || r.status === 403) markKeyDead('pollinations-image', k, r.status); /* v7.8.3: dead pool key (401 confirmed live 2026-11-24) — skip it for 10m */
         if (r.status !== 401 && r.status !== 403 && r.status !== 429) break;
       } catch (e) {}
     }
@@ -1075,6 +1122,15 @@ async function handleDeviceCmd(req, env) {
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    /* v7.8.3 (FULL-CHECK L1/B4): internal repo files were publicly downloadable
+       from the live site (full SQL schema, internal docs, agent prompt, deploy
+       notes). Hard 404 for exactly those paths BEFORE any route or static-asset
+       fallthrough. No app feature fetches these paths (verified by grep of the
+       web tree); /, /app, /admin, /api/* and /assets/* are unaffected. */
+    const lp = url.pathname.toLowerCase();
+    if (lp === '/sql' || lp.startsWith('/sql/') || lp.startsWith('/documentation/') || lp.startsWith('/prompts/') || lp === '/deploy.md' || lp === '/readme.md') {
+      return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store', 'X-Robots-Tag': 'noindex', ...SECURITY_HEADERS } });
+    }
     if (url.pathname === '/api/config') return handleConfig(req, env);
     if (url.pathname === '/api/track') return handleTrack(req, env);
     if (url.pathname === '/api/profile-sync') return handleProfileSync(req, env);
