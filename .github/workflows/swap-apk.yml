@@ -1,0 +1,18 @@
+name: swap-apk
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swap APK
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git rm -q website-v4/BADSHAH-AI.apk
+          git mv website-v4/BADSHAH-AI-v7.8.2.apk website-v4/BADSHAH-AI.apk
+          git commit -m "site: BADSHAH-AI.apk -> v7.8.2"
+          git push
