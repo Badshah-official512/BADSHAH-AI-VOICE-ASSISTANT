@@ -22,6 +22,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Make gradlew executable
         run: chmod +x gradlew
+
+      # 0) HARD GATE (v7.8.3): release signing secrets MUST exist.
+      #    Before this fix, a missing keystore secret produced a GREEN build
+      #    with UNSIGNED artifacts that looked like release outputs.
+      #    Now the build fails loudly instead — no silent unsigned releases.
+      - name: Require release signing secrets
+        env:
+          KS_B64: ${{ secrets.BADSHAH_KEYSTORE_BASE64 }}
+          KS_PW: ${{ secrets.BADSHAH_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.BADSHAH_KEY_ALIAS }}
+          KS_KEYPW: ${{ secrets.BADSHAH_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -z "$KS_B64" ]   && missing="$missing BADSHAH_KEYSTORE_BASE64"
+          [ -z "$KS_PW" ]    && missing="$missing BADSHAH_KEYSTORE_PASSWORD"
+          [ -z "$KS_ALIAS" ] && missing="$missing BADSHAH_KEY_ALIAS"
+          [ -z "$KS_KEYPW" ] && missing="$missing BADSHAH_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error::Release signing secrets are MISSING:$missing — refusing to build. An unsigned 'release' must never ship green. Add the secrets in repo Settings > Secrets and variables > Actions, then re-run."
+            exit 1
+          fi
+          echo "All release signing secrets present."
+
       # 1) Unit tests (command parser, voice catalog, provider logic)
       - name: Unit tests
         run: ./gradlew --no-daemon testDebugUnitTest
@@ -30,19 +53,14 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew --no-daemon assembleDebug
 
-      # 3) Release: signed ONLY if you added the 4 secrets + keystore secret (see documentation/BUILD-APK.md).
-      - name: Restore release keystore (if secrets exist)
+      # 3) Release: signed (secrets proven present by the gate above).
+      - name: Restore release keystore
         env:
           KS_B64: ${{ secrets.BADSHAH_KEYSTORE_BASE64 }}
         run: |
-          if [ -n "$KS_B64" ]; then
-            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
-            echo "BADSHAH_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-            echo "SIGNED=true" >> "$GITHUB_ENV"
-          else
-            echo "SIGNED=false" >> "$GITHUB_ENV"
-            echo "::warning::No keystore secret found: release APK/AAB will be UNSIGNED."
-          fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "BADSHAH_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          echo "SIGNED=true" >> "$GITHUB_ENV"
 
       - name: Assemble release APK and bundle AAB
         env:
@@ -57,15 +75,10 @@ jobs:
           mkdir -p ../release-artifacts
           D=app/build/outputs/apk/debug/app-debug.apk
           cp "$D" ../release-artifacts/BADSHAH-AI-debug.apk
-          if [ "$SIGNED" = "true" ]; then
-            cp app/build/outputs/apk/release/app-release.apk ../release-artifacts/BADSHAH-AI-release.apk
-            cp app/build/outputs/bundle/release/app-release.aab ../release-artifacts/BADSHAH-AI.aab
-          else
-            cp app/build/outputs/apk/release/app-release-unsigned.apk ../release-artifacts/BADSHAH-AI-release-UNSIGNED.apk
-            cp app/build/outputs/bundle/release/app-release.aab ../release-artifacts/BADSHAH-AI-UNSIGNED.aab
-          fi
+          cp app/build/outputs/apk/release/app-release.apk ../release-artifacts/BADSHAH-AI-release.apk
+          cp app/build/outputs/bundle/release/app-release.aab ../release-artifacts/BADSHAH-AI.aab
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          for f in ../release-artifacts/*.apk; do echo "== $f"; "$BT/apksigner" verify --print-certs "$f" || echo "(not signed / unsigned as expected)"; done
+          for f in ../release-artifacts/BADSHAH-AI-release.apk; do echo "== $f"; "$BT/apksigner" verify --print-certs "$f"; done
           ls -la ../release-artifacts
           (cd ../release-artifacts && sha256sum * > SHA256SUMS.txt)
 
