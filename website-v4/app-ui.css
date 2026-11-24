@@ -825,6 +825,19 @@ body.av-hero #chatAvWrap{width:150px;height:174px;border-radius:80px 80px 26px 2
 body.av-hero #chatAvWrap::after{display:none}
 body.av-hero #chatAv{inset:auto;left:50%;bottom:0;transform:translateX(-50%);width:136px;height:160px;border-radius:0;object-fit:contain;box-shadow:none}
 
+/* ===== v7.8.1 fix (user request, 2026-11-24): the call stage shows the HOME
+   HERO artwork — the same hologram art as the home hero stage
+   (assets/avatar-full.webp, portrait 1280x1920, character already inside it).
+   For the default 'hero' preset it replaces the poster room (call-bg) plus the
+   separate #callChar full-body overlay, which would double the character.
+   .callHero stays in flow as the spacer (its ring/halo/pedestal are hidden),
+   so stage geometry, chips, wave, panels and controls are unchanged.
+   Other avatar presets keep the poster stage exactly as before. */
+#callHeroArt{display:none}
+body.av-hero #callHeroArt{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2}
+body.av-hero #callChar{display:none}
+body.av-hero .callHeroRing,body.av-hero .callHeroHalo,body.av-hero .callPedestal{display:none}
+
 /* ============================================================
    v7.8.1 — Purple Neon full dark palette (format-revert port)
    The original one-line body[data-theme="neon"] rule near the
@@ -921,3 +934,78 @@ body[data-theme="neon"] .floatcap{background:rgba(17,10,38,.92)}
    whose placeholder wraps to 2 lines at <=480px, but its height showed only
    ~1.5 lines, half-cutting the second line. Give it the full 2-line height. */
 @media (max-width:480px){ #homeCmd{height:62px} }
+
+/* ============================================================
+   v7.8.1 fit + top Minimize (user request, 2026-11-24):
+   (1) the whole call panel fits ONE phone viewport — no scroll
+       to reach End: the hero stage flex-shrinks and its chips /
+       wave / panels overlay the art's bottom (as in the approved
+       hero screenshot) instead of stacking below a tall spacer;
+       the lower call section is compacted (geometry only — every
+       element and function is unchanged).
+   (2) a Minimize button in the stage's top corner, wired to the
+       app's minimizeCall() (ported from v7.8.0 with its floating
+       mini bar below) — the call keeps running behind the bar.
+   Scoped so other avatar presets keep their stage as before.
+   ============================================================ */
+@keyframes eqB{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.5)}}
+#callMiniBar{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:210;display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:99px;background:linear-gradient(90deg,rgba(24,12,54,.96),rgba(44,20,96,.96));border:1.5px solid rgba(170,120,255,.85);box-shadow:0 0 26px rgba(140,80,255,.55),0 14px 34px rgba(0,0,0,.5);color:#fff;cursor:pointer}
+#callMiniBar.hidden{display:none!important}
+.cmb-face{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,160,255,.9);flex:none}
+.cmb-txt{flex:1;min-width:0}
+.cmb-txt b{display:block;font-size:14.5px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmb-txt span{display:block;font-size:12px;color:#C4A0FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmb-wave{display:inline-flex;gap:2.5px;align-items:center;flex:none}
+.cmb-wave i{width:3.5px;height:10px;border-radius:3px;background:#B78CFF;animation:eqB 0.9s ease-in-out infinite}
+.cmb-wave i:nth-child(odd){animation-delay:.25s}
+.cmb-btn{width:40px;height:40px;border-radius:50%;background:rgba(124,77,255,.3);border:1px solid rgba(170,120,255,.7);color:#fff;font-size:16px;flex:none;display:flex;align-items:center;justify-content:center}
+.cmb-end{background:rgba(229,72,77,.85);border-color:rgba(255,120,120,.8)}
+/* top-corner Minimize (stage top-right, same row as the LIVE LINK chip) */
+#btnMinCallTop{position:absolute;top:10px;right:12px;z-index:7;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;background:rgba(10,14,30,.55);border:1px solid rgba(170,150,255,.45);color:#EDE9FF;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.4px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#btnMinCallTop .min-ic{font-size:12px;line-height:1;color:#B79CFF}
+/* --- compaction of the lower call section (all presets) --- */
+#callView{padding:12px 16px calc(10px + env(safe-area-inset-bottom))}
+#callMain{min-height:0}
+#callName{font-size:20px;margin-top:8px}
+#callStatus{font-size:13px;min-height:18px;margin-top:2px}
+.eq{height:18px;margin-top:5px}
+#callCaption{font-size:13.5px;min-height:18px;margin-top:5px}
+.ctlhint{font-size:11px;padding-top:6px;white-space:nowrap;overflow:hidden}
+.ctlrow{padding-top:6px}
+.ctlrow button{padding:7px 12px}
+#ctlStatus{margin-top:3px!important;min-height:14px}
+.call-ctl{padding-top:8px}
+.eng-row{margin-bottom:6px}
+.eng{padding:6px 12px;font-size:12.5px}
+.voice-sel{padding:7px 12px;font-size:13.5px;margin-bottom:6px}
+.mic-meter{margin-bottom:6px}
+.cbtn{width:54px;height:54px}
+.cbtn.end{width:60px;height:60px}
+.cpanel{padding:8px 12px}
+/* --- hero preset: stage flex-shrinks; overlays anchor to its bottom --- */
+body.av-hero #callView .stage{flex:1 1 auto;min-height:0;padding:40px 14px 10px;margin-top:4px}
+body.av-hero .callHero{flex:1 1 auto;height:auto;min-height:0}
+body.av-hero #callHeroArt{object-position:50% 0%}
+body.av-hero #callStage .callChips{position:absolute;left:14px;right:14px;bottom:100px;margin-top:0;flex-wrap:nowrap;gap:5px}
+body.av-hero #callStage .cchip{font-size:9px;letter-spacing:1px;padding:5px 8px;white-space:nowrap}
+body.av-hero #callWave{position:absolute;left:14px;right:14px;width:auto;bottom:70px;height:26px;margin-top:0}
+body.av-hero #callStage .callPanels{position:absolute;left:14px;right:14px;bottom:10px;margin-top:0}
+/* short viewports (e.g. 360x740): squeeze the lower section a little more
+   so the stage keeps enough height for the face to stay clear of the chips */
+@media (max-height:760px){
+  .eng{padding:5px 11px}
+  .eng-row{margin-bottom:5px}
+  .voice-sel{padding:6px 12px}
+  #callName{margin-top:6px}
+  .eq{margin-top:3px}
+  .ctlrow{padding-top:4px}
+  .call-ctl{padding-top:6px}
+}
+/* phone widths: compact the mini bar so its title never ellipsizes */
+@media (max-width:480px){
+  #callMiniBar{gap:8px;padding:9px 11px}
+  .cmb-face{width:38px;height:38px}
+  .cmb-btn{width:34px;height:34px;font-size:14px}
+  .cmb-wave i:nth-child(n+5){display:none}
+  .cmb-txt b{font-size:13px}
+}

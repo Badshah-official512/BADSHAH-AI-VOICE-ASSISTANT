@@ -994,8 +994,8 @@
   </div>
   <div id="callMain" class="hidden" style="display:flex;flex-direction:column;align-items:center;flex:1;width:100%">
     <div class="call-orb" id="callOrbHost" style="display:none"></div>
-    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI">
-        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><img id="callChar" src="assets/char-full.webp" alt="BADSHAH"><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
+    <div class="stage avatarhide" id="callStage"><div class="rgbglow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div><img id="callHeroArt" src="assets/avatar-full.webp" alt="BADSHAH hologram"><div class="scan"></div><div class="hud"><span class="hud-live">● LIVE LINK</span><span class="hud-id">BADSHAH://VOICE</span></div><button id="btnMinCallTop" type="button" title="Minimize — call chalti rahegi, app use karo" aria-label="Minimize call"><span class="min-ic">▽</span><span class="min-lab">Minimize</span></button><div class="callHero"><div class="callHeroRing"></div><div class="callHeroHalo"></div><img id="callAvatar" src="assets/avatar-face.png" alt="BADSHAH AI">
+        <video id="callAvVid" class="avvid" muted loop playsinline preload="auto" poster="assets/avatar-face.png"><source src="assets/avz-idle.webm" type="video/webm"><source src="assets/avz-idle.mp4" type="video/mp4"></video><div class="callPedestal"></div></div><img id="callChar" src="assets/char-full.webp" alt="BADSHAH"><div class="callChips"><span class="cchip live">● LIVE</span><span class="cchip" id="callStateChip" data-s="idle">READY</span><span class="cchip" id="callEngineChip">GEMINI LIVE</span><span class="cchip" id="callTimer">00:00</span></div><canvas id="callWave"></canvas><div class="callPanels"><div class="cpanel"><b>MEMORIES</b><span id="cpMem">—</span></div><div class="cpanel"><b>VOICE</b><span id="cpVoice">Charon</span></div><div class="cpanel"><b>AGENT COMPUTER</b><span id="cpAgent">—</span></div></div><div class="neonwash"></div></div>
     <h2 id="callName">BADSHAH</h2>
     <p id="callStatus">Connecting…</p>
     <div class="eq" id="callEq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1029,6 +1029,16 @@
     <div id="callChatBox" title="Call Chat — ye baatein alag save hoti hain"></div>
     <div class="ccp-foot"><button class="eng" type="button" id="btnCopyCallChat">📋 Saari chat copy karo</button><button class="eng" type="button" id="btnCallChatImg">🖼️ Image banao</button><button class="eng" type="button" id="btnCallChatVid">🎬 Video banao</button></div>
   </div>
+</div>
+
+<!-- ===== v7.8.1: minimized-call floating bar (ported from v7.8.0) — call keeps running behind it ===== -->
+<div id="callMiniBar" class="hidden" role="button" aria-label="Back to call">
+  <img class="cmb-face" src="assets/poster-cut.png" alt="">
+  <div class="cmb-txt"><b>Ask BADSHAH AI</b><span id="cmbStatus">Listening...</span></div>
+  <span class="cmb-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+  <button class="cmb-btn" id="cmbMic" type="button" aria-label="Mute / unmute">🎙️</button>
+  <button class="cmb-btn" id="cmbChat" type="button" aria-label="Open chat">⌨️</button>
+  <button class="cmb-btn cmb-end" id="cmbEnd" type="button" aria-label="End call">✕</button>
 </div>
 
 <script src="bh-core.js"></script>
@@ -1207,6 +1217,7 @@ $('btnPair').onclick=async()=>{
 /* ---------- CALL v3 — Gemini Live (BYOK key) + ElevenLabs + PHONE CONTROL tools ---------- */
 const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', ws:null, ac:null, stream:null, proc:null, analyser:null, raf:0,
   sources:[], playT:0, muted:false, handle:null, retries:0, key:null, chunks:0,
+  minimized:false, startedAt:0, timerT:null,
   elBuf:[], elSpeech:false, elSil:0, elBusy:false, elHist:[], elAudio:null, elVoices:null,
   /* v7.8.1 port (from v7.8.0): Live-listen fix state — purana layout/call screen waisa hi */
   setupReady:false,
@@ -1215,7 +1226,7 @@ const call={ on:false, engine:localStorage.getItem('ba_call_engine')||'gemini', 
          lastFrameAt:0, lastSentAt:0, lastRms:0, maxRms:0, lastRebuildAt:0, lastDiagAt:0 } };
 const GEM_VOICES=(CFG.voicesMale&&CFG.voicesMale.length)?CFG.voicesMale:['Charon','Fenrir','Puck','Orus','Algieba','Achird'];
 const EL_FALLBACK=[{id:'pNInz6obpgDQGcFmaJgB',name:'Adam — gehri mardana'},{id:'ErXwobaYiN019PkySvjV',name:'Antoni — mardana'},{id:'yoZ06aMxZJJ28mfd3POQ',name:'Sam — mardana'}];
-function callStatus(t){ $('callStatus').textContent=t; }
+function callStatus(t){ $('callStatus').textContent=t; const mb=$('cmbStatus'); if(mb && call.minimized) mb.textContent=t; }
 /* ----- v7.8.1 port (from v7.8.0): Live diagnostics ----- */
 function liveLog(){ try{ console.log.apply(console, ['[BH Live]'].concat(Array.prototype.slice.call(arguments))); }catch(e){} }
 function liveDiag(){ const d=call.diag||{}; const now=Date.now(); return {
@@ -1271,6 +1282,7 @@ function setEngine(e, restart){
 }
 async function openCall(){
   if(window.BadshahBridge && BadshahBridge.ensureMic){ try{ BadshahBridge.ensureMic(); }catch(e){} }
+  call.minimized=false; const _mb0=$('callMiniBar'); if(_mb0) _mb0.classList.add('hidden');
   $('callView').classList.remove('hidden'); callUI(); const _rf=$('rgbFrame'); if(_rf) _rf.classList.add('on');
   if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('dark'); }catch(e){} }
   $('keyBox').classList.add('hidden'); $('callMain').classList.remove('hidden'); const _mb=$('callMediaBox'); if(_mb) _mb.classList.add('hidden');
@@ -1279,6 +1291,7 @@ async function openCall(){
   $('engEl').onclick=()=>{ if(!localStorage.getItem('ba_el_key')){ openKeyBox('eleven'); } else setEngine('eleven',true); };
   $('callVoice').onchange=()=>{ localStorage.setItem(call.engine==='gemini'?'ba_voice_gem':'ba_voice_el', selVoice()); if(call.engine==='gemini'&&call.on){ stopEngine(); startEngine(); } };
   setEngine(call.engine,false);
+  startCallTimer();
   startEngine();
 }
 function openCallSmart(){ openCall(); }
@@ -1295,7 +1308,21 @@ $('btnKeySave').onclick=()=>{ const k=$('gemKey').value.trim(); const el=$('elKe
 $('btnEnd').onclick=closeCall;
 $('btnMute').onclick=()=>{ call.muted=!call.muted; $('btnMute').classList.toggle('muted',call.muted); if(call.stream) call.stream.getAudioTracks().forEach(t=>t.enabled=!call.muted); callStatus(call.muted?'Mute — mic band hai':'Live — bolo, main sun raha hoon'); };
 $('btnSpk').onclick=()=>{ $('callCaption').scrollIntoView(); };
-function closeCall(){ const _rf2=$('rgbFrame'); if(_rf2) _rf2.classList.remove('on'); if(call.screenOn) toggleScreen(); if(call.camOn) toggleCam(); call.on=false; if(window.__callLog&&window.__callLog.length>1&&window.__bhSaveCallLog){ try{ window.__bhSaveCallLog(window.__callLog); }catch(e){} } window.__callLog=[]; if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('light'); }catch(e){} } stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
+/* ----- v7.8.1: call timer + minimize-to-bar (ported from v7.8.0 — call isi screen ka overlay hai, alag page nahi) ----- */
+function fmtCallTime(s){ const m=Math.floor(s/60), ss=s%60; return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss; }
+function startCallTimer(){ call.startedAt=Date.now(); const t=$('callTimer'); if(t) t.textContent='00:00'; if(call.timerT) clearInterval(call.timerT); call.timerT=setInterval(()=>{ const el=$('callTimer'); if(el && call.on) el.textContent=fmtCallTime(Math.floor((Date.now()-call.startedAt)/1000)); },1000); }
+function stopCallTimer(){ if(call.timerT){ clearInterval(call.timerT); call.timerT=null; } const t=$('callTimer'); if(t) t.textContent='00:00'; }
+function minimizeCall(){ if(!call.on) return; call.minimized=true; $('callView').classList.add('hidden'); const bar=$('callMiniBar'); if(bar){ bar.classList.remove('hidden'); const st=$('cmbStatus'); if(st) st.textContent=call.muted?(window.v78T?window.v78T('mutedWord'):'Muted'):(window.v78T?window.v78T('listening'):'Listening...'); } liveLog('call minimized — call chalti rahegi', liveDiag()); }
+function restoreCall(){ if(!call.on) return; call.minimized=false; const bar=$('callMiniBar'); if(bar) bar.classList.add('hidden'); $('callView').classList.remove('hidden'); }
+window.minimizeCall=minimizeCall; window.restoreCall=restoreCall;
+$('btnMinCallTop').onclick=minimizeCall;
+(function(){ const bar=$('callMiniBar'); if(!bar) return;
+  bar.addEventListener('click',e=>{ if(e.target.closest('.cmb-btn')) return; restoreCall(); });
+  const mic=$('cmbMic'); if(mic) mic.onclick=e=>{ e.stopPropagation(); const b=$('btnMute'); if(b) b.click(); mic.textContent=call.muted?'🔇':'🎙️'; };
+  const cht=$('cmbChat'); if(cht) cht.onclick=e=>{ e.stopPropagation(); minimizeCall(); try{ showView('chat'); }catch(err){} };
+  const end=$('cmbEnd'); if(end) end.onclick=e=>{ e.stopPropagation(); closeCall(); };
+})();
+function closeCall(){ const _rf2=$('rgbFrame'); if(_rf2) _rf2.classList.remove('on'); stopCallTimer(); call.minimized=false; const _mb9=$('callMiniBar'); if(_mb9) _mb9.classList.add('hidden'); if(call.screenOn) toggleScreen(); if(call.camOn) toggleCam(); call.on=false; if(window.__callLog&&window.__callLog.length>1&&window.__bhSaveCallLog){ try{ window.__bhSaveCallLog(window.__callLog); }catch(e){} } window.__callLog=[]; if(window.BadshahBridge && BadshahBridge.setChromeTheme){ try{ BadshahBridge.setChromeTheme('light'); }catch(e){} } stopEngine(); stopAudio(); $('callView').classList.add('hidden'); if(window.BadshahBridge && BadshahBridge.micRelease){ try{ BadshahBridge.micRelease(); }catch(e){} } }
 /* ----- Screen share ----- */
 function bhSendFrame(b64){ if(call.screenOn && call.engine==='gemini' && call.ws && call.ws.readyState===1){ try{ call.ws.send(JSON.stringify({realtimeInput:{video:{mimeType:'image/jpeg',data:b64}}})); }catch(e){} } }
 window.__bhScreenFrame=function(b64){ bhSendFrame(b64); };
