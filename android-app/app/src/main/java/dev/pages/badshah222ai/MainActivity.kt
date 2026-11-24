@@ -31,7 +31,9 @@ import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.WindowInsets
+import android.view.WindowManager
 import android.view.WindowInsetsController
 import android.webkit.JavascriptInterface
 import android.view.ViewGroup
@@ -78,6 +80,11 @@ class MainActivity : ComponentActivity() {
     private val uiScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var audioFocusReq: AudioFocusRequest? = null
     @Volatile private var screenPumpOn = false
+    // v7.8.3 A9: call-session state shared by micTakeover/micRelease and the
+    // audio-focus listener. callActive = a voice call is in progress;
+    // focusWasHeld = we had audio focus before a loss, so GAIN should restore.
+    @Volatile private var callActive = false
+    @Volatile private var focusWasHeld = false
 
     private val projectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode == Activity.RESULT_OK && res.data != null) {
@@ -112,6 +119,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val TAG = "BadshahCall"
         const val PRIMARY_URL = "https://badshah222-ai.pages.dev/app.html"
         const val FALLBACK_URL = "https://badshah-xjc.pages.dev/app.html"
         private const val REQ_WEB = 45
@@ -119,6 +127,102 @@ class MainActivity : ComponentActivity() {
         private const val REQ_ONE = 48
         private const val REQ_MIC_PRE = 44
         @Volatile var appInForeground = false
+    }
+
+    // v7.8.3 A9: REAL audio-focus listener (v7.8.2 registered an empty one).
+    // Mid-call focus loss (notification sounds, another app, system UI) used
+    // to be silently ignored for the rest of the call. Now: on loss we tell
+    // the web layer so it can pause/rebuild; on gain we re-request focus,
+    // restore MODE_IN_COMMUNICATION + speakerphone exactly as micTakeover
+    // set them, and tell the web layer it can resume.
+    private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { change ->
+        when (change) {
+            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                Log.d(TAG, "audio focus lost (change=$change, callActive=$callActive)")
+                if (callActive) {
+                    focusWasHeld = true
+                    notifyWebAudioFocus("lost")
+                }
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                Log.d(TAG, "audio focus duck (change=$change, callActive=$callActive)")
+                if (callActive) notifyWebAudioFocus("lost")
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                Log.d(TAG, "audio focus gained (callActive=$callActive, focusWasHeld=$focusWasHeld)")
+                if (callActive) {
+                    // Capture + clear BEFORE the async restore runs:
+                    // requestCallAudioFocus sets focusWasHeld again on grant,
+                    // and that fresh value must survive for the next loss.
+                    val wasHeld = focusWasHeld
+                    focusWasHeld = false
+                    runOnUiThread {
+                        try {
+                            val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                            if (wasHeld) requestCallAudioFocus(am)
+                            am.mode = AudioManager.MODE_IN_COMMUNICATION
+                            @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
+                        } catch (e: Exception) {
+                            Log.d(TAG, "audio focus restore failed: ${e.message}")
+                        }
+                    }
+                    notifyWebAudioFocus("gained")
+                }
+            }
+            else -> Log.d(TAG, "audio focus change=$change (callActive=$callActive)")
+        }
+    }
+
+    /** Builds and requests the call's audio focus with the real listener.
+     *  Used by micTakeover and by the focus-regain path. Returns true when
+     *  focus was granted. Never throws. */
+    private fun requestCallAudioFocus(am: AudioManager): Boolean {
+        return try {
+            val attrs = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+            val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                .setAudioAttributes(attrs)
+                .setOnAudioFocusChangeListener(audioFocusListener)
+                .build()
+            audioFocusReq = req
+            val granted = am.requestAudioFocus(req) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+            if (granted) focusWasHeld = true
+            granted
+        } catch (e: Exception) {
+            Log.d(TAG, "requestCallAudioFocus failed: ${e.message}")
+            false
+        }
+    }
+
+    /** Tells the web layer about a call audio-focus transition so it can
+     *  pause/rebuild its Live session. Hook contract:
+     *  window.__bhAudioFocus('lost' | 'gained'). Never throws. */
+    private fun notifyWebAudioFocus(state: String) {
+        runOnUiThread {
+            try {
+                if (this::web.isInitialized) {
+                    web.evaluateJavascript("window.__bhAudioFocus&&window.__bhAudioFocus('$state')", null)
+                }
+            } catch (e: Exception) {
+                Log.d(TAG, "notifyWebAudioFocus($state) failed: ${e.message}")
+            }
+        }
+    }
+
+    // v7.8.3 A4: keep the screen on ONLY while a voice call is active, so the
+    // display timeout cannot stall the call's WebView JS/socket mid-call.
+    // FLAG_KEEP_SCREEN_ON needs no permission; set at call start, cleared at
+    // call end. Must run on the UI thread. Never throws.
+    private fun setCallScreenOn(on: Boolean) {
+        try {
+            if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            Log.d(TAG, "FLAG_KEEP_SCREEN_ON ${if (on) "set" else "cleared"}")
+        } catch (e: Exception) {
+            Log.d(TAG, "setCallScreenOn($on) failed: ${e.message}")
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -355,22 +459,18 @@ class MainActivity : ComponentActivity() {
             // v6.6: MIC CHHEEN-LO system — asal call apps ki tarah. Audio focus +
             // MODE_IN_COMMUNICATION se system dusri apps ka mic khali kar deta hai,
             // phir WebView ka getUserMedia araam se mic le leta hai. Speaker ON.
+            // v7.8.3: callActive set hoti hai (A9 focus listener isi par kaam
+            // karta hai), focus request ab asal listener ke saath jati hai, aur
+            // A4 — call ke doran screen on rehti hai (FLAG_KEEP_SCREEN_ON).
             runOnUiThread {
+                callActive = true
                 try {
                     val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                     am.mode = AudioManager.MODE_IN_COMMUNICATION
-                    val attrs = AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build()
-                    val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
-                        .setAudioAttributes(attrs)
-                        .setOnAudioFocusChangeListener { }
-                        .build()
-                    audioFocusReq = req
-                    am.requestAudioFocus(req)
+                    requestCallAudioFocus(am)
                     @Suppress("DEPRECATION") am.isSpeakerphoneOn = true
                 } catch (e: Exception) { }
+                setCallScreenOn(true)
                 // Call ko minimize/background mein zinda rakho (foreground service)
                 try { CallService.start(this@MainActivity) } catch (e: Exception) { }
                 // v7.2: floating bubble — sirf jab overlay permission pehle se granted ho
@@ -381,6 +481,10 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface
         fun micRelease() {
             runOnUiThread {
+                // v7.8.3: pehle call state band karo taake koi late focus event
+                // khatam-shuda call par restore/notify na kare.
+                callActive = false
+                focusWasHeld = false
                 try {
                     val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
                     audioFocusReq?.let { runCatching { am.abandonAudioFocusRequest(it) } }
@@ -388,6 +492,7 @@ class MainActivity : ComponentActivity() {
                     @Suppress("DEPRECATION") am.isSpeakerphoneOn = false
                     am.mode = AudioManager.MODE_NORMAL
                 } catch (e: Exception) { }
+                setCallScreenOn(false)
                 try { CallService.stop(this@MainActivity) } catch (e: Exception) { }
                 try { FloatingOrbService.stop(this@MainActivity) } catch (e: Exception) { }
             }
