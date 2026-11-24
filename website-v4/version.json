@@ -1,1 +1,1 @@
-{"code":31,"name":"7.8.2","notes":"Fixes: calls work again after ending, accessibility stays on, more attachment types, chat header fixed."}
+{"code":32,"name":"7.8.3","notes":"Fixes: calls keep working when the connection drops or the mic is taken, dead chat/image models repaired, loading animation, tutorial video."}
