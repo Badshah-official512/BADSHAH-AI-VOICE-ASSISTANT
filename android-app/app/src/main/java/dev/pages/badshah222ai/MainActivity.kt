@@ -3,6 +3,7 @@ package dev.pages.badshah222ai
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -25,6 +26,7 @@ import android.net.Uri
 import android.app.role.RoleManager
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.os.Environment
 import android.provider.ContactsContract
 import android.provider.MediaStore
@@ -549,6 +551,119 @@ class MainActivity : ComponentActivity() {
         fun a11yRead(): String {
             val s = BadshahAccessibilityService.instance ?: return "off"
             return s.readScreen()
+        }
+
+        /* v7.8.2 Fault-2: Settings mein ON hona aur service ka asal mein CHAL
+           raha hona do alag baatein hain. Call khatam hone par CallService
+           (foreground service) rukta hai to kuch phones (Tecno/HiOS) background
+           process ko maar dete hain — Settings ka switch ON rehta hai lekin
+           service murda ho jati hai. Web layer ab ye farq dekh sakta hai:
+           a11yStatus() = Settings grant, a11yRunning() = zinda service. */
+        @JavascriptInterface
+        fun a11yRunning(): String {
+            return if (BadshahAccessibilityService.instance != null) "on" else "off"
+        }
+
+        @JavascriptInterface
+        fun a11yRecents(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.goRecents()
+        }
+
+        @JavascriptInterface
+        fun a11yNotifications(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.openNotifications()
+        }
+
+        @JavascriptInterface
+        fun a11yTapXY(x: Int, y: Int): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.tapXY(x, y)
+        }
+
+        @JavascriptInterface
+        fun a11ySwipe(x1: Int, y1: Int, x2: Int, y2: Int): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.swipe(x1, y1, x2, y2)
+        }
+
+        @JavascriptInterface
+        fun a11yLongPress(text: String): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.longPressText(text)
+        }
+
+        @JavascriptInterface
+        fun a11yScreenshot(): String {
+            val s = BadshahAccessibilityService.instance ?: return "off"
+            return s.screenshotBase64()
+        }
+
+        /* v7.8.2 Part A — accessibility persistence helpers. Dono one-time
+           SYSTEM allows hain jo user khud deta hai; koi app khud ko battery
+           exemption ya auto-start nahi de sakta. Ye methods sirf sahi
+           Settings screen kholte hain aur asal state report karte hain. */
+        @JavascriptInterface
+        fun batteryOptStatus(): String {
+            // "unrestricted" = battery optimization OFF for this app (zinda
+            // rehne ki ijazat), "restricted" = system maar sakta hai.
+            return try {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (pm.isIgnoringBatteryOptimizations(packageName)) "unrestricted" else "restricted"
+            } catch (e: Exception) { "unknown" }
+        }
+
+        @JavascriptInterface
+        fun batteryOptRequest(): String {
+            return try {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                if (pm.isIgnoringBatteryOptimizations(packageName)) return "already"
+                val i = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                i.data = Uri.parse("package:$packageName")
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(i)
+                "opened"
+            } catch (e: Exception) {
+                try {
+                    val j = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    j.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(j)
+                    "opened-list"
+                } catch (e2: Exception) { "failed" }
+            }
+        }
+
+        @JavascriptInterface
+        fun autostartSettings(): String {
+            // Tecno/HiOS (Transsion) auto-start screen — best effort: pehle
+            // maloom HiOS/PhoneMaster components, phir Phone Master app,
+            // warna is app ki details screen. Jo khula, wahi report hota hai.
+            val candidates = listOf(
+                ComponentName("com.transsion.phonemaster", "com.transsion.phonemaster.autostart.AutoStartActivity"),
+                ComponentName("com.transsion.phonemaster", "com.transsion.phonemaster.manager.AutoStartActivity"),
+                ComponentName("com.transsion.hilauncher", "com.transsion.hilauncher.autostart.AutoStartActivity"),
+                ComponentName("com.infinix.xos", "com.infinix.xos.autostart.AutoStartActivity")
+            )
+            for (c in candidates) {
+                try {
+                    val i = Intent()
+                    i.component = c
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    if (packageManager.resolveActivity(i, 0) != null) { startActivity(i); return "hios" }
+                } catch (e: Exception) { /* agla candidate */ }
+            }
+            try {
+                val launch = packageManager.getLaunchIntentForPackage("com.transsion.phonemaster")
+                if (launch != null) { launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(launch); return "phonemaster" }
+            } catch (e: Exception) { /* fallback neeche */ }
+            return try {
+                val d = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                d.data = Uri.parse("package:$packageName")
+                d.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(d)
+                "details"
+            } catch (e: Exception) { "failed" }
         }
 
         @JavascriptInterface
