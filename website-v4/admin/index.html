@@ -109,6 +109,7 @@ main{padding:22px 26px 110px;min-width:0}
     <button class="nv" data-p="announce">📣 Announcements</button>
     <button class="nv" data-p="support">🛟 Support <span class="bd hidden" id="tkBd"></span></button>
     <button class="nv" data-p="system">🧰 System</button>
+    <button class="nv" id="btnRani" style="border-color:rgba(255,107,157,.45);color:#FFC2D4">💜 RANI Panel ↗</button>
     <div class="sp"></div>
     <button class="nv" id="btnSite">↗ Open website</button>
     <button class="nv" id="btnLogout">⎋ Logout</button>
@@ -328,7 +329,7 @@ function go(p){ cur=p; qa('.nv[data-p]').forEach(n=>n.classList.toggle('on',n.da
 async function load(p){ await safe(async()=>{ ({overview:loadOverview,analytics:loadAnalytics,live:loadLive,users:loadUsers,website:loadConfig,app:loadApp,keys:loadKeys,announce:loadAnn,support:loadTickets,system:loadSystem})[p](); }); }
 qa('.nv[data-p]').forEach(n=>n.onclick=()=>go(n.dataset.p)); qa('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 $('menuBtn').onclick=()=>$('side').classList.toggle('open'); $('btnRefresh').onclick=()=>load(cur);
-$('btnSite').onclick=()=>window.open('../','_blank'); $('btnLogout').onclick=()=>{ sessionStorage.removeItem('ba_admin_pw'); PW=''; location.reload(); };
+$('btnSite').onclick=()=>window.open('../','_blank'); $('btnRani').onclick=()=>window.open('../Ranipanal/','_blank'); $('btnLogout').onclick=()=>{ sessionStorage.removeItem('ba_admin_pw'); PW=''; location.reload(); };
 
 /* ---------- overview ---------- */
 async function loadOverview(){

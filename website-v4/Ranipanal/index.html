@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>RANI AI GF — Ranipanal (Admin)</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14081F">
+<link rel="icon" href="../icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* RANI Ranipanal — same shell as /admin (Control Room), RANI pink accent.
+   Login: wahi admin password jo /admin ka hai. Panel search engines se chhupa hai. */
+:root{--ink:#14081F;--ink2:#1F0B2E;--panel:#2A1238;--panel2:#341845;--g:#FF6B9D;--gd:#E8437A;--gs:#FFC2D4;--blue:#38BDF8;--red:#FF5C6C;--gold:#FFC94D;--txt:#FFF0F5;--mut:#C9A8C0;--line:rgba(255,107,157,.28);--ok:#34D399}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(1200px 600px at 20% -10%,#3D1450 0%,transparent 60%),radial-gradient(1000px 500px at 110% 10%,#2A0B45 0%,transparent 55%),var(--ink);color:var(--txt);font-family:Inter,system-ui,sans-serif;min-height:100dvh;font-size:14.5px}
+button{font-family:inherit;cursor:pointer;color:inherit}input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+.lights{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}.glow{position:absolute;border-radius:50%;filter:blur(110px);opacity:.5}.g1{width:480px;height:480px;background:#E8437A;top:-160px;left:-120px}.g2{width:420px;height:420px;background:#6D28D9;bottom:-160px;right:-100px}
+.center{position:relative;z-index:2;min-height:100dvh;display:grid;place-items:center;padding:20px}
+.login{width:min(410px,100%);background:linear-gradient(180deg,var(--panel),var(--ink2));border:1px solid var(--line);border-radius:28px;padding:34px 30px;text-align:center;box-shadow:0 0 0 1px rgba(255,107,157,.12),0 30px 80px rgba(0,0,0,.6),0 0 60px rgba(232,67,122,.25)}
+.login img{width:96px;height:96px;border-radius:24px;box-shadow:0 0 50px rgba(255,107,157,.55);object-fit:cover}
+.login h1{font-family:"Space Grotesk";font-size:25px;margin-top:16px;color:#fff}.login p{color:var(--mut);margin-top:6px;font-size:13.5px}
+.field,.in{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(20,8,31,.75);color:#fff;font-size:14.5px;outline:none;transition:.2s}
+.field{margin-top:14px;padding:13px 16px;font-size:15px}
+.field:focus,.in:focus{border-color:rgba(255,107,157,.85);box-shadow:0 0 0 3px rgba(255,107,157,.18)}
+.field::placeholder,.in::placeholder{color:#8F7390}
+select.in option{background:#2A1238;color:#fff}
+textarea.in{resize:vertical;min-height:80px;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:700;font-size:13.5px;border:1px solid transparent;background:linear-gradient(135deg,var(--g),var(--gd));color:#fff;transition:.2s;white-space:nowrap;box-shadow:0 6px 22px rgba(232,67,122,.35)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(232,67,122,.5)}.btn.w{width:100%;margin-top:14px;padding:13px}
+.btn.g{background:rgba(255,107,157,.1);border-color:var(--line);color:var(--txt);box-shadow:none}.btn.red{background:var(--red);color:#fff;box-shadow:none}.btn.gold{background:var(--gold);color:#241a00;box-shadow:none}.btn.s{padding:6px 12px;font-size:12.5px}
+.err{color:#FF8A94;font-size:13.5px;margin-top:12px;min-height:18px}
+.app{position:relative;z-index:2;display:grid;grid-template-columns:248px 1fr;min-height:100dvh}
+nav.side{background:rgba(31,11,46,.92);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100dvh;backdrop-filter:blur(12px)}
+.brand{display:flex;gap:11px;align-items:center;padding:2px 6px 14px}.brand img{width:44px;height:44px;border-radius:13px;object-fit:cover;box-shadow:0 0 18px rgba(255,107,157,.5)}.brand b{font-family:"Space Grotesk";font-size:16.5px;display:block;color:#fff}.brand small{color:var(--mut);font-size:11.5px}
+.nv{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:13px;border:1px solid transparent;background:transparent;font-weight:600;font-size:14px;text-align:left;color:var(--mut);transition:.15s;width:100%}
+.nv:hover{background:rgba(255,107,157,.12);color:#fff}.nv.on{background:linear-gradient(135deg,rgba(255,107,157,.35),rgba(232,67,122,.18));border-color:rgba(255,107,157,.55);color:#fff;box-shadow:0 0 18px rgba(232,67,122,.25)}
+.nv .bd{margin-left:auto;background:var(--red);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
+.side .sp{flex:1}
+main{padding:22px 26px 110px;min-width:0}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.top h1{font-family:"Space Grotesk";font-size:26px;color:#fff}.top .sp{flex:1}
+.live-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,107,157,.5);background:rgba(255,107,157,.12);font-weight:700;font-size:13px;color:#fff}
+.live-pill i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px var(--ok);animation:pl 1.6s infinite}@keyframes pl{50%{transform:scale(1.5);opacity:.5}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.kpi{border:1px solid var(--line);border-radius:20px;padding:18px 20px;background:linear-gradient(180deg,var(--panel),var(--ink2));position:relative;overflow:hidden;box-shadow:0 0 24px rgba(232,67,122,.14)}
+.kpi:after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--c,var(--g));opacity:.22;filter:blur(8px)}
+.kpi span{color:var(--mut);font-size:12.5px;display:block}.kpi b{font-family:"Space Grotesk";font-size:30px;display:block;margin-top:4px;color:#fff}.kpi small{color:var(--mut);font-size:12px}
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:14px}.grid2e{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.card{border:1px solid var(--line);border-radius:20px;padding:20px;background:linear-gradient(180deg,rgba(42,18,56,.94),rgba(31,11,46,.96));margin-bottom:14px;min-width:0;box-shadow:0 0 24px rgba(232,67,122,.12)}
+.grid2 .card,.grid2e .card{margin-bottom:0}
+.card h3{font-size:15.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:#fff}.card h3 small{color:var(--mut);font-weight:500;font-size:12px;margin-left:auto}
+.mut{color:var(--mut)}.note{background:rgba(255,201,77,.08);border:1px solid rgba(255,201,77,.35);color:#FFE29A;border-radius:14px;padding:13px 16px;margin-bottom:16px;line-height:1.6;font-size:13.5px}
+.note code,code{background:rgba(255,107,157,.16);padding:1px 7px;border-radius:6px;font-size:12.5px;color:#FFD9E6}
+.seg{display:inline-flex;gap:4px;background:rgba(20,8,31,.65);border:1px solid var(--line);border-radius:999px;padding:4px;flex-wrap:wrap}.seg button{border:0;background:transparent;border-radius:999px;padding:7px 13px;font-weight:600;font-size:13px;color:var(--mut)}.seg button.on{background:linear-gradient(135deg,var(--g),var(--gd));color:#fff}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:620px}th{text-align:left;color:var(--mut);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12.5px}td{padding:10px;border-bottom:1px solid rgba(255,107,157,.1);vertical-align:middle}tr:hover td{background:rgba(255,107,157,.06)}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700}.pill.ok{background:rgba(52,211,153,.15);color:var(--ok)}.pill.bad{background:rgba(255,92,108,.15);color:#FF8A94}.pill.info{background:rgba(56,189,248,.14);color:var(--blue)}.pill.gold{background:rgba(255,201,77,.15);color:var(--gold)}.pill.pink{background:rgba(255,107,157,.15);color:var(--gs)}
+.empty{color:var(--mut);text-align:center;padding:26px}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.bars{display:grid;gap:9px}.bar{display:grid;grid-template-columns:130px 1fr 52px;gap:10px;align-items:center;font-size:13px}.bar .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar .t{height:9px;border-radius:9px;background:rgba(255,107,157,.12);overflow:hidden}.bar .t i{display:block;height:100%;background:linear-gradient(90deg,var(--gd),var(--g));border-radius:9px;transition:width .6s}.bar .n{text-align:right;color:var(--mut)}
+.form{display:grid;gap:14px}.f{display:grid;gap:6px}.f>span{font-size:12.5px;color:var(--mut);font-weight:600}.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tg{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(20,8,31,.55)}.tg b{font-size:14px;display:block;color:#fff}.tg small{color:var(--mut);font-size:12px}
+.sw{width:46px;height:26px;appearance:none;background:rgba(255,107,157,.25);border-radius:20px;position:relative;cursor:pointer;flex:none;transition:.2s}.sw:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}.sw:checked{background:var(--g)}.sw:checked:after{transform:translateX(20px)}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--panel2);color:#fff;border:1px solid var(--g);padding:12px 22px;border-radius:999px;font-size:14px;z-index:99;box-shadow:0 14px 40px rgba(0,0,0,.5);max-width:92vw}
+.menu-btn{display:none}
+.bnav{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:70;display:flex;gap:4px;padding:6px;border-radius:999px;border:1px solid var(--line);background:rgba(31,11,46,.94);backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 30px rgba(232,67,122,.25);max-width:94vw}
+.bnav button{border:0;background:transparent;color:var(--mut);font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;white-space:nowrap}
+.bnav button:hover{color:#fff;background:rgba(255,107,157,.18)}
+@media(max-width:1000px){.kpis{grid-template-columns:1fr 1fr}.grid2,.grid2e,.f2{grid-template-columns:1fr}}
+@media(max-width:860px){.app{grid-template-columns:1fr}nav.side{position:fixed;z-index:60;left:0;top:0;bottom:0;width:min(280px,84vw);transform:translateX(-105%);transition:.3s;box-shadow:20px 0 60px rgba(0,0,0,.5)}nav.side.open{transform:none}main{padding:16px 14px 110px}.menu-btn{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(42,18,56,.8);color:#fff;font-size:18px}.top h1{font-size:21px}.bar{grid-template-columns:96px 1fr 44px}.bnav button{padding:9px 12px;font-size:12.5px}}
+</style>
+</head>
+<body>
+<div class="lights"><div class="glow g1"></div><div class="glow g2"></div></div>
+
+<div class="center" id="loginView">
+  <div class="login">
+    <img src="../assets/rani.png" alt="RANI AI GF">
+    <h1>RANI Admin Panel 💜</h1>
+    <p>RANI AI GF ka control room — sara control yahin se. Wahi admin password jo /admin ka hai.</p>
+    <input class="field" id="pw" type="password" placeholder="Admin password" autocomplete="current-password">
+    <div class="err" id="loginErr"></div>
+    <button class="btn w" id="btnLogin">Login →</button>
+  </div>
+</div>
+
+<div class="app hidden" id="panelView">
+  <nav class="side" id="side">
+    <div class="brand"><img src="../assets/rani.png" alt=""><div><b>RANI AI GF</b><small>Ranipanal • Admin</small></div></div>
+    <button class="nv on" data-p="dash">📊 Dashboard</button>
+    <button class="nv" data-p="users">👥 RANI Users</button>
+    <button class="nv" data-p="hisab">🧾 Hisab Kitab</button>
+    <button class="nv" data-p="memories">🧠 Memories</button>
+    <button class="nv" data-p="controls">🎛️ Controls</button>
+    <button class="nv" data-p="safety">🛡️ Safety <span class="bd hidden" id="sfBd"></span></button>
+    <button class="nv" data-p="announce">📣 Announce</button>
+    <div class="sp"></div>
+    <button class="nv" id="btnRaniSite">↗ RANI section (website)</button>
+    <button class="nv" id="btnBadshah">👑 BADSHAH Admin</button>
+    <button class="nv" id="btnLogout">⎋ Logout</button>
+  </nav>
+  <main>
+    <div class="top">
+      <button class="menu-btn" id="menuBtn">☰</button>
+      <h1 id="pTitle">Dashboard</h1><div class="sp"></div>
+      <div class="live-pill"><i></i><span id="liveN">0</span> active 24h</div>
+      <button class="btn g s" id="btnRefresh">↻ Refresh</button>
+    </div>
+    <div id="mig" class="note hidden"></div>
+
+    <!-- DASHBOARD -->
+    <section id="p-dash">
+      <div class="kpis">
+        <div class="kpi" style="--c:var(--g)"><span>💜 RANI users</span><b id="kUsers">–</b><small id="kNewU"></small></div>
+        <div class="kpi" style="--c:var(--blue)"><span>💬 Chats aaj</span><b id="kChats">–</b><small id="kCalls"></small></div>
+        <div class="kpi" style="--c:var(--gold)"><span>📞 Voice minutes aaj</span><b id="kMins">–</b><small id="kVp"></small></div>
+        <div class="kpi" style="--c:var(--red)"><span>🛡️ Safety alerts 24h</span><b id="kSafety">–</b><small id="kTickets"></small></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>🕒 Aaj ki activity <small>latest 10</small></h3><div class="tw"><table id="tbRecent"></table></div></div>
+        <div class="card"><h3>🎛️ Features abhi <small>Controls tab se badlo</small></h3><div id="featNow"></div>
+        <p class="mut" style="margin-top:14px;line-height:1.7;font-size:13px">Privacy: yahan sirf <b>counts aur metadata</b> dikhte hain — message ka content, contacts ka data, recordings aur raw voice kabhi server par nahi aate, sab phone par hi rehta hai.</p></div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="p-users" class="hidden">
+      <div class="card"><h3>👥 RANI Users <small>sirf woh users jo RANI app use karte hain</small></h3>
+        <div class="row" style="margin-bottom:14px"><input class="in" id="uQ" placeholder="Naam ya email se search…" style="max-width:280px"><button class="btn s" id="uSearch">Search</button></div>
+        <div class="tw"><table id="tbUsers"></table></div>
+        <p class="mut" style="margin-top:12px;font-size:12.5px">⚠️ Block shared account par lagta hai — user BADSHAH AI aur RANI AI dono se block ho jayega.</p>
+      </div>
+    </section>
+
+    <!-- HISAB KITAB -->
+    <section id="p-hisab" class="hidden">
+      <div class="card"><h3>🧾 Hisab Kitab <small>har RANI action ka record</small></h3>
+        <div class="row" style="margin-bottom:14px"><div class="seg" id="evSeg">
+          <button data-e="" class="on">Sab</button><button data-e="chat">💬 Chat</button><button data-e="voice_call">📞 Voice call</button><button data-e="youtube_search">▶️ YouTube</button><button data-e="message_sent">✉️ Messages</button><button data-e="contacts_read">👥 Contacts</button><button data-e="screen_recording">🎬 Recording</button><button data-e="camera_event">📷 Camera</button><button data-e="face_recognition">🙂 Face</button><button data-e="voiceprint_enrol">🎙️ Voice-print</button><button data-e="safety_alert">🛡️ Safety</button>
+        </div></div>
+        <div class="tw"><table id="tbHisab"></table></div>
+      </div>
+      <div class="grid2e">
+        <div class="card"><h3>🎬 Screen recordings <small>metadata only — file phone par hai</small></h3><div class="tw"><table id="tbRec"></table></div></div>
+        <div class="card"><h3>🎙️ Voice-print enrolments <small>metadata only — raw voice kabhi nahi</small></h3><div class="tw"><table id="tbVp"></table></div></div>
+      </div>
+    </section>
+
+    <!-- MEMORIES -->
+    <section id="p-memories" class="hidden">
+      <div class="card"><h3>🧠 RANI Memories <small>jo RANI ne yaad rakha — user ke approve kiye hue facts</small></h3>
+        <div class="tw"><table id="tbMem"></table></div>
+      </div>
+    </section>
+
+    <!-- CONTROLS -->
+    <section id="p-controls" class="hidden">
+      <div class="note" style="background:rgba(56,189,248,.07);border-color:rgba(56,189,248,.35);color:#BDE8FB">Ye settings <b>direct RANI app mein live</b> hoti hain — app <code>app_settings</code> se parhti hai. Koi bhi toggle band karo to RANI app mein woh feature ruk jayega.</div>
+      <div class="grid2e">
+        <div class="card"><h3>🎛️ Features on/off</h3><div class="form" id="featForm"></div></div>
+        <div class="card"><h3>💜 Persona &amp; voice</h3><div class="form">
+          <label class="f"><span>Default voice (female only)</span><select class="in" id="ctVoice"><option>Aoede</option><option>Kore</option><option>Zephyr</option><option>Leda</option><option>Sulafat</option><option>Callirrhoe</option></select></label>
+          <label class="f"><span>Tone</span><select class="in" id="ctTone"><option value="loving">Loving 💜</option><option value="playful">Playful 😄</option><option value="calm">Calm 🌸</option></select></label>
+          <label class="f"><span>Call greeting (jab Boss awaz de)</span><input class="in" id="ctGreet" placeholder="G Babu"></label>
+          <label class="f"><span>Gemini model</span><select class="in" id="ctModel"><option value="gemini-3.8-flash">gemini-3.8-flash</option><option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option><option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option></select></label>
+        </div></div>
+      </div>
+      <div class="grid2e" style="margin-top:14px">
+        <div class="card"><h3>🛠️ Maintenance mode</h3><div class="form">
+          <label class="tg"><div><b>RANI band karo</b><small>App khole to maintenance message dikhega</small></div><input type="checkbox" class="sw" id="ctMaint"></label>
+          <label class="f"><span>Maintenance message</span><input class="in" id="ctMaintMsg" placeholder="RANI thodi dair mein wapas aayegi…"></label>
+        </div></div>
+        <div class="card"><h3>📣 RANI announcement <small>app mein sab RANI users ko dikhega</small></h3><div class="form">
+          <label class="tg"><div><b>Announcement dikhao</b></div><input type="checkbox" class="sw" id="ctAnnOn"></label>
+          <label class="f"><span>Title</span><input class="in" id="ctAnnT"></label>
+          <label class="f"><span>Message</span><textarea class="in" id="ctAnnB" rows="3"></textarea></label>
+        </div></div>
+      </div>
+      <div class="row" style="margin-top:6px"><button class="btn" id="btnSaveCtl">💾 Save &amp; make live</button></div>
+    </section>
+
+    <!-- SAFETY -->
+    <section id="p-safety" class="hidden">
+      <div class="grid2e">
+        <div class="card"><h3>🛡️ Face Lock &amp; safety events <small>24h: <b id="sf24">–</b> • blocked users: <b id="sfBlocked">–</b></small></h3><div class="tw"><table id="tbSafety"></table></div></div>
+        <div class="card"><h3>🔒 Face Lock kya hai?</h3><p class="mut" style="line-height:1.8;font-size:14px">RANI Boss ka face on-device pehchanti hai. Koi <b>doosra chehra</b> camera mein aaye to Face Lock lagta hai — app lock ho jati hai aur yahan event aata hai. Face print <b>encrypted phone par</b> rehta hai, kabhi server ko nahi bheja jata. Safety alerts mein suspicious activity bhi aati hai — RANI Boss ki permission ke baghair bhi phone ki hifazat karti hai.</p></div>
+      </div>
+    </section>
+
+    <!-- ANNOUNCE -->
+    <section id="p-announce" class="hidden"><div class="grid2e">
+      <div class="card"><h3>📣 Naya announcement</h3><div class="form"><input class="in" id="anT" placeholder="Title"><textarea class="in" id="anB" rows="4" placeholder="Message — RANI app mein sab users ko nazar aayega"></textarea><button class="btn" id="anPub" style="justify-self:start">Publish</button></div></div>
+      <div class="card"><h3>📜 Current announcement</h3><div id="anCur"><div class="empty">Koi announcement nahi</div></div></div>
+    </div></section>
+  </main>
+  <nav class="bnav" aria-label="RANI sections">
+    <button data-go="dash">▦ Dashboard</button>
+    <button data-go="users">👥 Users</button>
+    <button data-go="hisab">🧾 Hisab</button>
+    <button data-go="controls">🎛️ Controls</button>
+  </nav>
+</div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id), qa=s=>[...document.querySelectorAll(s)];
+let PW=sessionStorage.getItem('ba_admin_pw')||'', SETTINGS={};
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const dt=s=>s?new Date(s).toLocaleString('en-PK',{dateStyle:'medium',timeStyle:'short'}):'—';
+const ago=s=>{ if(!s) return '—'; const d=(Date.now()-new Date(s))/1000; if(d<60) return Math.max(1,Math.round(d))+'s pehle'; if(d<3600) return Math.round(d/60)+' min pehle'; if(d<86400) return Math.round(d/3600)+' ghante pehle'; return Math.round(d/86400)+' din pehle'; };
+const num=n=>Number(n||0).toLocaleString('en-US');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.remove('hidden'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.add('hidden'),3200); }
+async function api(action,body={}){
+  const r=await fetch('/admin-api/'+action,{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':PW},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||('Server '+r.status)); return d;
+}
+const safe=async fn=>{ try{ return await fn(); }catch(e){ toast('⚠️ '+e.message); } };
+function setMig(d){ const b=$('mig'); const show=d&&d.error==='migration'; b.classList.toggle('hidden',!show);
+  if(show) b.innerHTML='⚠️ <b>RANI tables abhi Supabase mein nahi bane.</b> Supabase → SQL Editor kholo, <code>sql/20261125000015_rani_admin.sql</code> ka poora text paste karo aur Run karo (sirf ek dafa). Us ke baad ye panel kaam karega. Tab tak RANI app bhi apna data save nahi kar payegi — lekin app chalna band nahi hogi.'; }
+const EV_LABEL={chat:'💬 Chat',voice_call:'📞 Voice call',voice_minutes:'⏱️ Voice minutes',command:'⌨️ Command',youtube_search:'▶️ YouTube search',message_sent:'✉️ Message sent',contacts_read:'👥 Contacts read',screen_recording:'🎬 Screen recording',camera_event:'📷 Camera',face_recognition:'🙂 Face recognised',voiceprint_enrol:'🎙️ Voice-print enrol',face_lock:'🔒 Face Lock',safety_alert:'🛡️ Safety alert',awareness:'👁️ Awareness'};
+const metaTxt=m=>{ if(!m||typeof m!=='object') return ''; const bits=[]; if(m.minutes!=null) bits.push(m.minutes+' min'); if(m.duration_sec!=null) bits.push(m.duration_sec+'s'); if(m.count!=null) bits.push('×'+m.count); if(m.query) bits.push('“'+String(m.query).slice(0,60)+'”'); if(m.detail) bits.push(String(m.detail).slice(0,80)); if(m.reason) bits.push(String(m.reason).slice(0,80)); return esc(bits.join(' • ')); };
+
+/* ---------- navigation ---------- */
+const TITLES={dash:'Dashboard',users:'RANI Users',hisab:'Hisab Kitab',memories:'Memories',controls:'Controls',safety:'Safety',announce:'Announce'};
+let cur='dash', evFil='';
+function go(p){ cur=p; qa('.nv[data-p]').forEach(n=>n.classList.toggle('on',n.dataset.p===p)); Object.keys(TITLES).forEach(k=>$('p-'+k).classList.toggle('hidden',k!==p)); $('pTitle').textContent=TITLES[p]; $('side').classList.remove('open'); load(p); window.scrollTo(0,0); }
+async function load(p){ await safe(async()=>{ ({dash:loadDash,users:loadUsers,hisab:loadHisab,memories:loadMem,controls:loadCtl,safety:loadSafety,announce:loadAnn})[p](); }); }
+qa('.nv[data-p]').forEach(n=>n.onclick=()=>go(n.dataset.p)); qa('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('menuBtn').onclick=()=>$('side').classList.toggle('open'); $('btnRefresh').onclick=()=>load(cur);
+$('btnRaniSite').onclick=()=>window.open('../#rani','_blank'); $('btnBadshah').onclick=()=>window.open('../admin/','_blank');
+$('btnLogout').onclick=()=>{ sessionStorage.removeItem('ba_admin_pw'); PW=''; location.reload(); };
+
+/* ---------- dashboard ---------- */
+async function loadDash(){
+  const d=await api('rani-stats'); setMig(d); if(!d.ok) return;
+  $('kUsers').textContent=num(d.totalUsers); $('kNewU').textContent='Aaj +'+d.newToday+' • 7 din mein +'+d.new7d;
+  $('kChats').textContent=num(d.chatsToday); $('kCalls').textContent=d.callsToday+' voice calls aaj';
+  $('kMins').textContent=num(d.voiceMinutesToday); $('kVp').textContent=d.voiceprints+' voice-prints enrolled';
+  $('kSafety').textContent=num(d.safety24h); $('kTickets').textContent=d.openTickets+' open tickets • '+d.recordingsToday+' recordings aaj';
+  $('liveN').textContent=num(d.active24h);
+  const f=d.features||{}; const FEATS=[['awareness','👁️ Awareness'],['camera','📷 Camera'],['screen_recording','🎬 Screen recording'],['voiceprint_gate','🎙️ Voice-print gate'],['floating_orb','🔮 Floating orb']];
+  $('featNow').innerHTML=FEATS.map(x=>'<div class="row" style="justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)"><span>'+x[1]+'</span><span class="pill '+(f[x[0]]!==false?'ok':'bad')+'">'+(f[x[0]]!==false?'ON':'OFF')+'</span></div>').join('');
+  const bd=$('sfBd'); bd.textContent=d.safety24h; bd.classList.toggle('hidden',!d.safety24h);
+  const a=await api('rani-activity',{limit:10}); if(a.ok) $('tbRecent').innerHTML='<tr><th>When</th><th>User</th><th>Event</th><th>Detail</th></tr>'+(a.rows.map(r=>'<tr><td>'+ago(r.created_at)+'</td><td>'+esc(r.name||r.email||'—')+'</td><td>'+(EV_LABEL[r.event_type]||esc(r.event_type))+'</td><td>'+metaTxt(r.metadata)+'</td></tr>').join('')||'<tr><td colspan="4" class="empty">Abhi koi activity nahi — RANI app update ke baad yahan data aayega.</td></tr>');
+}
+
+/* ---------- users ---------- */
+async function loadUsers(){
+  const d=await api('rani-users',{q:$('uQ').value.trim()}); setMig(d); if(!d.ok) return;
+  $('tbUsers').innerHTML='<tr><th>User</th><th>RANI pehli dafa</th><th>Last seen</th><th>Chats</th><th>Status</th><th>Action</th></tr>'+(d.rows.map(u=>'<tr><td><b>'+esc(u.display_name||'—')+'</b><br><small class="mut">'+esc(u.email||'')+'</small></td><td>'+dt(u.first_seen_rani)+'</td><td>'+ago(u.last_seen_rani)+'</td><td>'+num(u.chats)+'</td><td>'+(u.is_blocked?'<span class="pill bad">BLOCKED</span>':'<span class="pill ok">active</span>')+'</td><td><button class="btn s '+(u.is_blocked?'':'red')+'" onclick="blockU(\''+esc(u.id)+'\','+!u.is_blocked+')">'+(u.is_blocked?'Unblock':'Block')+'</button></td></tr>').join('')||'<tr><td colspan="6" class="empty">Koi RANI user nahi mila — RANI app release ke baad users yahan aayenge.</td></tr>');
+}
+window.blockU=(id,b)=>safe(async()=>{ if(!id) return toast('uid missing'); await api('rani-user-block',{firebase_uid:id,blocked:b}); toast(b?'User block ho gaya (BADSHAH + RANI dono)':'User unblock ho gaya'); loadUsers(); });
+$('uSearch').onclick=loadUsers; $('uQ').addEventListener('keydown',e=>{ if(e.key==='Enter') loadUsers(); });
+
+/* ---------- hisab kitab ---------- */
+qa('#evSeg button').forEach(b=>b.onclick=()=>{ evFil=b.dataset.e; qa('#evSeg button').forEach(x=>x.classList.toggle('on',x===b)); loadHisab(); });
+async function loadHisab(){
+  const d=await api('rani-activity',{event_type:evFil||undefined,limit:100}); setMig(d); if(!d.ok) return;
+  $('tbHisab').innerHTML='<tr><th>When</th><th>User</th><th>Event</th><th>Detail</th></tr>'+(d.rows.map(r=>'<tr><td>'+dt(r.created_at)+'</td><td>'+esc(r.name||r.email||'—')+'</td><td>'+(EV_LABEL[r.event_type]||esc(r.event_type))+'</td><td>'+metaTxt(r.metadata)+'</td></tr>').join('')||'<tr><td colspan="4" class="empty">Is filter mein koi record nahi.</td></tr>');
+  const rec=await api('rani-recordings'); if(rec.ok) $('tbRec').innerHTML='<tr><th>When</th><th>File</th><th>Length</th><th>Size</th></tr>'+(rec.rows.map(r=>'<tr><td>'+dt(r.created_at)+'</td><td><code>'+esc(r.file_name)+'</code></td><td>'+(r.duration_sec||0)+'s</td><td>'+(Math.round((r.size_bytes||0)/1024/1024*10)/10)+' MB</td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi recording nahi.</td></tr>');
+  const vp=await api('rani-voiceprints'); if(vp.ok) $('tbVp').innerHTML='<tr><th>User</th><th>Enrolled</th><th>Last verified</th><th>Status</th></tr>'+(vp.rows.map(r=>'<tr><td>'+esc(r.name||r.email||'—')+'</td><td>'+dt(r.enrolled_at)+'</td><td>'+ago(r.last_verified_at)+'</td><td>'+(r.is_active?'<span class="pill ok">ACTIVE</span>':'<span class="pill bad">OFF</span>')+'</td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi voice-print enrol nahi hua.</td></tr>');
+}
+
+/* ---------- memories ---------- */
+async function loadMem(){
+  const d=await api('rani-memories'); setMig(d); if(!d.ok) return;
+  $('tbMem').innerHTML='<tr><th>User</th><th>Kind</th><th>Memory</th><th>When</th><th></th></tr>'+(d.rows.map(m=>'<tr><td>'+esc(m.name||m.email||'—')+'</td><td><span class="pill pink">'+esc(m.kind||'note')+'</span></td><td style="max-width:420px">'+esc(m.text)+'</td><td>'+ago(m.created_at)+'</td><td><button class="btn red s" onclick="delMem(\''+m.id+'\')">Delete</button></td></tr>').join('')||'<tr><td colspan="5" class="empty">Koi memory nahi — RANI app mein “ye yaad rakho” ke baad yahan aayegi.</td></tr>');
+}
+window.delMem=id=>safe(async()=>{ if(!confirm('Ye memory delete kar dun?')) return; await api('rani-memory-delete',{id}); toast('Memory delete ho gayi'); loadMem(); });
+
+/* ---------- controls ---------- */
+const FEATS=[['awareness','👁️ Awareness','RANI dekhe kaunsi app khuli hai, kitni dair se kaam ho raha hai'],['camera','📷 Camera','Front camera se Boss ko dekhna / pehchanna'],['screen_recording','🎬 Screen recording','Jo RANI dekhe, us ki recording save karna'],['voiceprint_gate','🎙️ Voice-print gate','Sirf Boss ki awaz par jawab dena'],['floating_orb','🔮 Floating orb','Orb hamesha screen par rahe (“G Babu” par aaye)']];
+async function loadCtl(){
+  const d=await api('rani-settings-get'); setMig(d); if(!d.ok) return; SETTINGS=d.settings||{};
+  const f=SETTINGS.features||{};
+  $('featForm').innerHTML=FEATS.map(x=>'<label class="tg"><div><b>'+x[1]+'</b><small>'+x[2]+'</small></div><input type="checkbox" class="sw" data-f="'+x[0]+'"'+(f[x[0]]!==false?' checked':'')+'></label>').join('');
+  const p=SETTINGS.persona||{}; $('ctVoice').value=p.default_voice||'Aoede'; $('ctTone').value=p.tone||'loving'; $('ctGreet').value=p.call_greeting||'G Babu';
+  $('ctModel').value=(SETTINGS.gemini||{}).model||'gemini-3.8-flash';
+  const m=SETTINGS.maintenance||{}; $('ctMaint').checked=!!m.enabled; $('ctMaintMsg').value=m.message||'';
+  const a=SETTINGS.announcement||{}; $('ctAnnOn').checked=!!a.enabled; $('ctAnnT').value=a.title||''; $('ctAnnB').value=a.body||'';
+}
+$('btnSaveCtl').onclick=()=>safe(async()=>{
+  const f={}; qa('#featForm [data-f]').forEach(el=>f[el.dataset.f]=el.checked);
+  await api('rani-settings-set',{key:'features',value:f});
+  await api('rani-settings-set',{key:'persona',value:{default_voice:$('ctVoice').value,tone:$('ctTone').value,call_greeting:$('ctGreet').value.trim()||'G Babu'}});
+  await api('rani-settings-set',{key:'gemini',value:{model:$('ctModel').value}});
+  await api('rani-settings-set',{key:'maintenance',value:{enabled:$('ctMaint').checked,message:$('ctMaintMsg').value.trim()}});
+  await api('rani-settings-set',{key:'announcement',value:{enabled:$('ctAnnOn').checked,title:$('ctAnnT').value.trim(),body:$('ctAnnB').value.trim()}});
+  toast('✅ RANI controls save ho gaye — app mein live');
+});
+
+/* ---------- safety ---------- */
+async function loadSafety(){
+  const d=await api('rani-safety'); setMig(d); if(!d.ok) return;
+  $('sf24').textContent=d.rows.length; $('sfBlocked').textContent=d.blockedCount;
+  $('tbSafety').innerHTML='<tr><th>When</th><th>User</th><th>Event</th><th>Detail</th></tr>'+(d.rows.map(r=>'<tr><td>'+dt(r.created_at)+'</td><td>'+esc(r.name||r.email||'—')+'</td><td><span class="pill '+(r.event_type==='face_lock'?'gold':'bad')+'">'+(EV_LABEL[r.event_type]||esc(r.event_type))+'</span></td><td>'+metaTxt(r.metadata)+'</td></tr>').join('')||'<tr><td colspan="4" class="empty">Koi safety event nahi — sab theek hai. 💜</td></tr>');
+}
+
+/* ---------- announce ---------- */
+async function loadAnn(){
+  const d=await api('rani-settings-get'); setMig(d); if(!d.ok) return; SETTINGS=d.settings||{};
+  const a=SETTINGS.announcement||{};
+  $('anCur').innerHTML=a.enabled?'<p style="line-height:1.7"><b>'+esc(a.title||'')+'</b><br><span class="mut">'+esc(a.body||'')+'</span><br><span class="pill ok" style="margin-top:8px">LIVE</span></p>':'<div class="empty">Koi announcement live nahi hai.</div>';
+}
+$('anPub').onclick=()=>safe(async()=>{ await api('rani-announce',{title:$('anT').value.trim(),body:$('anB').value.trim()}); toast('📣 RANI announcement publish ho gayi'); $('anT').value=''; $('anB').value=''; loadAnn(); });
+
+/* ---------- login ---------- */
+async function tryLogin(){
+  $('loginErr').textContent='';
+  try{ await api('rani-stats'); sessionStorage.setItem('ba_admin_pw',PW); $('loginView').classList.add('hidden'); $('panelView').classList.remove('hidden'); loadDash(); }
+  catch(e){ $('loginErr').textContent=e.message; }
+}
+$('btnLogin').onclick=()=>{ PW=$('pw').value; tryLogin(); };
+$('pw').addEventListener('keydown',e=>{ if(e.key==='Enter'){ PW=$('pw').value; tryLogin(); }});
+if(PW) tryLogin();
+</script>
+</body>
+</html>

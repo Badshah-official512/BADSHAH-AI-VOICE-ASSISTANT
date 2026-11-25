@@ -823,10 +823,126 @@ async function handleAdmin(req, env, url) {
       }
       case 'health': {
         const out = {};
-        for (const t of ['site_sessions', 'site_events', 'web_users', 'site_settings', 'device_commands', 'announcements', 'api_keys', 'support_tickets', 'profiles']) {
+        for (const t of ['site_sessions', 'site_events', 'web_users', 'site_settings', 'device_commands', 'announcements', 'api_keys', 'support_tickets', 'profiles', 'app_users', 'app_settings', 'rani_activity', 'rani_screen_recordings', 'rani_voiceprints', 'rani_preferences', 'memories']) {
           out[t] = await sbAdmin(env, t + '?select=*&limit=1').then(() => true).catch(() => false);
         }
         return json(200, { ok: true, tables: out, workerKey: true });
+      }
+
+      /* ---------- RANI admin (Ranipanal) — needs sql/20261125000015_rani_admin.sql ---------- */
+      /* RANI ka hisab kitab BADSHAH se alag: har query mein app=eq.rani filter.
+         Privacy: panel mein sirf counts aur metadata — kabhi message content,
+         contacts data, recordings ya raw voice nahi. */
+      case 'rani-stats': {
+        const has = await sbAdmin(env, 'app_settings?select=app&limit=1').catch(() => null);
+        if (has === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — Supabase SQL Editor mein sql/20261125000015_rani_admin.sql run karo.' });
+        const today = new Date(); today.setUTCHours(0, 0, 0, 0); const tISO = today.toISOString();
+        const dayAgo = new Date(Date.now() - 86400e3).toISOString();
+        const [users, chatsToday, callsToday, minsRows, active, tickets, alerts, recs, vps, settings] = await Promise.all([
+          sbAdmin(env, 'app_users?select=user_id,first_seen_at,last_seen_at&app=eq.rani').catch(() => []),
+          sbAdmin(env, 'ai_usage_events?select=id&app=eq.rani&event_type=eq.chat&created_at=gte.' + tISO).catch(() => []),
+          sbAdmin(env, 'rani_activity?select=id&event_type=eq.voice_call&created_at=gte.' + tISO).catch(() => []),
+          sbAdmin(env, 'rani_activity?select=metadata&event_type=eq.voice_minutes&created_at=gte.' + tISO).catch(() => []),
+          sbAdmin(env, 'app_users?select=user_id&app=eq.rani&last_seen_at=gte.' + dayAgo).catch(() => []),
+          sbAdmin(env, 'support_tickets?select=id&app=eq.rani&status=eq.open').catch(() => []),
+          sbAdmin(env, 'rani_activity?select=id&event_type=in.(face_lock,safety_alert)&created_at=gte.' + dayAgo).catch(() => []),
+          sbAdmin(env, 'rani_screen_recordings?select=id&created_at=gte.' + tISO).catch(() => []),
+          sbAdmin(env, 'rani_voiceprints?select=id&is_active=eq.true').catch(() => []),
+          sbAdmin(env, 'app_settings?select=setting_key,setting_value&app=eq.rani').catch(() => [])
+        ]);
+        const u = Array.isArray(users) ? users : [];
+        const now = Date.now(), d = 86400e3;
+        let mins = 0; for (const r of (minsRows || [])) mins += Number((r.metadata && r.metadata.minutes) || 0);
+        const feats = {}; for (const s of (settings || [])) feats[s.setting_key] = s.setting_value;
+        return json(200, { ok: true, totalUsers: u.length,
+          newToday: u.filter(x => now - new Date(x.first_seen_at).getTime() < d).length,
+          new7d: u.filter(x => now - new Date(x.first_seen_at).getTime() < 7 * d).length,
+          chatsToday: (chatsToday || []).length, callsToday: (callsToday || []).length,
+          voiceMinutesToday: mins, active24h: (active || []).length,
+          openTickets: (tickets || []).length, safety24h: (alerts || []).length,
+          recordingsToday: (recs || []).length, voiceprints: (vps || []).length, features: feats.features || {} });
+      }
+      case 'rani-users': {
+        const au = await sbAdmin(env, 'app_users?select=user_id,first_seen_at,last_seen_at&app=eq.rani&order=last_seen_at.desc&limit=100').catch(() => null);
+        if (au === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        const ids = (au || []).map(x => x.user_id);
+        if (!ids.length) return json(200, { ok: true, rows: [] });
+        const q = body.q ? '&or=(display_name.ilike.*' + encodeURIComponent(body.q) + '*,email.ilike.*' + encodeURIComponent(body.q) + '*)' : '';
+        const prof = await sbAdmin(env, 'profiles?select=id,email,display_name,is_blocked,created_at&id=in.(' + ids.map(encodeURIComponent).join(',') + ')' + q).catch(() => []);
+        const chats = await sbAdmin(env, 'ai_usage_events?select=user_id&app=eq.rani&event_type=eq.chat').catch(() => []);
+        const cc = {}; for (const c of (chats || [])) cc[c.user_id] = (cc[c.user_id] || 0) + 1;
+        const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
+        const rows = (au || []).filter(x => byId[x.user_id]).map(x => ({ ...byId[x.user_id], first_seen_rani: x.first_seen_at, last_seen_rani: x.last_seen_at, chats: cc[x.user_id] || 0 }));
+        return json(200, { ok: true, rows });
+      }
+      case 'rani-user-block': {
+        // Shared account: block BADSHAH + RANI dono ke liye lagta hai.
+        await sbAdmin(env, 'profiles?id=eq.' + encodeURIComponent(body.firebase_uid), { method: 'PATCH', body: JSON.stringify({ is_blocked: !!body.blocked }), prefer: 'return=minimal' });
+        return json(200, { ok: true });
+      }
+      case 'rani-activity': {
+        let f = 'rani_activity?select=*&order=created_at.desc&limit=' + Math.min(Number(body.limit) || 100, 300);
+        if (body.event_type) f += '&event_type=eq.' + encodeURIComponent(body.event_type);
+        if (body.user_id) f += '&user_id=eq.' + encodeURIComponent(body.user_id);
+        const rows = await sbAdmin(env, f).catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        const ids = [...new Set((rows || []).map(r => r.user_id))];
+        const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
+        const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
+        return json(200, { ok: true, rows: (rows || []).map(r => ({ ...r, email: (byId[r.user_id] || {}).email || '', name: (byId[r.user_id] || {}).display_name || '' })) });
+      }
+      case 'rani-recordings': {
+        const rows = await sbAdmin(env, 'rani_screen_recordings?select=*&order=created_at.desc&limit=100').catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration' });
+        return json(200, { ok: true, rows: rows || [] });
+      }
+      case 'rani-voiceprints': {
+        const rows = await sbAdmin(env, 'rani_voiceprints?select=*&order=enrolled_at.desc&limit=100').catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration' });
+        const ids = [...new Set((rows || []).map(r => r.user_id))];
+        const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
+        const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
+        return json(200, { ok: true, rows: (rows || []).map(r => ({ ...r, email: (byId[r.user_id] || {}).email || '', name: (byId[r.user_id] || {}).display_name || '' })) });
+      }
+      case 'rani-memories': {
+        const rows = await sbAdmin(env, 'memories?select=id,user_id,kind,text,created_at&app=eq.rani&order=created_at.desc&limit=100').catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        const ids = [...new Set((rows || []).map(r => r.user_id))];
+        const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
+        const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
+        return json(200, { ok: true, rows: (rows || []).map(r => ({ ...r, email: (byId[r.user_id] || {}).email || '', name: (byId[r.user_id] || {}).display_name || '' })) });
+      }
+      case 'rani-memory-delete': {
+        await sbAdmin(env, 'memories?id=eq.' + encodeURIComponent(body.id), { method: 'DELETE', prefer: 'return=minimal' });
+        return json(200, { ok: true });
+      }
+      case 'rani-settings-get': {
+        const rows = await sbAdmin(env, 'app_settings?select=setting_key,setting_value&app=eq.rani').catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        const out = {}; for (const r of (rows || [])) out[r.setting_key] = r.setting_value;
+        return json(200, { ok: true, settings: out });
+      }
+      case 'rani-settings-set': {
+        const ALLOWED = ['features', 'persona', 'gemini', 'maintenance', 'announcement'];
+        const key = String(body.key || '');
+        if (!ALLOWED.includes(key) || typeof body.value !== 'object' || body.value === null) return json(400, { error: 'Setting key ghalat hai' });
+        if (JSON.stringify(body.value).length > 10000) return json(400, { error: 'Value bahut badi hai' });
+        await sbAdmin(env, 'app_settings?on_conflict=app,setting_key', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: JSON.stringify({ app: 'rani', setting_key: key, setting_value: body.value, updated_at: new Date().toISOString() }) });
+        return json(200, { ok: true });
+      }
+      case 'rani-safety': {
+        const rows = await sbAdmin(env, 'rani_activity?select=*&event_type=in.(face_lock,safety_alert)&order=created_at.desc&limit=100').catch(() => null);
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        const blocked = await sbAdmin(env, 'profiles?select=id&is_blocked=eq.true').catch(() => []);
+        const ids = [...new Set((rows || []).map(r => r.user_id))];
+        const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
+        const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
+        return json(200, { ok: true, rows: (rows || []).map(r => ({ ...r, email: (byId[r.user_id] || {}).email || '', name: (byId[r.user_id] || {}).display_name || '' })), blockedCount: (blocked || []).length });
+      }
+      case 'rani-announce': {
+        const v = { enabled: true, title: String(body.title || 'RANI AI'), body: String(body.body || '') };
+        await sbAdmin(env, 'app_settings?on_conflict=app,setting_key', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: JSON.stringify({ app: 'rani', setting_key: 'announcement', setting_value: v, updated_at: new Date().toISOString() }) });
+        return json(200, { ok: true });
       }
       default:
         return json(404, { error: 'Unknown admin action: ' + action });
