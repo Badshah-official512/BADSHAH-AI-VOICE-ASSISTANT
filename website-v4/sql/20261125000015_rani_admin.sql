@@ -1,52 +1,52 @@
 -- ============================================================
 -- BADSHAH-RANI AI — Migration 015: RANI admin panel
--- RANI AI GF ka alag admin panel (badshah222-ai.pages.dev/Ranipanal)
--- aur BADSHAH website par RANI section.
+-- RANI AI GF's separate admin panel (badshah222-ai.pages.dev/Ranipanal)
+-- and the RANI section on the BADSHAH website.
 --
--- RUN: Supabase Dashboard → SQL Editor → paste → Run (sirf ek dafa).
--- PREPARE ONLY — is file ko khud run NA karo; admin (coordinator) run karega.
--- Idempotent: dobara run karna safe hai.
+-- RUN: Supabase Dashboard → SQL Editor → paste → Run (once only).
+-- PREPARE ONLY — do NOT run this file yourself; the admin (coordinator) will run it.
+-- Idempotent: running it again is safe.
 --
--- Kya karta hai:
---  1. Shared tables par `app` marker ('badshah' / 'rani') — RANI rows
---     BADSHAH rows se alag nazar aayen. Default 'badshah' hai, is liye
---     BADSHAH app/website par koi farq nahi padta.
---  2. RANI-only tables: rani_activity (hisab kitab), rani_preferences,
+-- What it does:
+--  1. `app` marker ('badshah' / 'rani') on shared tables — RANI rows
+--     show up separately from BADSHAH rows. Default is 'badshah', so
+--     nothing changes for the BADSHAH app/website.
+--  2. RANI-only tables: rani_activity (records), rani_preferences,
 --     rani_provider_settings, rani_screen_recordings (metadata only),
 --     rani_voiceprints (metadata only), app_users, app_settings.
---  3. RPCs app_touch_profile / app_record_login / app_record_usage ko
---     optional p_app parameter milta hai (default 'badshah') — purane
---     calls bilkul waise hi chalte rahenge.
---  4. voice_profiles mein RANI ki 6 female voices seed hoti hain
---     (Aoede default) aur app_settings mein RANI ke default controls.
+--  3. RPCs app_touch_profile / app_record_login / app_record_usage get an
+--     optional p_app parameter (default 'badshah') — old
+--     calls keep working exactly as before.
+--  4. RANI's 6 female voices are seeded in voice_profiles
+--     (Aoede default) plus RANI's default controls in app_settings.
 --
--- RANI APP SIDE (native app team ke liye — migration ke saath ya
--- us ke baad, warna RANI data 'badshah' ki tarah count hoga):
---  * Har Supabase call mein app='rani' bhejo:
+-- RANI APP SIDE (for the native app team — with the migration or
+-- after it, otherwise RANI data counts as 'badshah'):
+--  * Send app='rani' in every Supabase call:
 --      - conversations / messages / support_tickets / support_messages /
 --        memories POST body mein "app": "rani"
 --      - RPCs: app_touch_profile(..., p_app => 'rani'),
 --        app_record_login(..., p_app => 'rani'),
 --        app_record_usage(..., p_app => 'rani')
---  * user_preferences / user_provider_settings NA likho (shared row hai,
---    BADSHAH app band hai — us ki PK badal nahi sakte). Is ki jagah
---    rani_preferences / rani_provider_settings tables use karo
---    (neeche banayi gayi hain, shape wahi hai).
---  * Har RANI action ka hisab rani_activity mein likho (event_type neeche
---    check list mein hai). Sirf counts/metadata — kabhi message ka
---    content, contacts ka data, ya recording ki file NA bhejo.
---  * Screen recording ki sirf metadata rani_screen_recordings mein
---    (file_name, duration_sec, size_bytes) — file phone par hi rehti hai.
---  * Voice-print enrolment ki sirf metadata rani_voiceprints mein —
---    kabhi raw voice data NA bhejo.
---  * Feature switches + maintenance app_settings (app='rani') se parho.
+--  * Do NOT write user_preferences / user_provider_settings (shared row,
+--    BADSHAH app is closed — its PK cannot change). Use
+--    rani_preferences / rani_provider_settings tables instead
+--    (created below, same shape).
+--  * Log every RANI action in rani_activity (event_type
+--    check list is below). Counts/metadata only — never message
+--    content, contacts data, or recording files.
+--  * Screen recordings: metadata only in rani_screen_recordings
+--    (file_name, duration_sec, size_bytes) — the file stays on the phone.
+--  * Voice-print enrolment: metadata only in rani_voiceprints —
+--    never send raw voice data.
+--  * Read feature switches + maintenance from app_settings (app='rani').
 --    Maintenance key 'maintenance', features key 'features',
 --    persona key 'persona', gemini key 'gemini', announcement 'announcement'.
 --
 -- PRIVACY (standing rule):
---  * Contacts, messages ka content, recordings, raw voice — kabhi
---    Supabase par NA bhejo, sab on-device rehta hai. Panel mein sirf
---    counts aur metadata dikhte hain.
+--  * Contacts, message content, recordings, raw voice — never
+--    send to Supabase; everything stays on-device. The panel shows only
+--    counts and metadata.
 -- ============================================================
 
 -- ---------- 1. `app` marker on shared tables ----------
@@ -66,9 +66,9 @@ create index if not exists idx_login_app_created on public.login_events (app, cr
 create index if not exists idx_tickets_app_status on public.support_tickets (app, status, created_at desc);
 create index if not exists idx_memories_app_user on public.memories (app, user_id, created_at desc);
 
--- ---------- 2. app_users: kaunsa user kis app mein ----------
--- profiles shared hai (ek user BADSHAH + RANI dono use kar sakta hai),
--- is liye per-app membership alag table mein hai.
+-- ---------- 2. app_users: which user is in which app ----------
+-- profiles is shared (one user can use BADSHAH + RANI both),
+-- so per-app membership lives in a separate table.
 create table if not exists public.app_users (
     user_id text not null,
     app text not null default 'badshah' check (app in ('badshah', 'rani')),
@@ -81,9 +81,9 @@ create index if not exists idx_app_users_app_seen on public.app_users (app, last
 revoke all on public.app_users from anon, authenticated;
 grant all on public.app_users to service_role;
 
--- ---------- 3. rani_preferences (user_preferences ka RANI version) ----------
--- BADSHAH app CLOSED hai — user_preferences ki PK (user_id) badal nahi
--- sakte, is liye RANI ki preferences alag table mein hain.
+-- ---------- 3. rani_preferences (RANI version of user_preferences) ----------
+-- BADSHAH app is CLOSED — user_preferences PK (user_id) cannot change,
+-- so RANI preferences live in a separate table.
 create table if not exists public.rani_preferences (
     user_id text primary key,
     selected_provider text default 'gemini',
@@ -142,7 +142,7 @@ revoke all on public.rani_provider_settings from anon, authenticated;
 grant select, insert, update, delete on public.rani_provider_settings to authenticated;
 grant all on public.rani_provider_settings to service_role;
 
--- ---------- 5. rani_activity: hisab kitab (counts/metadata ONLY) ----------
+-- ---------- 5. rani_activity: records (counts/metadata ONLY) ----------
 create table if not exists public.rani_activity (
     id uuid primary key default gen_random_uuid(),
     user_id text not null,
@@ -168,7 +168,7 @@ revoke all on public.rani_activity from anon, authenticated;
 grant select, insert on public.rani_activity to authenticated;
 grant all on public.rani_activity to service_role;
 
--- ---------- 6. rani_screen_recordings: metadata ONLY (file phone par) ----------
+-- ---------- 6. rani_screen_recordings: metadata ONLY (file stays on phone) ----------
 create table if not exists public.rani_screen_recordings (
     id uuid primary key default gen_random_uuid(),
     user_id text not null,
@@ -189,7 +189,7 @@ revoke all on public.rani_screen_recordings from anon, authenticated;
 grant select, insert on public.rani_screen_recordings to authenticated;
 grant all on public.rani_screen_recordings to service_role;
 
--- ---------- 7. rani_voiceprints: enrolment metadata ONLY (kabhi raw voice nahi) ----------
+-- ---------- 7. rani_voiceprints: enrolment metadata ONLY (never raw voice) ----------
 create table if not exists public.rani_voiceprints (
     id uuid primary key default gen_random_uuid(),
     user_id text not null,
@@ -214,8 +214,8 @@ revoke all on public.rani_voiceprints from anon, authenticated;
 grant select, insert, update on public.rani_voiceprints to authenticated;
 grant all on public.rani_voiceprints to service_role;
 
--- ---------- 8. app_settings: RANI ke saare controls (admin likhta hai, app parhta hai) ----------
--- Kabhi secrets NA likhna — sirf non-secret config.
+-- ---------- 8. app_settings: all RANI controls (admin writes, app reads) ----------
+-- Never store secrets here — non-secret config only.
 create table if not exists public.app_settings (
     app text not null check (app in ('badshah', 'rani')),
     setting_key text not null,
@@ -231,7 +231,7 @@ revoke all on public.app_settings from anon, authenticated;
 grant select on public.app_settings to authenticated;
 grant all on public.app_settings to service_role;
 
--- RANI defaults (admin panel se badle ja sakte hain)
+-- RANI defaults (can be changed from the admin panel)
 insert into public.app_settings (app, setting_key, setting_value) values
   ('rani', 'features', '{"awareness": true, "camera": true, "screen_recording": true, "voiceprint_gate": true, "floating_orb": true}'),
   ('rani', 'persona', '{"default_voice": "Aoede", "tone": "loving", "call_greeting": "G Babu"}'),
@@ -251,7 +251,7 @@ insert into public.voice_profiles (id, label, category, language, engine, pitch,
 on conflict (id) do nothing;
 
 -- ---------- 10. RPCs: optional p_app (backward compatible) ----------
--- app_touch_profile: RANI users ko app_users mein darj karta hai.
+-- app_touch_profile: registers RANI users in app_users.
 drop function if exists public.app_touch_profile(text, text, text);
 create or replace function public.app_touch_profile(
     p_email text, p_display_name text, p_avatar_url text, p_app text default 'badshah')
@@ -274,7 +274,7 @@ begin
     return jsonb_build_object('user_id', uid, 'is_blocked', blocked);
 end; $$;
 
--- app_record_login: login_events mein app marker.
+-- app_record_login: app marker in login_events.
 drop function if exists public.app_record_login(text, text, text);
 create or replace function public.app_record_login(
     p_provider text, p_event_type text default 'login', p_device text default 'android', p_app text default 'badshah')
@@ -291,7 +291,7 @@ begin
             case when p_app = 'rani' then 'rani' else 'badshah' end);
 end; $$;
 
--- app_record_usage: ai_usage_events mein app marker.
+-- app_record_usage: app marker in ai_usage_events.
 drop function if exists public.app_record_usage(text, text, text, boolean, bigint, bigint, integer, text);
 create or replace function public.app_record_usage(
     p_provider text, p_model text, p_event_type text, p_success boolean,
@@ -321,7 +321,7 @@ grant execute on function public.app_touch_profile(text,text,text,text),
                           public.app_record_usage(text,text,text,boolean,bigint,bigint,integer,text,text)
     to authenticated;
 
--- Blocked users: nayi RANI tables par bhi laagu.
+-- Blocked users: also applies to the new RANI tables.
 do $$
 declare t text;
 begin

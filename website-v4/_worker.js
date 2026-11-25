@@ -716,7 +716,7 @@ async function handleAdmin(req, env, url) {
         return json(200, { ok: true, rows });
       }
       case 'user-block': {
-        await sbAdmin(env, 'profiles?firebase_uid=eq.' + encodeURIComponent(body.firebase_uid), { method: 'PATCH', body: JSON.stringify({ blocked: !!body.blocked }) });
+        await sbAdmin(env, 'profiles?id=eq.' + encodeURIComponent(body.firebase_uid), { method: 'PATCH', body: JSON.stringify({ is_blocked: !!body.blocked }), prefer: 'return=minimal' });
         return json(200, { ok: true });
       }
       case 'tickets': {
@@ -728,7 +728,7 @@ async function handleAdmin(req, env, url) {
         return json(200, { ok: true });
       }
       case 'announce': {
-        await sbAdmin(env, 'announcements', { method: 'POST', body: JSON.stringify({ title: String(body.title || 'Announcement'), body: String(body.body || ''), active: true }) });
+        await sbAdmin(env, 'announcements', { method: 'POST', body: JSON.stringify({ title: String(body.title || 'Announcement'), content: String(body.content || ''), is_published: true }) });
         return json(200, { ok: true });
       }
       case 'keys-list': {
@@ -810,7 +810,7 @@ async function handleAdmin(req, env, url) {
         return json(200, { ok: true, rows: rows || [] });
       }
       case 'announcement-toggle': {
-        await sbAdmin(env, 'announcements?id=eq.' + encodeURIComponent(body.id), { method: 'PATCH', body: JSON.stringify({ active: !!body.active }), prefer: 'return=minimal' });
+        await sbAdmin(env, 'announcements?id=eq.' + encodeURIComponent(body.id), { method: 'PATCH', body: JSON.stringify({ is_published: !!body.is_published }), prefer: 'return=minimal' });
         return json(200, { ok: true });
       }
       case 'announcement-delete': {
@@ -830,12 +830,12 @@ async function handleAdmin(req, env, url) {
       }
 
       /* ---------- RANI admin (Ranipanal) — needs sql/20261125000015_rani_admin.sql ---------- */
-      /* RANI ka hisab kitab BADSHAH se alag: har query mein app=eq.rani filter.
+      /* RANI records are separate from BADSHAH: every query filters app=eq.rani.
          Privacy: panel mein sirf counts aur metadata — kabhi message content,
          contacts data, recordings ya raw voice nahi. */
       case 'rani-stats': {
         const has = await sbAdmin(env, 'app_settings?select=app&limit=1').catch(() => null);
-        if (has === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — Supabase SQL Editor mein sql/20261125000015_rani_admin.sql run karo.' });
+        if (has === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const today = new Date(); today.setUTCHours(0, 0, 0, 0); const tISO = today.toISOString();
         const dayAgo = new Date(Date.now() - 86400e3).toISOString();
         const [users, chatsToday, callsToday, minsRows, active, tickets, alerts, recs, vps, settings] = await Promise.all([
@@ -864,7 +864,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'rani-users': {
         const au = await sbAdmin(env, 'app_users?select=user_id,first_seen_at,last_seen_at&app=eq.rani&order=last_seen_at.desc&limit=100').catch(() => null);
-        if (au === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        if (au === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const ids = (au || []).map(x => x.user_id);
         if (!ids.length) return json(200, { ok: true, rows: [] });
         const q = body.q ? '&or=(display_name.ilike.*' + encodeURIComponent(body.q) + '*,email.ilike.*' + encodeURIComponent(body.q) + '*)' : '';
@@ -876,7 +876,7 @@ async function handleAdmin(req, env, url) {
         return json(200, { ok: true, rows });
       }
       case 'rani-user-block': {
-        // Shared account: block BADSHAH + RANI dono ke liye lagta hai.
+        // Shared account: block applies to BADSHAH + RANI both.
         await sbAdmin(env, 'profiles?id=eq.' + encodeURIComponent(body.firebase_uid), { method: 'PATCH', body: JSON.stringify({ is_blocked: !!body.blocked }), prefer: 'return=minimal' });
         return json(200, { ok: true });
       }
@@ -885,7 +885,7 @@ async function handleAdmin(req, env, url) {
         if (body.event_type) f += '&event_type=eq.' + encodeURIComponent(body.event_type);
         if (body.user_id) f += '&user_id=eq.' + encodeURIComponent(body.user_id);
         const rows = await sbAdmin(env, f).catch(() => null);
-        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const ids = [...new Set((rows || []).map(r => r.user_id))];
         const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
         const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
@@ -906,7 +906,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'rani-memories': {
         const rows = await sbAdmin(env, 'memories?select=id,user_id,kind,text,created_at&app=eq.rani&order=created_at.desc&limit=100').catch(() => null);
-        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const ids = [...new Set((rows || []).map(r => r.user_id))];
         const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
         const byId = {}; for (const p of (prof || [])) byId[p.id] = p;
@@ -918,7 +918,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'rani-settings-get': {
         const rows = await sbAdmin(env, 'app_settings?select=setting_key,setting_value&app=eq.rani').catch(() => null);
-        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const out = {}; for (const r of (rows || [])) out[r.setting_key] = r.setting_value;
         return json(200, { ok: true, settings: out });
       }
@@ -932,7 +932,7 @@ async function handleAdmin(req, env, url) {
       }
       case 'rani-safety': {
         const rows = await sbAdmin(env, 'rani_activity?select=*&event_type=in.(face_lock,safety_alert)&order=created_at.desc&limit=100').catch(() => null);
-        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables nahi mile — sql/20261125000015_rani_admin.sql run karo.' });
+        if (rows === null) return json(200, { ok: false, error: 'migration', note: 'RANI tables not found — run sql/20261125000015_rani_admin.sql in the Supabase SQL Editor.' });
         const blocked = await sbAdmin(env, 'profiles?select=id&is_blocked=eq.true').catch(() => []);
         const ids = [...new Set((rows || []).map(r => r.user_id))];
         const prof = ids.length ? await sbAdmin(env, 'profiles?select=id,email,display_name&id=in.(' + ids.map(encodeURIComponent).join(',') + ')').catch(() => []) : [];
