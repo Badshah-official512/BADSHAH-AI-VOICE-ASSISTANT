@@ -697,6 +697,39 @@ async function handleLiveHttp(req, env, ctx, url) {
   if (!persona) persona = LIVE_HTTP_PERSONA;
   if (!req.body) return json(400, { error: 'Stream mic PCM16 (16 kHz) in the request body.', code: 'NO_BODY' });
   const googleUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + encodeURIComponent(key);
+  // TEMPORARY DIAGNOSTIC (v1.5.2-debug): ?debug=1 collects everything Google
+  // sends for 12 s and returns it as JSON, so we can see whether the upstream
+  // ever sends setupComplete. Remove after diagnosing.
+  if (url.searchParams.get('debug') === '1') {
+    const dbg = { upstreamOpened: false, setupSent: false, setupSentAt: 0, messages: [], closed: null, error: null, setupComplete: false };
+    let upstream;
+    try { upstream = new WebSocket(googleUrl); } catch (e) { return json(502, { error: 'Could not open upstream Live socket.', code: 'UPSTREAM_FAIL' }); }
+    const setup = {
+      model: 'models/gemini-3.8-live',
+      generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voice_config: { prebuilt_voice_config: { voice_name: voice } } } },
+      systemInstruction: { parts: [{ text: persona }], role: 'user' },
+      inputAudioTranscription: {},
+      outputAudioTranscription: {},
+    };
+    upstream.addEventListener('open', () => {
+      dbg.upstreamOpened = true;
+      try { upstream.send(JSON.stringify({ setup })); dbg.setupSent = true; dbg.setupSentAt = Date.now(); } catch (e) { dbg.error = 'send threw: ' + String(e); }
+    });
+    upstream.addEventListener('message', (ev) => {
+      let s = '';
+      try { s = typeof ev.data === 'string' ? ev.data : new TextDecoder().decode(ev.data); } catch (e) { s = '[undecodable:' + typeof ev.data + ']'; }
+      dbg.messages.push(s.slice(0, 300));
+      try { const r = JSON.parse(s); if (r.setupComplete !== undefined) dbg.setupComplete = true; } catch (e) {}
+    });
+    upstream.addEventListener('close', (ev) => { dbg.closed = { code: ev.code, reason: ev.reason }; });
+    upstream.addEventListener('error', () => { dbg.error = 'upstream error event'; });
+    // Drain the request body so the POST completes (curl sends 640KB).
+    ctx.waitUntil((async () => { try { const r = req.body.getReader(); for (;;) { const x = await r.read(); if (x.done) break; } } catch (e) {} })());
+    await new Promise((res) => setTimeout(res, 12000));
+    try { upstream.close(1000, 'debug done'); } catch (e) {}
+    dbg.setupJson = JSON.stringify({ setup }).slice(0, 200);
+    return json(200, dbg);
+  }
   let upstream;
   try {
     upstream = new WebSocket(googleUrl);
