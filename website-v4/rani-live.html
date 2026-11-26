@@ -79,7 +79,6 @@
   <div class="btns">
     <button class="btn" id="muteBtn"><span class="c">🎙️</span><span>Mute</span></button>
     <button class="btn end" id="endBtn"><span class="c">📞</span><span>End</span></button>
-    <button class="btn" id="minBtn"><span class="c">⌄</span><span>Minimize</span></button>
   </div>
 
 <script>
@@ -279,9 +278,6 @@
     this.querySelector('span:last-child').textContent = live.muted ? 'Unmute' : 'Mute';
   };
   $('endBtn').onclick = endCall;
-  $('minBtn').onclick = function () {
-    if (window.RaniApp && RaniApp.onMinimize) { try { RaniApp.onMinimize(); } catch (e) {} }
-  };
   retryBtn.onclick = function () { retryBtn.style.display = 'none'; setErr(''); stopLive(); start(); };
 
   // Let the native app end the call too (evaluateJavascript("endRaniCall()")).
