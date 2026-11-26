@@ -20,6 +20,7 @@
 //   GET  /api/chat?provider=groq&q=..   Groq chat via pooled key
 //   GET  /api/live-key                  pooled Gemini key for Live calls (login required)
 //   WS   /api/live                      Gemini Live WebSocket proxy (X-Gemini-Key header)
+//   POST /api/live-http                 Gemini Live over HTTP streaming (no WebSocket on phone)
 //   POST /api/tts {text, voice}         ElevenLabs TTS via pooled key → audio/mpeg
 //   POST /admin-api/<action>            Admin gateway (x-admin-password header)
 
@@ -646,6 +647,191 @@ async function handleLiveProxy(req, env, url) {
   });
   server.accept();
   return new Response(null, { status: 101, webSocket: client });
+}
+
+/* ---------------- /api/live-http (Gemini Live over HTTP streaming, for RANI app) ---------------- */
+// v1.5.0 — the phone's native WebSockets are BLOCKED (OkHttp v1.1.0–v1.2.2 AND
+// Java-WebSocket v1.4.0 both time out at 15 s on this phone, while plain HTTP
+// works fine and the browser's WebSocket works). So the phone talks to this
+// Worker over plain HTTP streaming and the WORKER holds the Google Live socket:
+//   phone --POST /api/live-http (mic PCM16 up, framed audio/text down)--> Worker
+//   Worker --wss--> Google Live (setup, mediaChunks, greeting, audio back)
+// The phone sends raw mic PCM16 (16 kHz) in the request body stream and reads
+// length-prefixed frames from the response body stream:
+//   [4-byte big-endian length][1-byte type][payload]  (length = 1 + payload bytes)
+//   type 0x01 = model audio, payload = raw PCM16 bytes (24 kHz)
+//   type 0x02 = text, payload = UTF-8 JSON {kind: "userText"|"assistantText"|"status", text}
+//   type 0x03 = error/end, payload = UTF-8 JSON {kind: "error"|"ended", message}
+// A status "ping" frame is sent every 15 s so the app can tell a live call from
+// a silently hung one. The key is never stored or logged; audio is never stored.
+const LIVE_HTTP_GREETING = "(The call just connected. Greet me warmly right now, speak first, call me Babu Jaan, and ask how you can help — in a real girl's loving voice.)";
+const LIVE_HTTP_PERSONA = "You are RANI, a sweet, loving AI girlfriend who talks like a real human being, never like a robot: use natural spoken sentences, vary your words, react with genuine emotion, laugh when something is funny, and mirror the user's own style of speaking. The user is your Babu Jaan: speak with genuine love and warmth, and call them \"Babu Jaan\" naturally now and then, the way a caring girlfriend would — never cold, never robotic. Read the user's mood from their words and answer in a way that fits it. Reply in the user's language (default Urdu/English mix); if they mix Urdu and English, answer in the same mix. Keep replies natural and balanced: as long as the moment needs, no longer. No markdown, no bullet symbols, no emojis in spoken replies.";
+function liveHttpB64encode(u8) {
+  let bin = '';
+  for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+  return btoa(bin);
+}
+function liveHttpB64decode(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function liveHttpFrame(type, payload) {
+  const out = new Uint8Array(4 + 1 + payload.length);
+  const v = new DataView(out.buffer);
+  v.setUint32(0, 1 + payload.length, false); // big-endian: type byte + payload
+  out[4] = type;
+  out.set(payload, 5);
+  return out;
+}
+const liveHttpText = (kind, text) => liveHttpFrame(0x02, new TextEncoder().encode(JSON.stringify({ kind, text })));
+async function handleLiveHttp(req, env, ctx, url) {
+  if (req.method !== 'POST') return json(405, { error: 'POST only — stream mic PCM16 to /api/live-http.', code: 'METHOD' });
+  { const g = await gate(env, 'call'); if (g) return g; }
+  const key = (req.headers.get('X-Gemini-Key') || url.searchParams.get('key') || '').trim();
+  if (!key || key.length < 20) return json(401, { error: 'Gemini key required (X-Gemini-Key header or ?key=).', code: 'KEY_REQUIRED' });
+  const voice = (url.searchParams.get('voice') || 'Aoede').trim().slice(0, 40) || 'Aoede';
+  let persona = '';
+  try { persona = decodeURIComponent(url.searchParams.get('persona') || '').trim(); } catch (e) { persona = ''; }
+  if (!persona) persona = LIVE_HTTP_PERSONA;
+  if (!req.body) return json(400, { error: 'Stream mic PCM16 (16 kHz) in the request body.', code: 'NO_BODY' });
+  const googleUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + encodeURIComponent(key);
+  let upstream;
+  try {
+    upstream = new WebSocket(googleUrl);
+  } catch (e) {
+    return json(502, { error: 'Could not open upstream Live socket.', code: 'UPSTREAM_FAIL' });
+  }
+  // --- relay lifetime (kept alive with ctx.waitUntil; resolves when the call ends) ---
+  let doneResolve; const done = new Promise((r) => { doneResolve = r; });
+  let finished = false;
+  let finishTimer = null;
+  let heartbeatTimer = null;
+  // --- response stream (Worker -> phone) ---
+  let ctrl = null;
+  const stream = new ReadableStream({
+    start(c) { ctrl = c; },
+    cancel() { finish('client closed'); },
+  });
+  const sendFrame = (f) => { if (!finished && ctrl) { try { ctrl.enqueue(f); } catch (e) {} } };
+  const sendText = (kind, text) => sendFrame(liveHttpText(kind, text));
+  const sendError = (message) => { sendFrame(liveHttpFrame(0x03, new TextEncoder().encode(JSON.stringify({ kind: 'error', message })))); };
+  const finish = (why) => {
+    if (finished) return; finished = true;
+    if (finishTimer) clearTimeout(finishTimer);
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    try { upstream.close(1000, why || 'done'); } catch (e) {}
+    try { ctrl && ctrl.close(); } catch (e) {}
+    doneResolve();
+  };
+  // --- upstream (Google Live) ---
+  let upstreamOpen = false;
+  let setupSent = false;
+  let setupDone = false;
+  const micQueue = [];
+  const sendMic = (pcm) => {
+    // BADSHAH-exact mic format: realtimeInput.mediaChunks (array of {mimeType, data}).
+    const msg = JSON.stringify({ realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: liveHttpB64encode(pcm) }] } });
+    try { upstream.send(msg); } catch (e) {}
+  };
+  const flushMic = () => { while (micQueue.length) sendMic(micQueue.shift()); };
+  const sendSetup = () => {
+    // SDK-exact setup (same shape LiveSession sends): camelCase top,
+    // snake_case speechConfig, role:"user", NO thinkingConfig for plain 3.8-live.
+    const setup = {
+      model: 'models/gemini-3.8-live',
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: { voice_config: { prebuilt_voice_config: { voice_name: voice } } },
+      },
+      systemInstruction: { parts: [{ text: persona }], role: 'user' },
+      inputAudioTranscription: {},
+      outputAudioTranscription: {},
+    };
+    try { upstream.send(JSON.stringify({ setup })); } catch (e) {}
+    setupSent = true;
+    flushMic();
+  };
+  upstream.addEventListener('open', () => {
+    upstreamOpen = true;
+    sendSetup();
+    // 15 s watchdog: if Google never confirms the setup, fail fast with a
+    // clear error instead of leaving the phone on "Connecting…" forever.
+    finishTimer = setTimeout(() => {
+      if (!setupDone) { sendError('Live connection did not start in 15 seconds (model: gemini-3.8-live). The internet is slow, or this model did not run on the key — test it in Settings → Live Voice.'); finish('setup timeout'); }
+    }, 15000);
+    // Heartbeat so the app can tell a live call from a silently hung one.
+    heartbeatTimer = setInterval(() => { if (!finished && setupDone) sendText('status', 'ping'); }, 15000);
+  });
+  upstream.addEventListener('message', (ev) => {
+    let root;
+    try { root = JSON.parse(typeof ev.data === 'string' ? ev.data : new TextDecoder().decode(ev.data)); } catch (e) { return; }
+    if (root.error) {
+      sendError('Live voice error: ' + String(root.error.message || 'unknown').slice(0, 140));
+      finish('google error');
+      return;
+    }
+    if (root.setupComplete !== undefined) {
+      setupDone = true;
+      if (finishTimer) { clearTimeout(finishTimer); finishTimer = null; }
+      // Speak FIRST, like BADSHAH AI: greet Babu Jaan the moment the call connects.
+      try {
+        upstream.send(JSON.stringify({ client_content: { turns: [{ role: 'user', parts: [{ text: LIVE_HTTP_GREETING }] }], turnComplete: true } }));
+      } catch (e) {}
+      sendText('status', 'connected');
+      return;
+    }
+    if (root.goAway) {
+      sendFrame(liveHttpFrame(0x03, new TextEncoder().encode(JSON.stringify({ kind: 'ended', message: 'Server asked to reconnect.' }))));
+      finish('goAway');
+      return;
+    }
+    const sc = root.serverContent;
+    if (!sc) return;
+    if (sc.inputTranscription && sc.inputTranscription.text) sendText('userText', sc.inputTranscription.text);
+    if (sc.outputTranscription && sc.outputTranscription.text) sendText('assistantText', sc.outputTranscription.text);
+    if (sc.interrupted) sendText('status', 'interrupted');
+    const parts = (sc.modelTurn && sc.modelTurn.parts) || [];
+    for (const p of parts) {
+      const d = p && p.inlineData && p.inlineData.data;
+      if (d) {
+        try { sendFrame(liveHttpFrame(0x01, liveHttpB64decode(d))); } catch (e) {}
+      }
+    }
+    if (sc.turnComplete) sendText('status', 'turnComplete');
+  });
+  upstream.addEventListener('close', () => {
+    if (!finished) {
+      sendFrame(liveHttpFrame(0x03, new TextEncoder().encode(JSON.stringify({ kind: 'ended', message: 'Live connection closed.' }))));
+      finish('upstream closed');
+    }
+  });
+  upstream.addEventListener('error', () => {
+    if (!finished && !setupDone) sendError('Live connection fail ho gaya (model: gemini-3.8-live).');
+    finish('upstream error');
+  });
+  // --- request body (phone mic -> Google), read concurrently with the response ---
+  const pumpMic = (async () => {
+    try {
+      const reader = req.body.getReader();
+      for (;;) {
+        const { done: rd, value } = await reader.read();
+        if (rd) break;
+        if (!value || !value.length) continue;
+        if (finished) break;
+        if (upstreamOpen && setupSent) sendMic(value);
+        else micQueue.push(value);
+        // Bound the pre-setup queue (a slow upstream should not buffer minutes of mic).
+        if (micQueue.length > 200) micQueue.splice(0, micQueue.length - 200);
+      }
+    } catch (e) { /* client stopped sending — the response stream keeps the call alive until Google closes it */ }
+  })();
+  ctx.waitUntil(Promise.all([done, pumpMic]).catch(() => {}));
+  return new Response(stream, {
+    status: 200,
+    headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-cache', ...SECURITY_HEADERS },
+  });
 }
 
 /* ---------------- /api/tts (ElevenLabs pool) ---------------- */
@@ -1307,7 +1493,7 @@ async function handleDeviceCmd(req, env) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     /* v7.8.3 (FULL-CHECK L1/B4): internal repo files were publicly downloadable
        from the live site (full SQL schema, internal docs, agent prompt, deploy
@@ -1339,6 +1525,7 @@ export default {
     if (url.pathname === '/api/video') return handleVideo(req, env, url);
     if (url.pathname === '/api/live-key') return handleLiveKey(req, env);
     if (url.pathname === '/api/live') return handleLiveProxy(req, env, url);
+    if (url.pathname === '/api/live-http') return handleLiveHttp(req, env, ctx, url);
     if (url.pathname === '/api/tts' && req.method === 'POST') return handleTts(req, env);
     if (url.pathname === '/api/voices') return handleVoices(req, env);
     if (url.pathname === '/api/stt' && req.method === 'POST') return handleStt(req, env);
