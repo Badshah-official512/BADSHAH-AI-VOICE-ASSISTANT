@@ -19,6 +19,7 @@
 //   GET  /api/chat?model=..&q=..        FT Fusion proxy (all models free)
 //   GET  /api/chat?provider=groq&q=..   Groq chat via pooled key
 //   GET  /api/live-key                  pooled Gemini key for Live calls (login required)
+//   WS   /api/live                      Gemini Live WebSocket proxy (X-Gemini-Key header)
 //   POST /api/tts {text, voice}         ElevenLabs TTS via pooled key → audio/mpeg
 //   POST /admin-api/<action>            Admin gateway (x-admin-password header)
 
@@ -575,6 +576,76 @@ async function handleLiveKey(req, env) {
   if (!keys.length) return json(404, { error: 'Abhi koi Gemini key available nahi — thodi dair baad try karo.' });
   await touchKey(env, keys[0]);
   return json(200, { key: keys[0].key_value });
+}
+
+/* ---------------- /api/live (Gemini Live WebSocket proxy for RANI app) ---------------- */
+// RANI native app (OkHttp WebSocket) cannot hold a direct socket to Google Live
+// from the phone — the socket is aborted / hangs on both 4G and WiFi, while the
+// browser's WebSocket works fine on the same phone and the same key. The phone
+// CAN reach this Worker reliably (chat / image / video all work through it),
+// and this Worker (Cloudflare edge) CAN reach Google Live. So the app connects
+// here and the Worker relays every frame to Google Live and back, in both
+// directions, untouched. The app supplies its Gemini key (pooled via
+// /api/live-key, or its own key) in the X-Gemini-Key header (or ?key=); the
+// Worker never stores, logs or reuses it — it only opens the upstream socket.
+// Auth is enforced where the pooled key is issued (/api/live-key, Firebase
+// gated); this endpoint is a dumb relay and takes the key the caller supplies.
+async function handleLiveProxy(req, env, url) {
+  const upgrade = (req.headers.get('Upgrade') || '').toLowerCase();
+  if (upgrade !== 'websocket') {
+    return json(426, { error: 'WebSocket upgrade required — connect to wss://<host>/api/live with X-Gemini-Key header.', code: 'WS_REQUIRED' });
+  }
+  { const g = await gate(env, 'call'); if (g) return g; }
+  const key = (req.headers.get('X-Gemini-Key') || url.searchParams.get('key') || '').trim();
+  if (!key || key.length < 20) {
+    return new Response('Gemini key required (X-Gemini-Key header or ?key=).', { status: 401, headers: { 'content-type': 'text/plain' } });
+  }
+  const googleUrl = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=' + encodeURIComponent(key);
+  let upstream;
+  try {
+    upstream = new WebSocket(googleUrl);
+  } catch (e) {
+    return json(502, { error: 'Could not open upstream Live socket.', code: 'UPSTREAM_FAIL' });
+  }
+  const pair = new WebSocketPair();
+  const client = pair[0];
+  const server = pair[1];
+  // Client -> Google (buffer until the upstream is open; the app sends setup
+  // the moment its socket opens, which can be before Google answers).
+  const queued = [];
+  let upstreamOpen = false;
+  let closed = false;
+  const closeBoth = (code, reason) => {
+    if (closed) return; closed = true;
+    try { upstream.close(code, reason); } catch (e) {}
+    try { server.close(code, reason); } catch (e) {}
+  };
+  upstream.addEventListener('open', () => {
+    upstreamOpen = true;
+    for (const m of queued) { try { upstream.send(m); } catch (e) {} }
+    queued.length = 0;
+  });
+  upstream.addEventListener('message', (ev) => {
+    try { server.send(ev.data); } catch (e) {}
+  });
+  upstream.addEventListener('close', (ev) => {
+    try { server.close(ev.code || 1000, ev.reason || 'upstream closed'); } catch (e) {}
+  });
+  upstream.addEventListener('error', () => {
+    closeBoth(1011, 'upstream error');
+  });
+  server.addEventListener('message', (ev) => {
+    if (upstreamOpen) { try { upstream.send(ev.data); } catch (e) {} }
+    else queued.push(ev.data);
+  });
+  server.addEventListener('close', (ev) => {
+    try { upstream.close(ev.code || 1000, ev.reason || 'client closed'); } catch (e) {}
+  });
+  server.addEventListener('error', () => {
+    closeBoth(1011, 'client error');
+  });
+  server.accept();
+  return new Response(null, { status: 101, webSocket: client });
 }
 
 /* ---------------- /api/tts (ElevenLabs pool) ---------------- */
@@ -1267,6 +1338,7 @@ export default {
     if (url.pathname === '/api/image') return handleImage(req, env, url);
     if (url.pathname === '/api/video') return handleVideo(req, env, url);
     if (url.pathname === '/api/live-key') return handleLiveKey(req, env);
+    if (url.pathname === '/api/live') return handleLiveProxy(req, env, url);
     if (url.pathname === '/api/tts' && req.method === 'POST') return handleTts(req, env);
     if (url.pathname === '/api/voices') return handleVoices(req, env);
     if (url.pathname === '/api/stt' && req.method === 'POST') return handleStt(req, env);
