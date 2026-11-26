@@ -731,11 +731,19 @@ async function handleLiveHttp(req, env, ctx, url) {
   let setupDone = false;
   const micQueue = [];
   const sendMic = (pcm) => {
+    // v1.5.1 FIX (review): NEVER send mic audio to Google before setupComplete.
+    // The v1.5.0 code flushed the mic queue the instant the setup was SENT,
+    // so Google got a burst of mediaChunks before it had acknowledged the
+    // setup — and it never sent setupComplete at all (proven: /api/live, which
+    // sends NO mic before setupComplete, works in 1.8 s with the same key).
+    // Queue until setupDone, then send. The Live protocol is: setup →
+    // setupComplete → THEN media.
+    if (!setupDone) { micQueue.push(pcm); return; }
     // BADSHAH-exact mic format: realtimeInput.mediaChunks (array of {mimeType, data}).
     const msg = JSON.stringify({ realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: liveHttpB64encode(pcm) }] } });
     try { upstream.send(msg); } catch (e) {}
   };
-  const flushMic = () => { while (micQueue.length) sendMic(micQueue.shift()); };
+  const flushMic = () => { if (!setupDone) return; while (micQueue.length) sendMic(micQueue.shift()); };
   const sendSetup = () => {
     // SDK-exact setup (same shape LiveSession sends): camelCase top,
     // snake_case speechConfig, role:"user", NO thinkingConfig for plain 3.8-live.
@@ -751,7 +759,8 @@ async function handleLiveHttp(req, env, ctx, url) {
     };
     try { upstream.send(JSON.stringify({ setup })); } catch (e) {}
     setupSent = true;
-    flushMic();
+    // v1.5.1: do NOT flushMic() here — mic starts only after setupComplete
+    // (see sendMic). Flushing now would send media before Google acked setup.
   };
   upstream.addEventListener('open', () => {
     upstreamOpen = true;
@@ -775,6 +784,8 @@ async function handleLiveHttp(req, env, ctx, url) {
     if (root.setupComplete !== undefined) {
       setupDone = true;
       if (finishTimer) { clearTimeout(finishTimer); finishTimer = null; }
+      // Mic starts NOW (setup acked) — flush everything queued while connecting.
+      flushMic();
       // Speak FIRST, like BADSHAH AI: greet Babu Jaan the moment the call connects.
       try {
         upstream.send(JSON.stringify({ client_content: { turns: [{ role: 'user', parts: [{ text: LIVE_HTTP_GREETING }] }], turnComplete: true } }));
