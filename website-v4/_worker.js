@@ -715,9 +715,15 @@ async function handleLiveHttp(req, env, ctx, url) {
       dbg.upstreamOpened = true;
       try { upstream.send(JSON.stringify({ setup })); dbg.setupSent = true; dbg.setupSentAt = Date.now(); } catch (e) { dbg.error = 'send threw: ' + String(e); }
     });
-    upstream.addEventListener('message', (ev) => {
+    upstream.addEventListener('message', async (ev) => {
       let s = '';
-      try { s = typeof ev.data === 'string' ? ev.data : new TextDecoder().decode(ev.data); } catch (e) { s = '[undecodable:' + typeof ev.data + ']'; }
+      try {
+        if (typeof ev.data === 'string') s = ev.data;
+        else if (ev.data instanceof ArrayBuffer) s = new TextDecoder().decode(ev.data);
+        else if (ev.data && typeof ev.data.text === 'function') s = await ev.data.text();
+        else if (ev.data && typeof ev.data.arrayBuffer === 'function') s = new TextDecoder().decode(await ev.data.arrayBuffer());
+        else s = '[undecodable:' + typeof ev.data + ']';
+      } catch (e) { s = '[decode threw:' + String(e).slice(0, 60) + ']'; }
       dbg.messages.push(s.slice(0, 300));
       try { const r = JSON.parse(s); if (r.setupComplete !== undefined) dbg.setupComplete = true; } catch (e) {}
     });
@@ -806,9 +812,23 @@ async function handleLiveHttp(req, env, ctx, url) {
     // Heartbeat so the app can tell a live call from a silently hung one.
     heartbeatTimer = setInterval(() => { if (!finished && setupDone) sendText('status', 'ping'); }, 15000);
   });
-  upstream.addEventListener('message', (ev) => {
+  upstream.addEventListener('message', async (ev) => {
+    // v1.5.2 FIX (root cause, proven by ?debug=1): Cloudflare Workers delivers
+    // WebSocket message data as string, ArrayBuffer, OR Blob. The v1.5.0 code
+    // only handled string/ArrayBuffer — Google's messages arrive as Blob, so
+    // `new TextDecoder().decode(blob)` THREW and every message (including
+    // setupComplete) was silently dropped. That is why the 15 s watchdog fired
+    // even though Google WAS answering. Blob needs `await ev.data.text()`.
+    let s = '';
+    try {
+      if (typeof ev.data === 'string') s = ev.data;
+      else if (ev.data instanceof ArrayBuffer) s = new TextDecoder().decode(ev.data);
+      else if (ev.data && typeof ev.data.text === 'function') s = await ev.data.text();
+      else if (ev.data && typeof ev.data.arrayBuffer === 'function') s = new TextDecoder().decode(await ev.data.arrayBuffer());
+      else s = String(ev.data);
+    } catch (e) { return; }
     let root;
-    try { root = JSON.parse(typeof ev.data === 'string' ? ev.data : new TextDecoder().decode(ev.data)); } catch (e) { return; }
+    try { root = JSON.parse(s); } catch (e) { return; }
     if (root.error) {
       sendError('Live voice error: ' + String(root.error.message || 'unknown').slice(0, 140));
       finish('google error');
