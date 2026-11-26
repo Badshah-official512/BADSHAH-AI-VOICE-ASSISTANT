@@ -156,7 +156,7 @@
       var data; try { data = JSON.parse(typeof ev.data === 'string' ? ev.data : ev.data); } catch (e) { return; }
       if (data.setupComplete !== undefined) {
         live.setupDone = true; live.retries = 0;
-        setStatus('RANI is speaking...'); setErr(''); retryBtn.style.display = 'none'; startEq();
+        setStatus('RANI is speaking...'); subEl.textContent = 'Real voice · Gemini Live'; setErr(''); retryBtn.style.display = 'none'; startEq();
         try { ws.send(greet()); } catch (e) {}
         if (window.RaniApp && RaniApp.onLiveConnected) RaniApp.onLiveConnected();
       }
@@ -181,7 +181,7 @@
           setCaption('Babu Jaan', sc.inputTranscription.text); setStatus('Listening...');
         }
       }
-      if (data.goAway) { try { ws.close(); } catch (e) {} scheduleReconnect(); }
+      if (data.goAway) { try { ws.close(); } catch (e) {} /* onclose reconnects — never call scheduleReconnect() here too (double reconnect) */ }
     };
     ws.onclose = function () { if (live.on) scheduleReconnect(); };
     ws.onerror = function () {
@@ -243,7 +243,7 @@
 
   function endCall() {
     stopLive();
-    setStatus('Call ended'); setCaption('', '');
+    setStatus('Call ended'); subEl.textContent = 'Classic voice mode'; setCaption('', '');
     if (window.RaniApp && RaniApp.onCallEnded) { try { RaniApp.onCallEnded(); } catch (e) {} }
   }
 
@@ -253,7 +253,7 @@
       return;
     }
     live.on = true; live.retries = 0; live.setupDone = false;
-    setStatus('Connecting to Gemini 3.8 Live...');
+    setStatus('Connecting to Gemini 3.8 Live...'); subEl.textContent = 'Classic voice mode';
     // 15 s watchdog — same as the native app: a hung handshake shows at once.
     setTimeout(function () {
       if (live.on && !live.setupDone) scheduleReconnect();
@@ -264,6 +264,9 @@
       connectWs();
       startMic();
     } catch (e) {
+      // Mic failed — stop the 15 s watchdog + any reconnect, or it would
+      // overwrite this real mic error with a misleading timeout error.
+      live.on = false;
       setStatus('Mic permission chahiye');
       setErr('Mic permission nahi mili — app ki Settings mein microphone Allow karo, phir dobara try karo.');
       retryBtn.style.display = 'inline-block';
